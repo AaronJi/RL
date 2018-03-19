@@ -13,4 +13,5 @@ python python/MDPrank/MDPrank_main.py letor_trec_example --training_set Letor/TR
 
 For different experiments, the data path in the arguments need to be changed accordingly.
 
-## Temporary problem: Currently the code may not run direclty in Windows, due to some path issues.
+### Temporary problem: 
+Currently the code may not run direclty in Windows, due to some path issues.
