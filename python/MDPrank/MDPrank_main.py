@@ -26,7 +26,7 @@ class MDPrankMain(object):
     """ Main class to run algorithms and experiments. """
     def __init__(self, args, init=None, sample=None):
         """
-        Initialize GPSMain
+        Initialize MDPrankMain
         Args:
             config: Hyperparameters for experiment
             quit_on_end: When true, quit automatically on completion
