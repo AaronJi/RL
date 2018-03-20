@@ -4,7 +4,7 @@
 from abc import ABCMeta, abstractmethod
 import copy
 
-from Environment import Environment
+from .Environment import Environment
 
 class RankEnvironment(Environment):
     """ Rank Environment superclass. """

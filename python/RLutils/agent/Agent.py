@@ -4,7 +4,8 @@
 from abc import ABCMeta, abstractmethod
 import copy
 
-from AGEconfig import AGEconfig
+
+from .AGEconfig import AGEconfig
 
 class Agent(object):
     """ Environment superclass. """

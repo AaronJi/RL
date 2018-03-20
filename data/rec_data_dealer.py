@@ -33,6 +33,7 @@ class RecDataDealer(DataDealer):
             file.close()
         except:
             print("error: feature file can not read")
+            sys.exit(1)
         return
 
     def load_data(self, data_path):
@@ -54,6 +55,7 @@ class RecDataDealer(DataDealer):
             file.close()
         except:
             print("error: data file can not read")
+            sys.exit(1)
 
         return data
 

@@ -4,7 +4,7 @@
 from abc import ABCMeta, abstractmethod
 import copy
 
-from ENVconfig import ENVconfig
+from .ENVconfig import ENVconfig
 
 class Environment(object):
     """ Environment superclass. """
