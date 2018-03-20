@@ -3,11 +3,8 @@
 
 from abc import ABCMeta, abstractmethod
 import copy
-import logging
 
 from ENVconfig import ENVconfig
-
-LOGGER = logging.getLogger(__name__)
 
 class Environment(object):
     """ Environment superclass. """

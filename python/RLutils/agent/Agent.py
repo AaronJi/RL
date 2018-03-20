@@ -3,11 +3,8 @@
 
 from abc import ABCMeta, abstractmethod
 import copy
-import logging
 
 from AGEconfig import AGEconfig
-
-LOGGER = logging.getLogger(__name__)
 
 class Agent(object):
     """ Environment superclass. """

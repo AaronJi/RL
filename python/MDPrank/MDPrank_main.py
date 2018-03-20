@@ -13,7 +13,6 @@ import numpy as np
 
 # path of the whole project
 MDPrank_main_path = os.path.abspath(__file__)
-#project_dir = '/'.join(str.split(MDPrank_main_path, '/')[:-3]) + '/'
 project_dir = os.path.dirname(os.path.dirname(os.path.dirname(MDPrank_main_path))) + '/'
 sys.path.append(project_dir)
 
