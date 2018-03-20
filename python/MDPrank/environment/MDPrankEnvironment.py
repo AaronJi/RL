@@ -8,7 +8,7 @@ import copy
 src_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.append(src_dir)
 
-from data.Letor.LectorDataDealer import getQueries, getQueryData
+from data.rec_data_dealer import getQueries, getQueryData
 from RLutils.environment.rankEnvironment import RankEnvironment
 from RLutils.environment.rankMetric import DCG_singlePos
 

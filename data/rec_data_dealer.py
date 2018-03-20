@@ -21,19 +21,20 @@ class RecDataDealer(DataDealer):
         return
 
     def init_schema(self, feature_schema):
-        try:
-            with open(feature_schema, 'r') as file:
-                lines = file.readlines()
+        if feature_schema is not None:
+            try:
+                with open(feature_schema, 'r') as file:
+                    lines = file.readlines()
 
-                for line in lines:
-                    feature_name = line.rstrip('\n').rstrip('\r')
-                    if len(feature_name) > 0 :
-                        self.nFeature += 1
-                        self.feature_names.append(feature_name)
-            file.close()
-        except:
-            print("error: feature file can not read")
-            sys.exit(1)
+                    for line in lines:
+                        feature_name = line.rstrip('\n').rstrip('\r')
+                        if len(feature_name) > 0 :
+                            self.nFeature += 1
+                            self.feature_names.append(feature_name)
+                file.close()
+            except:
+                print("error: feature file can not read")
+                sys.exit(1)
         return
 
     def load_data(self, data_path):
@@ -132,6 +133,12 @@ class RecDataDealer(DataDealer):
 
 def getQueries(data):
     return list(data.keys())
+
+def getQeuryItems(data, uid):
+    try:
+        return list(data[uid].keys())
+    except KeyError:
+        return None
 
 def getQueryData(data, uid):
     try:

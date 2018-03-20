@@ -9,13 +9,13 @@ import sys
 parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(parentdir)
 
+from rec_data_dealer import  RecDataDealer
 from DataDealer import DataDealer
 
-class LectorDataDealer(DataDealer):
+class LectorDataDealer(RecDataDealer):
 
     def __init__(self, hyperparams):
         super(LectorDataDealer, self).__init__(hyperparams)
-        self.nFeature = 0
         return
 
     # return a dict, whose key is query id, value is the querydata in a dict format
@@ -88,49 +88,7 @@ class LectorDataDealer(DataDealer):
                         data[qid][docid] = (newFeature[i], tempLabel[i])
             return data
 
-    # generate a partial data for fast test purpose
-    def getPartData(self, data, nQuery, nNegDoc, nPosDoc):
-        partial_data = {}
 
-        queries = data.keys()
-
-        for iq, query in enumerate(queries):
-            if iq >= nQuery:
-                break
-
-            partial_data[query] = {}
-
-            iNegDoc = 0
-            iPosDoc = 0
-            for doc in data[query].keys():
-                if iPosDoc >= nPosDoc and iNegDoc >= nNegDoc:
-                    break
-
-                if iPosDoc < nPosDoc and data[query][doc][1] > 0:
-                    iPosDoc += 1
-                    partial_data[query][doc] = data[query][doc]
-
-                if iNegDoc < nNegDoc and data[query][doc][1] <= 0:
-                    iNegDoc += 1
-                    partial_data[query][doc] = data[query][doc]
-
-        return partial_data
-
-def getQueries(data):
-    return list(data.keys())
-
-def getQeuryItems(data, qid):
-    try:
-        return list(data[qid].keys())
-    except KeyError:
-        return None
-
-
-def getQueryData(data, qid):
-    try:
-        return [data[qid][docid] for docid in data[qid]]
-    except KeyError:
-        return None
 
 def getDocInfo(data, qid, docid):
     try:
