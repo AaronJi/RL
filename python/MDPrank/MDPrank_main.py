@@ -13,7 +13,8 @@ import numpy as np
 
 # path of the whole project
 MDPrank_main_path = os.path.abspath(__file__)
-project_dir = '/'.join(str.split(MDPrank_main_path, '/')[:-3]) + '/'
+#project_dir = '/'.join(str.split(MDPrank_main_path, '/')[:-3]) + '/'
+project_dir = os.path.dirname(os.path.dirname(os.path.dirname(MDPrank_main_path))) + '/'
 sys.path.append(project_dir)
 
 from data.Letor.LectorDataDealer import LectorDataDealer
@@ -26,7 +27,7 @@ class MDPrankMain(object):
     """ Main class to run algorithms and experiments. """
     def __init__(self, args, init=None, sample=None):
         """
-        Initialize MDPrankMain
+        Initialize GPSMain
         Args:
             config: Hyperparameters for experiment
             quit_on_end: When true, quit automatically on completion
@@ -180,8 +181,8 @@ def main():
 
     args = parser.parse_args()
 
-    #singleLearn(args, init_theta=args.param_init)
-    multiLearn(args, nLearner=10, init_theta=args.param_init)
+    singleLearn(args, init_theta=args.param_init)
+    #multiLearn(args, nLearner=10, init_theta=args.param_init)
 
     return
 
