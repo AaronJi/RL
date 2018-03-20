@@ -10,7 +10,7 @@
 ## Vendor Conventions ##
 
 # Data
-- data/
+- (^|/)data/
 
 # Caches
 - (^|/)cache/
