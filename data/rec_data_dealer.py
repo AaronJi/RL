@@ -115,6 +115,16 @@ class RecDataDealer(DataDealer):
 
         return partial_data
 
+    # if a query only contains neg labels, filter it
+    def filter_all_neg(self, data_raw):
+        data = dict()
+
+        users = data_raw.keys()
+        for uid in users:
+            if query_has_pos(data_raw, uid):
+                data[uid] = data_raw[uid]
+        return data
+
 def getQueries(data):
     return list(data.keys())
 
@@ -134,6 +144,8 @@ def query_has_pos(data, uid):
 
     except KeyError:
         return False
+
+
 
 def main():
     pass
