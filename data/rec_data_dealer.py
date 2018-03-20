@@ -90,7 +90,7 @@ class RecDataDealer(DataDealer):
         return uid, iid, label, feature_vec
 
     # generate a partial data for fast test purpose
-    def getPartData(self, data, nQuery, nNegDoc, nPosDoc):
+    def getPartData(self, data, nQuery, nNegDoc=None, nPosDoc=None):
         partial_data = {}
 
         queries = data.keys()
@@ -101,19 +101,22 @@ class RecDataDealer(DataDealer):
 
             partial_data[query] = {}
 
-            iNegDoc = 0
-            iPosDoc = 0
-            for doc in data[query].keys():
-                if iPosDoc >= nPosDoc and iNegDoc >= nNegDoc:
-                    break
+            if nNegDoc is None or nPosDoc is None:
+                partial_data[query] = data[query]
+            else:
+                iNegDoc = 0
+                iPosDoc = 0
+                for doc in data[query].keys():
+                    if iPosDoc >= nPosDoc and iNegDoc >= nNegDoc:
+                        break
 
-                if iPosDoc < nPosDoc and data[query][doc][1] > 0:
-                    iPosDoc += 1
-                    partial_data[query][doc] = data[query][doc]
+                    if iPosDoc < nPosDoc and data[query][doc][1] > 0:
+                        iPosDoc += 1
+                        partial_data[query][doc] = data[query][doc]
 
-                if iNegDoc < nNegDoc and data[query][doc][1] <= 0:
-                    iNegDoc += 1
-                    partial_data[query][doc] = data[query][doc]
+                    if iNegDoc < nNegDoc and data[query][doc][1] <= 0:
+                        iNegDoc += 1
+                        partial_data[query][doc] = data[query][doc]
 
         return partial_data
 
