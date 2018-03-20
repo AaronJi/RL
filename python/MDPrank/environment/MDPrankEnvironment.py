@@ -8,13 +8,10 @@ import copy
 src_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.append(src_dir)
 
-from data.Letor.LectorDataDealer import getQueries, getSearchData
-
+from data.Letor.LectorDataDealer import getQueries, getQueryData
 from RLutils.environment.rankEnvironment import RankEnvironment
 from RLutils.environment.rankMetric import DCG_singlePos
 
-rankEnvironment_path = os.path.abspath(__file__)
-project_dir = '/'.join(str.split(rankEnvironment_path, '/')[:-4]) + '/'
 
 class MDPrankEnvironment(RankEnvironment):
 
@@ -75,11 +72,11 @@ class MDPrankEnvironment(RankEnvironment):
     # dict of state keys and values
     def getCandidates(self, query, mode="train"):
         if mode == "validation":
-            return getSearchData(self.validData, query)
+            return getQueryData(self.validData, query)
         if mode == "test":
-            return getSearchData(self.testData, query)
+            return getQueryData(self.testData, query)
 
-        return getSearchData(self.data, query)
+        return getQueryData(self.data, query)
 
 
 

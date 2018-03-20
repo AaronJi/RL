@@ -10,7 +10,6 @@ sys.path.append(src_dir)
 
 from RLutils.agent.Agent import Agent
 from RLutils.algorithm.utils import softmax
-import data.Letor.LectorDataDealer
 
 
 class MDPrankAgent(Agent):

@@ -1,7 +1,6 @@
 #!/usr/bin/python
 # -*- coding: <encoding name> -*-
 
-from collections import defaultdict
 import numpy as np
 import re
 import os
@@ -44,8 +43,6 @@ class LectorDataDealer(DataDealer):
             else:
                 self.nFeature = K
 
-            N = len(Mn)  # number of queries
-
             # load data
             data = dict()
 
@@ -57,7 +54,7 @@ class LectorDataDealer(DataDealer):
 
                     feature_vec = np.zeros(K)  # vector of features, for each query-document pair
 
-                    feature_tup = [tuple.split(":") for tuple in line.strip().split("#")[0].strip().split()[2:]]
+                    feature_tup = [tup.split(":") for tup in line.strip().split("#")[0].strip().split()[2:]]
                     for tup in feature_tup:
                         index = int(tup[0]) - 1
                         x = float(tup[1])
@@ -91,6 +88,7 @@ class LectorDataDealer(DataDealer):
                         data[qid][docid] = (newFeature[i], tempLabel[i])
             return data
 
+    # generate a partial data for fast test purpose
     def getPartData(self, data, nQuery, nNegDoc, nPosDoc):
         partial_data = {}
 
@@ -121,14 +119,14 @@ class LectorDataDealer(DataDealer):
 def getQueries(data):
     return list(data.keys())
 
-def getSearchDocs(data, qid):
+def getQeuryItems(data, qid):
     try:
         return list(data[qid].keys())
     except KeyError:
         return None
 
 
-def getSearchData(data, qid):
+def getQueryData(data, qid):
     try:
         return [data[qid][docid] for docid in data[qid]]
     except KeyError:
