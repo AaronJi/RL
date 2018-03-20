@@ -13,7 +13,7 @@ import numpy as np
 
 # path of the whole project
 MDPrank_main_path = os.path.abspath(__file__)
-project_dir = os.path.dirname(os.path.dirname(os.path.dirname(MDPrank_main_path))) + '/'
+project_dir = os.path.dirname(os.path.dirname(os.path.dirname(MDPrank_main_path)))
 sys.path.append(project_dir)
 
 from data.Letor.LectorDataDealer import LectorDataDealer
@@ -38,12 +38,12 @@ class MDPrankMain(object):
             self.sample = '_' + str(sample)
 
         exp_name = args.experiment
-        exp_dir = project_dir + 'experiments/' + exp_name + '/'
-        hyperparams_file = exp_dir + 'hyperparams.py'
+        exp_dir = os.path.join(project_dir, 'experiments', exp_name)
+        hyperparams_file = os.path.join(exp_dir, 'hyperparams.py')
 
-        data_dir = project_dir + 'data/'
+        data_dir = os.path.join(project_dir, 'data')
 
-        output_dir = project_dir + "/experiments/" + args.experiment + "/data_files/"
+        output_dir = os.path.join(project_dir, "experiments", args.experiment, "data_files")
         self.train_outputPath = output_dir + args.train_output
         self.valid_outputPath = output_dir + args.valid_output
         self.test_outputPath = output_dir + args.test_output
@@ -58,14 +58,14 @@ class MDPrankMain(object):
             logging.basicConfig(level=logging.INFO,
                                 format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
                                 datefmt='%m-%d %H:%M',
-                                filename=exp_dir + 'exp.log' + self.sample,
+                                filename=os.path.join(exp_dir, "exp" + self.sample + ".log"),
                                 filemode='w')
         else:
             # logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
             logging.basicConfig(level=logging.DEBUG,
                                 format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
                                 datefmt='%m-%d %H:%M',
-                                filename=exp_dir + 'exp.log' + self.sample,
+                                filename=os.path.join(exp_dir, "exp" + self.sample + ".log"),
                                 filemode='w')
         handler = logging.StreamHandler()
         LOGGER = logging.getLogger(__name__ + self.sample)
@@ -77,12 +77,12 @@ class MDPrankMain(object):
 
         ## init environment module
         self.lectordatadealer = LectorDataDealer(self.hyperparams.DATAconfig)
-        trainingData_raw = self.lectordatadealer.load_data(data_dir + args.training_set)
+        trainingData_raw = self.lectordatadealer.load_data(os.path.join(data_dir, args.training_set))
         #trainingData = self.lectordatadealer.getPartData(trainingData_raw, 2, 2, 18)
         #trainingData = self.lectordatadealer.getPartData(trainingData_raw, 1, 2, 8)
         trainingData = trainingData_raw
-        validationData = self.lectordatadealer.load_data(data_dir + args.valid_set)
-        testData = self.lectordatadealer.load_data(data_dir + args.test_set)
+        validationData = self.lectordatadealer.load_data(os.path.join(data_dir, args.valid_set))
+        testData = self.lectordatadealer.load_data(os.path.join(data_dir, args.test_set))
         if self.hyperparams.config['verbose']:
             print("%d train data, %d validation data, %d test data" % (len(trainingData), len(validationData), len(testData)))
         self.nTheta = self.lectordatadealer.nFeature
@@ -104,7 +104,7 @@ class MDPrankMain(object):
             theta0 = np.random.rand(self.nTheta) * 2 - 1
 
             # write_theta = None
-            write_theta = output_dir + "theta0.txt"
+            write_theta = os.path.join(output_dir, "theta0.txt")
             if write_theta is not None:
                 with open(write_theta, "w") as file:
                     for th in theta0:
@@ -188,7 +188,7 @@ def main():
 def singleLearn(args, init_theta="random"):
 
     # path to store experimental data
-    output_dir = project_dir + "/experiments/" + args.experiment + "/data_files/"
+    output_dir = os.path.join(project_dir, "experiments", args.experiment, "data_files")
 
     mdprank = MDPrankMain(args, init=init_theta)
 
@@ -209,7 +209,7 @@ def singleLearn(args, init_theta="random"):
 
 def multiLearn(args, nLearner=1, init_theta="random"):
     # path to store experimental data
-    output_dir = project_dir + "/experiments/" + args.experiment + "/data_files/"
+    output_dir = os.path.join(project_dir, "experiments", args.experiment, "data_files")
 
     learners = list()
     metric_valid = np.zeros(nLearner)

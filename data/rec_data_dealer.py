@@ -53,9 +53,9 @@ class RecDataDealer(DataDealer):
                         data[uid][iid] = (feature_vec, label)
             file.close()
         except:
-            print("error: feature file can not read")
+            print("error: data file can not read")
 
-        return
+        return data
 
     # default line format: uid \t iid \t libsvm_data_line
     def parse_rec_line(self, line):
@@ -67,7 +67,7 @@ class RecDataDealer(DataDealer):
         uid = arr[0]
         iid = arr[1]
 
-        tup_list = arr[3].split(' ')
+        tup_list = arr[2].split(' ')
         try:
             label = float(tup_list[0])
 
@@ -123,6 +123,17 @@ def getQueryData(data, uid):
         return [data[uid][iid] for iid in data[uid]]
     except KeyError:
         return None
+
+# for a given query, if there is at least one pos label
+def query_has_pos(data, uid):
+    try:
+        for iid in data[uid]:
+            if data[uid][iid][1] > 0:
+                return True
+        return False
+
+    except KeyError:
+        return False
 
 def main():
     pass
