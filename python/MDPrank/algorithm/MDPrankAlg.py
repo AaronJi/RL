@@ -57,6 +57,7 @@ class MDPrankAlg(object):
 
         if 'nAbsErr' not in self._hyperparams:
             self._hyperparams['nAbsErr'] = 1
+
         iAbsErr = 0
         nStep = 0
         cpuTimes = []
@@ -119,21 +120,28 @@ class MDPrankAlg(object):
                         print(self.agent.theta)
 
                 cpuTime_iter = (datetime.datetime.now() - time_start_iter).total_seconds()
-
-                # evaluate validation and test sets performance
-                NDCG_mean_valid, NDCG_queries_valid = self.eval(dataSet="validation")
-                NDCG_mean_test, NDCG_queries_test = self.eval(dataSet="test")
-
                 cpuTimes.append(cpuTime_iter)
 
+                outputData = [nStep, cpuTime_iter, np.linalg.norm(delta_theta), np.mean(G0_allQueries), np.mean(NDCG_allQueries)]
+                outputLine = "%dth iteration: compute time = %ds, step norm = %0.3f, averaged G0 = %0.3f, averaged NDCG = %0.3f" % (nStep, cpuTime_iter, np.linalg.norm(delta_theta), np.mean(G0_allQueries), np.mean(NDCG_allQueries))
+
+                # evaluate validation and test sets performance
+                if self._hyperparams['eval_valid_in_iters']:
+                    NDCG_mean_valid, NDCG_queries_valid = self.eval(dataSet="validation")
+                    outputData.append(NDCG_mean_valid)
+                    outputLine += ", valid NDCG = %0.3f" % NDCG_mean_valid
+                if self._hyperparams['eval_test_in_iters']:
+                    NDCG_mean_test, NDCG_queries_test = self.eval(dataSet="test")
+                    outputData.append(NDCG_mean_test)
+                    outputLine += ", test NDCG = %0.3f" % NDCG_mean_test
+
                 # print iteration results
-                outputData = [nStep, np.mean(G0_allQueries), np.mean(NDCG_allQueries), np.linalg.norm(delta_theta), NDCG_mean_valid, NDCG_mean_test, cpuTime_iter]
                 outputData.extend(list(self.agent.theta))
                 outputData = [str(d) for d in outputData]
-
                 file.write('\t'.join(outputData) + '\n')
+
                 if self._hyperparams['verbose']:
-                    print("%dth iteration: averaged G0 = %0.3f, averaged NDCG = %0.3f, step norm = %0.3f, valid NDCG = %0.3f, test NDCG = %0.3f, compute time = %ds" % (nStep, np.mean(G0_allQueries), np.mean(NDCG_allQueries), np.linalg.norm(delta_theta),  NDCG_mean_valid, NDCG_mean_test, cpuTime_iter))
+                    print(outputLine)
 
                 if 'absErr' in self._hyperparams and np.linalg.norm(delta_theta) <= self._hyperparams['absErr']:
                     iAbsErr += 1

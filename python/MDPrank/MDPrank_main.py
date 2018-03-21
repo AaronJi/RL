@@ -68,7 +68,7 @@ class MDPrankMain(object):
                                 filename=os.path.join(exp_dir, "exp" + self.sample + ".log"),
                                 filemode='w')
         handler = logging.StreamHandler()
-        LOGGER = logging.getLogger(__name__ + self.sample)
+        LOGGER = logging.getLogger()
         LOGGER.addHandler(handler)
         LOGGER.fatal(datetime.datetime.now().strftime('%Y-%m-%d'))
 

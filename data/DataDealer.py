@@ -7,6 +7,7 @@ The dealder of data, for the case that all data coming from the offline data set
 import numpy as np
 from abc import ABCMeta, abstractmethod
 import copy
+import pickle
 
 from DATAconfig import DATAconfig
 
@@ -20,7 +21,20 @@ class DataDealer(object):
         return
 
     @abstractmethod
-    def load_data(self, dataPath): pass
+    def load_data(self, dataPath):
+        raise NotImplementedError("Must be implemented in subclass.")
+
+    def dump_pickle(self, data, dumpFilePath):
+        with open(dumpFilePath, "wb") as file:
+            pickle.dump(data, file)
+        file.close()
+
+        return
+
+    def load_pickle(self, picklePath):
+        with open(picklePath, "rb") as file:
+            data = pickle.load(file)
+        return data
 
     # normalization columnwisely; especially emphasized by the LETOR document
     def normalize_by_column(self, matrix):
@@ -36,3 +50,12 @@ if __name__ == "__main__":
     print(A)
 
     print(datadealer.normalize_by_column(A))
+
+
+    datadealer.dump_pickle(A, "d")
+
+    B = datadealer.load_pickle("d")
+
+    print(B)
+
+
