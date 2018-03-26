@@ -2,7 +2,7 @@
 # -*- coding: <encoding name> -*-
 
 '''
-The dealder of data, for the case that all data coming from the offline data set
+The dealer of data, for the case that all data coming from the offline data set
 '''
 import numpy as np
 from abc import ABCMeta, abstractmethod

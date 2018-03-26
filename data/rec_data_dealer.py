@@ -131,33 +131,35 @@ class RecDataDealer(DataDealer):
                 data[uid] = data_raw[uid]
         return data
 
-def getQueries(data):
-    return list(data.keys())
+    @staticmethod
+    def getQueries(data):
+        return list(data.keys())
 
-def getQeuryItems(data, uid):
-    try:
-        return list(data[uid].keys())
-    except KeyError:
-        return None
+    @staticmethod
+    def getQeuryItems(data, uid):
+        try:
+            return list(data[uid].keys())
+        except KeyError:
+            return None
 
-def getQueryData(data, uid):
-    try:
-        return [data[uid][iid] for iid in data[uid]]
-    except KeyError:
-        return None
+    @staticmethod
+    def getQueryData(data, uid):
+        try:
+            return [data[uid][iid] for iid in data[uid]]
+        except KeyError:
+            return None
 
-# for a given query, if there is at least one pos label
-def query_has_pos(data, uid):
-    try:
-        for iid in data[uid]:
-            if data[uid][iid][1] > 0:
-                return True
-        return False
+    # for a given query, if there is at least one pos label
+    @staticmethod
+    def query_has_pos(data, uid):
+        try:
+            for iid in data[uid]:
+                if data[uid][iid][1] > 0:
+                    return True
+            return False
 
-    except KeyError:
-        return False
-
-
+        except KeyError:
+            return False
 
 def main():
     pass
