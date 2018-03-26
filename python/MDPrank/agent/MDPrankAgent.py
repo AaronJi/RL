@@ -4,6 +4,7 @@
 import os
 import sys
 import numpy as np
+import logging
 
 src_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.append(src_dir)
@@ -22,28 +23,29 @@ class MDPrankAgent(Agent):
 
     # perform an action according to the policy, given the current state
     def act(self, state, random=True):
-        assert self._hyperparams["policyTYpe"] == "stochastic"
         # if the policy is stochastic, this is a MonteCarlo sampling
-
+        logging.debug("* acting: at t = %d, %d candidates" % (state[0], len(state[1])))
         actions = self.getActionList(state)
 
         pi = self.calPolicyProbMap(state)
+        logging.debug("policy prob map: pi = [" + ','.join(["P(A" + str(ia) + ")=" + ("%.5f" % pa) for ia, pa in enumerate(pi)]) + "]")
 
-        assert np.abs(np.sum(pi) - 1.0) < 1.0e-5
+        # assert np.abs(np.sum(pi) - 1.0) < 1.0e-5
 
         if random:
-            randNum = np.random.rand(1)  # a random number between [0, 1] according to the uniform distribution
-
+            randNum = np.random.rand(1)[0]  # a random number between [0, 1] according to the uniform distribution
+            logging.debug("RANDOM act: generate random num %0.3f" % randNum)
             for action, action_prob in zip(actions, pi):
                 randNum -= action_prob
                 if randNum < 0:
+                    logging.debug("choose A%d" % action)
                     return action
-
-            print("warning: have not selected an action; should NOT happen")
         else:
             ia = np.argmax(pi)
+            logging.debug("Deterministic act: choose A%d with max prob = %0.3f" % (ia, np.max(pi)))
             return actions[ia]
 
+        logging.warning("warning: have not selected an action; should NOT happen; simply choose A%d" % actions[-1])
         return actions[-1]
 
 

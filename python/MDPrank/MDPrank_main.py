@@ -10,6 +10,7 @@ import threading
 import datetime
 import traceback
 import numpy as np
+import logging
 
 # path of the whole project
 MDPrank_main_path = os.path.abspath(__file__)
@@ -20,7 +21,6 @@ from data.Letor.LectorDataDealer import LectorDataDealer
 from algorithm.MDPrankAlg import MDPrankAlg
 from agent.MDPrankAgent import MDPrankAgent
 from environment.MDPrankEnvironment import MDPrankEnvironment
-
 
 class MDPrankMain(object):
     """ Main class to run algorithms and experiments. """
@@ -41,36 +41,30 @@ class MDPrankMain(object):
         exp_dir = os.path.join(project_dir, 'experiments', exp_name)
         hyperparams_file = os.path.join(exp_dir, 'hyperparams.py')
 
+        if args.silent:
+            logging.basicConfig(level=logging.INFO,
+                                format='%(asctime)s %(name)-8s %(levelname)-8s %(message)s',
+                                datefmt='%m-%d %H:%M',
+                                filename=os.path.join(exp_dir, "exp" + self.sample + ".log"),
+                                filemode='w')
+        else:
+            logging.basicConfig(level=logging.DEBUG,
+                                format='%(asctime)s %(name)-8s %(levelname)-8s %(message)s',
+                                datefmt='%m-%d %H:%M',
+                                filename=os.path.join(exp_dir, "exp" + self.sample + ".log"),
+                                filemode='w')
+
         data_dir = os.path.join(project_dir, 'data')
 
         output_dir = os.path.join(project_dir, "experiments", args.experiment, "data_files")
-        self.train_outputPath = output_dir + args.train_output
-        self.valid_outputPath = output_dir + args.valid_output
-        self.test_outputPath = output_dir + args.test_output
+        self.train_outputPath = os.path.join(output_dir, args.train_output)
+        self.valid_outputPath = os.path.join(output_dir, args.valid_output)
+        self.test_outputPath = os.path.join(output_dir, args.test_output)
 
         self.hyperparams = imp.load_source('hyperparams', hyperparams_file)
         if args.silent:
             self.hyperparams.config['verbose'] = False
             self.hyperparams.ALGconfig['verbose'] = False
-
-        if args.silent:
-            # logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
-            logging.basicConfig(level=logging.INFO,
-                                format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
-                                datefmt='%m-%d %H:%M',
-                                filename=os.path.join(exp_dir, "exp" + self.sample + ".log"),
-                                filemode='w')
-        else:
-            # logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
-            logging.basicConfig(level=logging.DEBUG,
-                                format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
-                                datefmt='%m-%d %H:%M',
-                                filename=os.path.join(exp_dir, "exp" + self.sample + ".log"),
-                                filemode='w')
-        handler = logging.StreamHandler()
-        LOGGER = logging.getLogger()
-        LOGGER.addHandler(handler)
-        LOGGER.fatal(datetime.datetime.now().strftime('%Y-%m-%d'))
 
         ## init algorithm module
         self.alg = MDPrankAlg(self.hyperparams.ALGconfig)
@@ -83,8 +77,12 @@ class MDPrankMain(object):
         trainingData = trainingData_raw
         validationData = self.lectordatadealer.load_data(os.path.join(data_dir, args.valid_set))
         testData = self.lectordatadealer.load_data(os.path.join(data_dir, args.test_set))
+
+        logging.info("%d train data, %d validation data, %d test data" % (len(trainingData), len(validationData), len(testData)))
         if self.hyperparams.config['verbose']:
             print("%d train data, %d validation data, %d test data" % (len(trainingData), len(validationData), len(testData)))
+
+
         self.nTheta = self.lectordatadealer.nFeature
         env = MDPrankEnvironment(self.hyperparams.ENVconfig, self.lectordatadealer)
         env.setTrainData(trainingData)
@@ -92,6 +90,7 @@ class MDPrankMain(object):
         env.setTestData(testData)
         self.alg.initEnv(env)
 
+        logging.info("model has %d features" % self.nTheta)
         if self.hyperparams.config['verbose']:
             print("model has %d features" % self.nTheta)
 
@@ -126,13 +125,16 @@ class MDPrankMain(object):
                     theta0 = np.array(theta0)
             except:
                 pass
+
+        logging.info("init param: " + ','.join([str(th) for th in theta0]))
         if self.hyperparams.config['verbose']:
             print("init param:")
             print(theta0)
+
         agent = MDPrankAgent(self.hyperparams.AGEconfig, theta0)
         self.alg.initAgent(agent)
 
-        LOGGER.info("init successfully")
+        logging.info("Init successfully")
 
         return
 
@@ -140,6 +142,7 @@ class MDPrankMain(object):
         train_outPath = self.train_outputPath + self.sample
         self.alg.learn(train_outPath)
 
+        logging.info("new param after learning: " + ','.join([str(th) for th in self.alg.agent.theta]))
         if self.hyperparams.config['verbose']:
             print("new param:")
             print(self.alg.agent.theta)
@@ -180,6 +183,7 @@ def main():
 
     args = parser.parse_args()
 
+
     singleLearn(args, init_theta=args.param_init)
     #multiLearn(args, nLearner=10, init_theta=args.param_init)
 
@@ -193,16 +197,21 @@ def singleLearn(args, init_theta="random"):
     mdprank = MDPrankMain(args, init=init_theta)
 
     theta_new = mdprank.learn()
-    output_path = output_dir + "theta1.txt"
+    output_path = os.path.join(output_dir, "theta1.txt")
     write_vector(theta_new, output_path)
 
     time0 = datetime.datetime.now()
     NDCG_mean = mdprank.eval(dataSet="validation")
+    logging.info("Evaluation: averaged NDCG of validation set = %0.3f" % NDCG_mean)
     print("Evaluation: averaged NDCG of validation set = %0.3f" % NDCG_mean)
+    logging.info("%ds used" % ((datetime.datetime.now() - time0).total_seconds()))
     print("%ds used" % ((datetime.datetime.now() - time0).total_seconds()))
+
     time0 = datetime.datetime.now()
     NDCG_mean = mdprank.eval(dataSet="test")
+    logging.info("Evaluation: averaged NDCG of test set = %0.3f" % NDCG_mean)
     print("Evaluation: averaged NDCG of test set = %0.3f" % NDCG_mean)
+    logging.info("%ds used" % ((datetime.datetime.now() - time0).total_seconds()))
     print("%ds used" % ((datetime.datetime.now() - time0).total_seconds()))
 
     return
@@ -223,6 +232,7 @@ def multiLearn(args, nLearner=1, init_theta="random"):
         metric_valid[i] = learners[i].eval(dataSet="validation")
         metric_test[i] = learners[i].eval(dataSet="test")
 
+    logging.info("Evaluation: averaged metric of validation set = %0.3f" % np.mean(metric_valid))
     print("Evaluation: averaged metric of validation set = %0.3f" % np.mean(metric_valid))
     print("Evaluation: averaged metric of test set = %0.3f" % np.mean(metric_test))
     write_vector(metric_valid, output_dir + "metric_valid.txt")

@@ -13,8 +13,13 @@ def cal_policy_gradient(t, Gt, discount, w_grad_a_with_s):
     delta_w = discount**t*Gt*w_grad_a_with_s
     return delta_w
 
-def cal_longterm_ret(labels, t, discount, max_t):
-    Gt = 0
-    for k in range(1, max_t+1):
-        Gt += discount**(k-1)*labels[t]
+def cal_longterm_ret(labels, t, discount, t_end=None):
+    if t_end is None:
+        t_end = len(labels)
+
+    Gt = 0.0
+    discount_rt = 1.0
+    for k in range(t, t_end):
+        Gt += discount_rt*labels[k]
+        discount_rt = discount_rt*discount
     return Gt

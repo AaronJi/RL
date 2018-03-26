@@ -7,18 +7,17 @@ import sys
 import copy
 import numpy as np
 import datetime
+import logging
 
 src_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.append(src_dir)
 
-from MDPrank.environment.MDPrankEnvironment import MDPrankEnvironment
-from MDPrank.agent.MDPrankAgent import MDPrankAgent
-
 from RLutils.algorithm.ALGconfig import ALGconfig
-import RLutils.algorithm.policy_gradient
+from RLutils.algorithm.policy_gradient import cal_policy_gradient, cal_longterm_ret
 from RLutils.algorithm.Optimizer import Optimizer
 from RLutils.algorithm.utils import softmax, sigmoid
 from RLutils.environment.rankMetric import NDCG
+
 
 class MDPrankAlg(object):
 
@@ -27,9 +26,9 @@ class MDPrankAlg(object):
         config.update(hyperparams)
         self._hyperparams = config
 
+        logging.info("learning rate = %f, discount rate = %f" % (self._hyperparams['eta'], self._hyperparams['discount']))
         if self._hyperparams['verbose']:
-            print("learning rate = %f" % self._hyperparams['eta'])
-            print("discount rate = %f" % self._hyperparams['discount'])
+            print("learning rate = %f, discount rate = %f" % (self._hyperparams['eta'], self._hyperparams['discount']))
 
         self.agent = None
         self.env = None
@@ -39,21 +38,23 @@ class MDPrankAlg(object):
 
     def initAgent(self, agent):
         self.agent = agent
+        logging.info("init agent")
         return
 
     def initEnv(self, env):
         self.env = env
+        logging.info("init environment")
         return
 
     def learn(self, train_outputPath):
-
         time_start = datetime.datetime.now()
 
         # Algorithm 1 MDPrank learning
         queryList = self.env.getQueries()
 
+        logging.debug("#### Start learning, totally %d queries" % len(queryList))
         if self._hyperparams['verbose']:
-            print("%d queries" % len(queryList))
+            print("start learning, totally %d queries" % len(queryList))
 
         if 'nAbsErr' not in self._hyperparams:
             self._hyperparams['nAbsErr'] = 1
@@ -65,6 +66,7 @@ class MDPrankAlg(object):
         with open(train_outputPath, "w") as file:
 
             while(True):
+                logging.debug("### The %dth iteration: ###" % nStep)
                 time_start_iter = datetime.datetime.now()
 
                 delta_theta = np.zeros(self.agent.nParam)
@@ -73,81 +75,75 @@ class MDPrankAlg(object):
                 NDCG_allQueries = np.zeros(len(queryList))
 
                 for iq, query in enumerate(queryList):
-
+                    logging.debug("## The %dth query: %s" % (iq, query))
                     episode = self.sampleAnEpisode(query, offline=True)
 
                     M = len(episode)
 
                     labels = self.getLabelsFromEpisode(episode)
+                    logging.debug('episode label sequence: [' + ','.join([str(l) for l in labels]) + ']')
+
                     NDCG_allQueries[iq] = NDCG(labels)
 
-                    for t in range(M):
-                        Gt = self.calLongTermReturn(episode, t)
+                    for t in range(M-1):
+                        # for the very last step, there is only one candidate to rank and only one possible action; the policy gradient then must be zero
+
+                        Gt = cal_longterm_ret(labels, t, self._hyperparams["discount"])
+
+                        logging.debug("# step %d, Gt = %f" % (t, Gt))
 
                         state, action, reward = episode[t]
                         grad_theta = self.calGradParam(state, action)
-                        delta_theta = delta_theta + self._hyperparams["discount"]**t*Gt*grad_theta
 
+                        logging.debug("Before: delta_theta = [" + ','.join([str(dt) for dt in delta_theta]) + ']')
+                        delta_theta += cal_policy_gradient(t, Gt, self._hyperparams["discount"], grad_theta)
+                        logging.debug("After: delta_theta = [" + ','.join([str(dt) for dt in delta_theta]) + ']')
 
                         if t == 0:
                             G0_allQueries[iq] = Gt
 
-                        if self._hyperparams['verbose']:
-                            if nStep == 0 and iq == 1 and t < 10 and False:
-                                print("t = %d, action = %d, reward = %f, state1 = %d, state2_n = %d, Gt = %f" % (t, action, reward, state[0], len(state[1]), Gt))
-                                print("grad of theta:")
-                                print(grad_theta)
-                                print('delta of theta:')
-                                print(delta_theta)
-
-                        #if t >= 10:
-                            #break
-
-                #self.agent.theta = self.agent.theta + self._hyperparams["eta"]*delta_theta
-                #print("before:")
-                #print(self.agent.theta)
+                logging.debug("Before update: theta = [" + ','.join([str(dt) for dt in self.agent.theta]) + ']')
                 self.agent.theta = self.opt.Gradient_Descent(self.agent.theta, delta_theta, self._hyperparams["eta"])
+                logging.debug("After update: theta = [" + ','.join([str(dt) for dt in self.agent.theta]) + ']')
 
                 # if process new theta with sigmoid function, as indicated in the diversification paper
                 if self._hyperparams['param_with_sigmoid']:
                     self.agent.theta = sigmoid(self.agent.theta)
-
-                if self._hyperparams['verbose'] and False:
-                    if nStep == 0 and iq == 1:
-                        print("change:")
-                        print(self._hyperparams["eta"]*delta_theta)
-                        print('after')
-                        print(self.agent.theta)
+                    logging.debug("After sigmoid conversion: theta = [" + ','.join([str(dt) for dt in self.agent.theta]) + ']')
 
                 cpuTime_iter = (datetime.datetime.now() - time_start_iter).total_seconds()
                 cpuTimes.append(cpuTime_iter)
 
                 outputData = [nStep, cpuTime_iter, np.linalg.norm(delta_theta), np.mean(G0_allQueries), np.mean(NDCG_allQueries)]
-                outputLine = "%dth iteration: compute time = %ds, step norm = %0.3f, averaged G0 = %0.3f, averaged NDCG = %0.3f" % (nStep, cpuTime_iter, np.linalg.norm(delta_theta), np.mean(G0_allQueries), np.mean(NDCG_allQueries))
+                outputLine = "%dth iteration: compute time = %ds, step norm = %0.3f, averaged G0 = %0.3f, averaged metric = %0.3f" % (nStep, cpuTime_iter, np.linalg.norm(delta_theta), np.mean(G0_allQueries), np.mean(NDCG_allQueries))
+                logging.debug("# after this iteration: compute time = %ds, norm of grad_theta = %0.3f, averaged G0 = %0.3f, averaged metric = %0.3f" % (cpuTime_iter, np.linalg.norm(delta_theta), np.mean(G0_allQueries), np.mean(NDCG_allQueries)))
 
                 # evaluate validation and test sets performance
                 if self._hyperparams['eval_valid_in_iters']:
                     NDCG_mean_valid, NDCG_queries_valid = self.eval(dataSet="validation")
                     outputData.append(NDCG_mean_valid)
-                    outputLine += ", valid NDCG = %0.3f" % NDCG_mean_valid
+                    outputLine += ", valid metric = %0.3f" % NDCG_mean_valid
+                    logging.debug("Evaluate validation set: metric = %0.3f" % NDCG_mean_valid)
                 if self._hyperparams['eval_test_in_iters']:
                     NDCG_mean_test, NDCG_queries_test = self.eval(dataSet="test")
                     outputData.append(NDCG_mean_test)
-                    outputLine += ", test NDCG = %0.3f" % NDCG_mean_test
+                    outputLine += ", test metric = %0.3f" % NDCG_mean_test
+                    logging.debug("Evaluate test set: metric = %0.3f" % NDCG_mean_test)
 
                 # print iteration results
                 outputData.extend(list(self.agent.theta))
                 outputData = [str(d) for d in outputData]
                 file.write('\t'.join(outputData) + '\n')
 
-                if self._hyperparams['verbose']:
-                    print(outputLine)
+                #if self._hyperparams['verbose']:
+                print(outputLine)
 
                 if 'absErr' in self._hyperparams and np.linalg.norm(delta_theta) <= self._hyperparams['absErr']:
                     iAbsErr += 1
 
                     if iAbsErr >= self._hyperparams['nAbsErr']:
                         file.write("iterations terminate with absError reached\n")
+                        logging.debug("iterations terminate with absError reached")
                         if self._hyperparams['verbose']:
                             print("iterations terminate with absError reached")
                         break
@@ -155,14 +151,14 @@ class MDPrankAlg(object):
                 nStep += 1
                 if 'iterations' in self._hyperparams and nStep > self._hyperparams['iterations']:
                     file.write("iterations terminate with max limit of iteration steps reached\n")
-
+                    logging.debug("iterations terminate with max limit of iteration steps reached")
                     if self._hyperparams['verbose']:
                         print("iterations terminate with max limit of iteration steps reached")
                     break
 
-
             cpuTime_total = (datetime.datetime.now() - time_start).total_seconds()
             file.write("total %ds used\n" % cpuTime_total)
+            logging.debug("learn is finished, total %ds used\n" % cpuTime_total)
             print("total %0.2fs used" % cpuTime_total)
 
             file.close()
@@ -170,11 +166,12 @@ class MDPrankAlg(object):
         return
 
     def eval(self, dataSet="test"):
-
         queryList = self.env.getQueries(dataSet)
+        logging.debug("#### start evaluation, totally %d queries" % len(queryList))
 
         NDCG_queries = np.zeros(len(queryList))
         for iq, query in enumerate(queryList):
+            logging.debug("## The %dth query: %s" % (iq, query))
             episode = self.sampleAnEpisode(query, offline=False, dataSet=dataSet)
             labels = self.getLabelsFromEpisode(episode)
             NDCG_queries[iq] = NDCG(labels)
@@ -186,32 +183,32 @@ class MDPrankAlg(object):
     def calLongTermReturn(self, episode, t):
         Gt = 0.0
 
-        discount_r = 1.0
+        discount_rt = 1.0
         for k in range(t, len(episode)):
             rk = episode[k][2]
-            Gt += discount_r*rk
-            discount_r = discount_r*self._hyperparams["discount"]
+            Gt += discount_rt*rk
+            discount_rt = discount_rt*self._hyperparams["discount"]
         return Gt
 
     # the direction taht most increase the probability of repeating the action on future visits to state, Equation (4)
     def calGradParam(self, state, action):
 
         candidates = state[1]
-        x = candidates[action][0]
-
         At = self.agent.getActionList(state)  # all possible actions with state t
-
         pi = self.agent.calPolicyProbMap(state)
 
-        grad_theta = x
+        grad_theta = candidates[action][0]
         for i, a in enumerate(At):
             grad_theta -= pi[i]*candidates[a][0]
 
-        return grad_theta
+        logging.debug("# calculate gradient of param: [" + ','.join([str(gt) for gt in grad_theta]) + "]")
 
+        return grad_theta
 
     # Algorithm 2: SampleAnEpisode
     def sampleAnEpisode(self, query, offline=True, dataSet="train"):
+        logging.debug("*** sampling an episode")
+
         candidates = self.env.getCandidates(query, dataSet)
 
         state = [0, candidates]  # the initial state
@@ -221,7 +218,7 @@ class MDPrankAlg(object):
         random = offline
 
         for t in range(M):
-            #print("t = " + str(t))
+            logging.debug("** step %d:" % t)
             action = self.agent.act(state, random)  # Equation (2)
 
             reward = self.env.reward(state, action)  # Equation(1), calculated on the basis of label
@@ -230,6 +227,8 @@ class MDPrankAlg(object):
 
             # continue to the next state
             state = self.env.transit(state, action)
+
+        logging.debug('episode action sequence: [' + ','.join([str(action) for state, action, reward in episode]) + ']')
 
         return episode
 
