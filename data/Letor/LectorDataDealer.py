@@ -71,21 +71,8 @@ class LectorDataDealer(RecDataDealer):
 
             # if required, normalize the feature vectors according to min and max of each query results
             if self._hyperparams['normalization']:
-                for qid in data:
-                    nDoc = len(data[qid])
-                    tempFeature = np.zeros((nDoc, self.nFeature))
-                    tempDoc = list()
-                    tempLabel = list()
-                    for i, docid in enumerate(data[qid]):
-                        tempDoc.append(docid)
-                        tempFeature[i] = data[qid][docid][0]
-                        tempLabel.append(data[qid][docid][1])
+                data = self.data_normalize_by_column(data)
 
-                    newFeature = self.normalize_by_column(tempFeature)
-
-                    # reconstruct the result
-                    for i, docid in enumerate(tempDoc):
-                        data[qid][docid] = (newFeature[i], tempLabel[i])
             return data
 
 

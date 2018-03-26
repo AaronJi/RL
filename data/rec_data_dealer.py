@@ -58,6 +58,28 @@ class RecDataDealer(DataDealer):
             print("error: data file can not read")
             sys.exit(1)
 
+        # if required, normalize the feature vectors according to min and max of each query results
+        if self._hyperparams['normalization']:
+            data = self.data_normalize_by_column(data)
+
+        return data
+
+    def data_normalize_by_column(self, data):
+        for uid in data:
+            nItem = len(data[uid])
+            tempFeature = np.zeros((nItem, self.nFeature))
+            tempDoc = list()
+            tempLabel = list()
+            for i, iid in enumerate(data[uid]):
+                tempDoc.append(iid)
+                tempFeature[i] = data[uid][iid][0]
+                tempLabel.append(data[uid][iid][1])
+
+            newFeature = self.normalize_by_column(tempFeature)
+
+            # reconstruct the result
+            for i, iid in enumerate(tempDoc):
+                data[uid][iid] = (newFeature[i], tempLabel[i])
         return data
 
     # default line format: uid \t iid \t libsvm_data_line
@@ -127,7 +149,7 @@ class RecDataDealer(DataDealer):
 
         users = data_raw.keys()
         for uid in users:
-            if query_has_pos(data_raw, uid):
+            if self.query_has_pos(data_raw, uid):
                 data[uid] = data_raw[uid]
         return data
 
