@@ -83,12 +83,15 @@ class MDPrankAlg(object):
                     labels = self.getLabelsFromEpisode(episode)
                     logging.debug('episode label sequence: [' + ','.join([str(l) for l in labels]) + ']')
 
+                    rewards = self.getRewardsFromEpisode(episode)
+                    logging.debug('episode rewards sequence: [' + ','.join([str(r) for r in rewards]) + ']')
+
                     NDCG_allQueries[iq] = NDCG(labels)
 
                     for t in range(M-1):
                         # for the very last step, there is only one candidate to rank and only one possible action; the policy gradient then must be zero
 
-                        Gt = cal_longterm_ret(labels, t, self._hyperparams["discount"])
+                        Gt = cal_longterm_ret(rewards, t, self._hyperparams["discount"])
 
                         logging.debug("# step %d, Gt = %f" % (t, Gt))
 
@@ -190,7 +193,7 @@ class MDPrankAlg(object):
             discount_rt = discount_rt*self._hyperparams["discount"]
         return Gt
 
-    # the direction taht most increase the probability of repeating the action on future visits to state, Equation (4)
+    # the direction that most increase the probability of repeating the action on future visits to state, Equation (4)
     def calGradParam(self, state, action):
 
         candidates = state[1]
@@ -239,3 +242,10 @@ class MDPrankAlg(object):
 
             labels.append(state[1][action][1])
         return labels
+
+    def getRewardsFromEpisode(self, episode):
+        rewards = []
+        for state, action, reward in episode:
+            rewards.append(reward)
+        return rewards
+
