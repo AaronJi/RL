@@ -22,15 +22,17 @@ class MDPrankAgent(Agent):
         return
 
     # perform an action according to the policy, given the current state
-    def act(self, state, random=True):
+    # can be provided with a pre-calculated policy pi to improve the speed
+    def act(self, state, random=True, pi=None):
         # if the policy is stochastic, this is a MonteCarlo sampling
         logging.debug("* acting: at t = %d, %d candidates" % (state[0], len(state[1])))
         actions = self.getActionList(state)
 
-        pi = self.calPolicyProbMap(state)
-        logging.debug("policy prob map: pi = [" + ','.join(["P(A" + str(ia) + ")=" + ("%.5f" % pa) for ia, pa in enumerate(pi)]) + "]")
-
+        if pi is None:
+            pi = self.calPolicyProbMap(state)
         # assert np.abs(np.sum(pi) - 1.0) < 1.0e-5
+
+        logging.debug("policy prob map: pi = [" + ','.join(["P(A" + str(ia) + ")=" + ("%.5f" % pa) for ia, pa in enumerate(pi)]) + "]")
 
         if random:
             randNum = np.random.rand(1)[0]  # a random number between [0, 1] according to the uniform distribution
@@ -77,8 +79,18 @@ class MDPrankAgent(Agent):
         candidate = candidates[action]
         x = candidate[0]
 
-        assert self.nParam == x.shape[0]
+        #assert self.nParam == x.shape[0]
         h = np.dot(self.theta, x)
 
         return h
+
+    # fast solution for MDP rank; LOSS the generalization
+    def cal_hvals_from_init(self, candidates):
+        h_dict = {}
+        for i, candidate in enumerate(candidates):
+            x = candidate[0]
+            h = np.dot(self.theta, x)
+            h_dict.update({i: h})
+
+        return h_dict
 

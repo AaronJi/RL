@@ -18,7 +18,6 @@ from RLutils.algorithm.Optimizer import Optimizer
 from RLutils.algorithm.utils import softmax, sigmoid
 from RLutils.environment.rankMetric import NDCG
 
-
 class MDPrankAlg(object):
 
     def __init__(self, hyperparams):
@@ -76,7 +75,11 @@ class MDPrankAlg(object):
 
                 for iq, query in enumerate(queryList):
                     logging.debug("## The %dth query: %s" % (iq, query))
-                    episode = self.sampleAnEpisode(query, offline=True)
+
+                    if not self._hyperparams['fast_cal']:
+                        episode = self.sampleAnEpisode(query, offline=True)
+                    else:
+                        episode, h_dict, grad_theta_list = self.sampleAnEpisode_fast(query, offline=True)
 
                     M = len(episode)
 
@@ -95,8 +98,11 @@ class MDPrankAlg(object):
 
                         logging.debug("# step %d, Gt = %f" % (t, Gt))
 
-                        state, action, reward = episode[t]
-                        grad_theta = self.calGradParam(state, action)
+                        if not self._hyperparams['fast_cal']:
+                            state, action, reward = episode[t]
+                            grad_theta = self.calGradParam(state, action)
+                        else:
+                            grad_theta = grad_theta_list[t]
 
                         logging.debug("Before: delta_theta = [" + ','.join([str(dt) for dt in delta_theta]) + ']')
                         delta_theta += cal_policy_gradient(t, Gt, self._hyperparams["discount"], grad_theta)
@@ -175,7 +181,11 @@ class MDPrankAlg(object):
         NDCG_queries = np.zeros(len(queryList))
         for iq, query in enumerate(queryList):
             logging.debug("## The %dth query: %s" % (iq, query))
-            episode = self.sampleAnEpisode(query, offline=False, dataSet=dataSet)
+            if not self._hyperparams['fast_cal']:
+                episode = self.sampleAnEpisode(query, offline=False, dataSet=dataSet)
+            else:
+                episode, h_dict, grad_theta_list = self.sampleAnEpisode_fast(query, offline=False, dataSet=dataSet)
+
             labels = self.getLabelsFromEpisode(episode)
             NDCG_queries[iq] = NDCG(labels)
         NDCG_mean = np.mean(NDCG_queries)
@@ -212,11 +222,12 @@ class MDPrankAlg(object):
     def sampleAnEpisode(self, query, offline=True, dataSet="train"):
         logging.debug("*** sampling an episode")
 
+        episode = list()  # the resulted episode: list of (s, a, r) for all time steps
+
         candidates = self.env.getCandidates(query, dataSet)
 
         state = [0, candidates]  # the initial state
         M = len(candidates)  # number of candidates to rank
-        episode = list()  # the resulted episode: list of (s, a, r) for all time steps
 
         random = offline
 
@@ -234,6 +245,49 @@ class MDPrankAlg(object):
         logging.debug('episode action sequence: [' + ','.join([str(action) for state, action, reward in episode]) + ']')
 
         return episode
+
+    # faster speed; LOSS the generalization
+    def sampleAnEpisode_fast(self, query, offline=True, dataSet="train"):
+        logging.debug("*** sampling an episode")
+
+        episode = list()  # the resulted episode: list of (s, a, r) for all time steps
+        grad_theta_list = list()
+
+        candidates = self.env.getCandidates(query, dataSet)
+        M = len(candidates)  # number of candidates to rank
+
+        curr_candidates_keyList = range(M)
+        h_dict = self.agent.cal_hvals_from_init(candidates)
+
+        state = [0, candidates]  # the initial state
+
+        random = offline
+
+        for t in range(M):
+            logging.debug("** step %d:" % t)
+
+            curr_h_list = [h_dict[k] for k in curr_candidates_keyList]
+            curr_pi = softmax(np.array(curr_h_list))
+
+            action = self.agent.act(state, random, curr_pi)  # Equation (2)
+
+            reward = self.env.reward(state, action)  # Equation(1), calculated on the basis of label
+
+            episode.append((state, action, reward))  # each instance is (s_t, a_t, r_{t+1})
+
+            At = self.agent.getActionList(state)
+            grad_theta = state[1][action][0]
+            for i, a in enumerate(At):
+                grad_theta -= curr_pi[i] * state[1][a][0]
+            grad_theta_list.append(grad_theta)
+
+            # continue to the next state
+            state = self.env.transit(state, action)
+            del curr_candidates_keyList[action]
+
+            #assert len(curr_candidates_keyList) == len(state[1])
+
+        return episode, h_dict, grad_theta_list
 
     def getLabelsFromEpisode(self, episode):
 

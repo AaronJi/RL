@@ -15,7 +15,8 @@ ALGconfig = {
     'param_with_sigmoid': False,
     'verbose': True,
     'eval_valid_in_iters': True,
-    'eval_test_in_iters': True
+    'eval_test_in_iters': True,
+    'fast_cal': True
 }
 
 AGEconfig = {
