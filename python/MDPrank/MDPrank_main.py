@@ -1,7 +1,6 @@
 #!/usr/bin/python
 # -*- coding: <encoding name> -*-
 
-import logging
 import imp
 import os
 import sys
@@ -112,7 +111,9 @@ class MDPrankMain(object):
         else:
             # read theta from file
             try:
-                with open(init, "r") as file:
+                read_theta = os.path.join(output_dir, init)
+
+                with open(read_theta, "r") as file:
                     theta0 = []
                     lines = file.readlines()
 
@@ -121,8 +122,8 @@ class MDPrankMain(object):
                         theta0.extend([float(v) for v in values if len(v) > 0])
                     file.close()
 
-                    assert len(theta0) == self.nTheta
-                    theta0 = np.array(theta0)
+                    # assert len(theta0) == self.nTheta
+                    theta0 = np.array(theta0[:self.nTheta])
             except:
                 pass
 
@@ -177,19 +178,22 @@ def main():
                         help='valid output')
 
     parser.add_argument('--param_init', type=str, default="random",
-                        help='valid output')  # "zero", "random",  output_dir + "theta1.txt"
+                        help='param init')  # "zero", "random",  output_dir + "theta1.txt"
+    parser.add_argument('--param_out', type=str, default="theta1.txt",
+                        help='param out')
+
     parser.add_argument('-s', '--silent', action='store_true',
                         help='silent debug print outs')
 
     args = parser.parse_args()
 
 
-    singleLearn(args, init_theta=args.param_init)
+    singleLearn(args, init_theta=args.param_init, out_theta=args.param_out)
     #multiLearn(args, nLearner=10, init_theta=args.param_init)
 
     return
 
-def singleLearn(args, init_theta="random"):
+def singleLearn(args, init_theta="random", out_theta=None):
 
     # path to store experimental data
     output_dir = os.path.join(project_dir, "experiments", args.experiment, "data_files")
@@ -197,8 +201,10 @@ def singleLearn(args, init_theta="random"):
     mdprank = MDPrankMain(args, init=init_theta)
 
     theta_new = mdprank.learn()
-    output_path = os.path.join(output_dir, "theta1.txt")
-    write_vector(theta_new, output_path)
+
+    if out_theta is not None:
+        output_path = os.path.join(output_dir, out_theta)
+        write_vector(theta_new, output_path)
 
     time0 = datetime.datetime.now()
     NDCG_mean = mdprank.eval(dataSet="validation")
@@ -216,27 +222,35 @@ def singleLearn(args, init_theta="random"):
 
     return
 
-def multiLearn(args, nLearner=1, init_theta="random"):
+def multiLearn(args, nLearner=1, init_theta="random", out_theta=None):
     # path to store experimental data
     output_dir = os.path.join(project_dir, "experiments", args.experiment, "data_files")
 
     learners = list()
     metric_valid = np.zeros(nLearner)
     metric_test = np.zeros(nLearner)
+
+    theta_new_list = list()
     for i in range(nLearner):
         learners.append(MDPrankMain(args, init=init_theta, sample=i))
         theta_new = learners[i].learn()
-        output_path = output_dir + "theta1_" + str(i) + ".txt"
-        write_vector(theta_new, output_path)
+        #output_path = output_dir + "theta1_" + str(i) + ".txt"
+        #write_vector(theta_new, output_path)
+        theta_new_list.append(theta_new)
 
         metric_valid[i] = learners[i].eval(dataSet="validation")
         metric_test[i] = learners[i].eval(dataSet="test")
+
+    if out_theta is not None:
+        output_path = os.path.join(output_dir, out_theta)
+        write_vector(np.mean(np.array(theta_new_list), axis=0), output_path)
 
     logging.info("Evaluation: averaged metric of validation set = %0.3f" % np.mean(metric_valid))
     print("Evaluation: averaged metric of validation set = %0.3f" % np.mean(metric_valid))
     print("Evaluation: averaged metric of test set = %0.3f" % np.mean(metric_test))
     write_vector(metric_valid, output_dir + "metric_valid.txt")
     write_vector(metric_test, output_dir + "metric_test.txt")
+
     return
 
 

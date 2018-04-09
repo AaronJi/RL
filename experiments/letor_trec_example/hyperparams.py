@@ -16,11 +16,13 @@ ALGconfig = {
     'verbose': True,
     'eval_valid_in_iters': True,
     'eval_test_in_iters': True,
-    'fast_cal': True
+    'fast_cal': True,
+    "softmax_power": 1
 }
 
 AGEconfig = {
-    "policyTYpe": "stochastic"
+    "policyTYpe": "stochastic",
+    "softmax_power": 1
 }
 
 ENVconfig = {

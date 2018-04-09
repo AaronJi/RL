@@ -15,7 +15,7 @@ sys.path.append(src_dir)
 from RLutils.algorithm.ALGconfig import ALGconfig
 from RLutils.algorithm.policy_gradient import cal_policy_gradient, cal_longterm_ret
 from RLutils.algorithm.Optimizer import Optimizer
-from RLutils.algorithm.utils import softmax, sigmoid
+from RLutils.algorithm.utils import softmax, softmax_power, sigmoid
 from RLutils.environment.rankMetric import NDCG
 
 class MDPrankAlg(object):
@@ -267,7 +267,12 @@ class MDPrankAlg(object):
             logging.debug("** step %d:" % t)
 
             curr_h_list = [h_dict[k] for k in curr_candidates_keyList]
-            curr_pi = softmax(np.array(curr_h_list))
+
+            if "softmax_power" not in self._hyperparams or self._hyperparams["softmax_power"] == 1:
+                curr_pi = softmax(np.array(curr_h_list))
+            else:
+                power = int(self._hyperparams["softmax_power"])
+                curr_pi = softmax_power(np.array(curr_h_list), power)
 
             action = self.agent.act(state, random, curr_pi)  # Equation (2)
 
@@ -286,6 +291,8 @@ class MDPrankAlg(object):
             del curr_candidates_keyList[action]
 
             #assert len(curr_candidates_keyList) == len(state[1])
+
+        logging.debug('episode action sequence: [' + ','.join([str(action) for state, action, reward in episode]) + ']')
 
         return episode, h_dict, grad_theta_list
 

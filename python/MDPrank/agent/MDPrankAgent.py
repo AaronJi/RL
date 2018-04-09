@@ -10,7 +10,7 @@ src_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file
 sys.path.append(src_dir)
 
 from RLutils.agent.Agent import Agent
-from RLutils.algorithm.utils import softmax
+from RLutils.algorithm.utils import softmax, softmax_power
 
 
 class MDPrankAgent(Agent):
@@ -58,14 +58,18 @@ class MDPrankAgent(Agent):
 
     # the probability of action given a state
     def calPolicyProbMap(self, state):
-        assert self._hyperparams["policyTYpe"] == "stochastic"
+        #assert self._hyperparams["policyTYpe"] == "stochastic"
 
         actions = self.getActionList(state)
 
         hvals = np.array([self.h(state, action) for action in actions])
 
         # pi(a|s), the probability of executed action given the current state
-        pi = softmax(hvals)
+        if "softmax_power" not in self._hyperparams or self._hyperparams["softmax_power"] == 1:
+            pi = softmax(hvals)
+        else:
+            power = int(self._hyperparams["softmax_power"])
+            pi = softmax_power(hvals, power)
 
         self.pi = pi
 
