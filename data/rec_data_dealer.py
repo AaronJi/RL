@@ -40,7 +40,6 @@ class RecDataDealer(DataDealer):
     def load_data(self, data_path):
         # load data
         data = dict()
-
         try:
             with open(data_path, 'r') as file:
                 lines = file.readlines()
@@ -53,6 +52,7 @@ class RecDataDealer(DataDealer):
                         data[uid] = udata
                     else:
                         data[uid][iid] = (feature_vec, label)
+
             file.close()
         except:
             print("error: data file can not read")
@@ -106,6 +106,10 @@ class RecDataDealer(DataDealer):
                 iFeature = int(tup.split(':')[0])
                 vFeature = float(tup.split(':')[1])
 
+                # -1 might be missing value; for linear model, just let then be zero?
+                if vFeature < 0:
+                    vFeature = 0
+                
                 feature_vec[iFeature] = vFeature
         except:
             return None
