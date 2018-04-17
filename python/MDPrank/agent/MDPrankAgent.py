@@ -34,6 +34,9 @@ class MDPrankAgent(Agent):
 
         logging.debug("policy prob map: pi = [" + ','.join(["P(A" + str(ia) + ")=" + ("%.5f" % pa) for ia, pa in enumerate(pi)]) + "]")
 
+        if self._hyperparams["policyType"] == "deterministic":
+            random = False
+
         if random:
             randNum = np.random.rand(1)[0]  # a random number between [0, 1] according to the uniform distribution
             logging.debug("RANDOM act: generate random num %0.3f" % randNum)

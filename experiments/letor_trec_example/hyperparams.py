@@ -21,7 +21,7 @@ ALGconfig = {
 }
 
 AGEconfig = {
-    "policyTYpe": "stochastic",
+    "policyType": "stochastic",
     "softmax_power": 1
 }
 
