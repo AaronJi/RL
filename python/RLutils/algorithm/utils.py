@@ -23,3 +23,25 @@ def softmax_power(x, power=1.0):
     softmax_x = exp_x_power / np.sum(exp_x_power)
 
     return softmax_x
+
+# x is a vector; scale to [-1, 1]
+def minMaxScale(x):
+    small = 1.0e-5
+
+    x_min = np.min(x)
+    x_max = np.max(x)
+
+    if x_max - x_min < small:
+        return x
+
+    x_scale = (2*x - (x_max + x_min))/(x_max - x_min)
+
+    return x_scale
+
+def scaler(theta, scale_way):
+    if scale_way == "sigmoid":
+        return sigmoid(theta)
+    if scale_way == "minMax":
+        return minMaxScale(theta)
+
+    return theta

@@ -15,7 +15,7 @@ sys.path.append(src_dir)
 from RLutils.algorithm.ALGconfig import ALGconfig
 from RLutils.algorithm.policy_gradient import cal_policy_gradient, cal_longterm_ret
 from RLutils.algorithm.Optimizer import Optimizer
-from RLutils.algorithm.utils import softmax, softmax_power, sigmoid
+from RLutils.algorithm.utils import softmax, softmax_power, scaler
 from RLutils.environment.rankMetric import NDCG
 
 class MDPrankAlg(object):
@@ -116,9 +116,10 @@ class MDPrankAlg(object):
                 logging.debug("After update: theta = [" + ','.join([str(dt) for dt in self.agent.theta]) + ']')
 
                 # if process new theta with sigmoid function, as indicated in the diversification paper
-                if self._hyperparams['param_with_sigmoid']:
-                    self.agent.theta = sigmoid(self.agent.theta)
-                    logging.debug("After sigmoid conversion: theta = [" + ','.join([str(dt) for dt in self.agent.theta]) + ']')
+                if 'param_with_scale' in self._hyperparams:
+                    self.agent.theta = scaler(self.agent.theta, self._hyperparams['param_with_scale'])
+
+                    logging.debug("After scaling: theta = [" + ','.join([str(dt) for dt in self.agent.theta]) + ']')
 
                 cpuTime_iter = (datetime.datetime.now() - time_start_iter).total_seconds()
                 cpuTimes.append(cpuTime_iter)
@@ -296,6 +297,7 @@ class MDPrankAlg(object):
 
         return episode, h_dict, grad_theta_list
 
+
     def getLabelsFromEpisode(self, episode):
 
         labels = []
@@ -309,4 +311,5 @@ class MDPrankAlg(object):
         for state, action, reward in episode:
             rewards.append(reward)
         return rewards
+
 
