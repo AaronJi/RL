@@ -41,11 +41,13 @@ class LectorDataDealer(RecDataDealer):
             if self.nFeature > 0:
                 assert K == self.nFeature
             else:
+                # if there is an intercept in the linear model, add a dummy feature to match the intercept
+                if 'with_linear_intercept' in self._hyperparams and self._hyperparams['with_linear_intercept']:
+                    K += 1
                 self.nFeature = K
 
             # load data
             data = dict()
-
             for line in lines:
                 try:
                     label = int(line.split()[0])
@@ -53,6 +55,9 @@ class LectorDataDealer(RecDataDealer):
                     docid = line.strip().split("#docid = ")[1]
 
                     feature_vec = np.zeros(K)  # vector of features, for each query-document pair
+                    if 'with_linear_intercept' in self._hyperparams and self._hyperparams['with_linear_intercept']:
+                        #feature_vec = np.hstack((feature_vec, np.array([1])))
+                        feature_vec[-1] = 1.0
 
                     feature_tup = [tup.split(":") for tup in line.strip().split("#")[0].strip().split()[2:]]
                     for tup in feature_tup:

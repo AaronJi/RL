@@ -25,12 +25,16 @@ class RecDataDealer(DataDealer):
             try:
                 with open(feature_schema, 'r') as file:
                     lines = file.readlines()
-
                     for line in lines:
                         feature_name = line.rstrip('\n').rstrip('\r')
                         if len(feature_name) > 0 :
                             self.nFeature += 1
                             self.feature_names.append(feature_name)
+
+                    # if there is an intercept in the linear model, add a dummy feature to match the intercept
+                    if 'with_linear_intercept' in self._hyperparams and self._hyperparams['with_linear_intercept']:
+                        self.nFeature += 1
+                        self.feature_names.append('dummy_intercept')
                 file.close()
             except:
                 print("error: feature file can not read")
@@ -46,6 +50,9 @@ class RecDataDealer(DataDealer):
 
                 for line in lines:
                     uid, iid, label, feature_vec = self.parse_rec_line(line.rstrip('\n').rstrip('\r'))
+                    # if there is an intercept in the linear model, add a dummy feature to match the intercept
+                    if 'with_linear_intercept' in self._hyperparams and self._hyperparams['with_linear_intercept']:
+                        feature_vec = np.hstack((feature_vec, np.array([1])))
 
                     if uid not in data:
                         udata = {iid: (feature_vec, label)}
@@ -70,6 +77,7 @@ class RecDataDealer(DataDealer):
             tempFeature = np.zeros((nItem, self.nFeature))
             tempDoc = list()
             tempLabel = list()
+
             for i, iid in enumerate(data[uid]):
                 tempDoc.append(iid)
                 tempFeature[i] = data[uid][iid][0]
@@ -109,7 +117,7 @@ class RecDataDealer(DataDealer):
                 # -1 might be missing value; for linear model, just let then be zero?
                 if vFeature < 0:
                     vFeature = 0
-                
+
                 feature_vec[iFeature] = vFeature
         except:
             return None

@@ -2,7 +2,8 @@
 from __future__ import division
 
 DATAconfig = {
-    'normalization': True
+    'normalization': True,
+    'with_linear_intercept': True
 }
 
 ALGconfig = {
