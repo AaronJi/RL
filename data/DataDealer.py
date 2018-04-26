@@ -25,6 +25,9 @@ class DataDealer(object):
         raise NotImplementedError("Must be implemented in subclass.")
 
     def dump_pickle(self, data, dumpFilePath):
+        if data is None:
+            return
+
         with open(dumpFilePath, "wb") as file:
             pickle.dump(data, file)
         file.close()
@@ -33,7 +36,10 @@ class DataDealer(object):
 
     def load_pickle(self, picklePath):
         with open(picklePath, "rb") as file:
-            data = pickle.load(file)
+            try:
+                data = pickle.load(file)
+            except:
+                data = None
         return data
 
     # normalization columnwisely; especially emphasized by the LETOR document

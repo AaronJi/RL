@@ -23,12 +23,13 @@ from environment.MDPrankEnvironment import MDPrankEnvironment
 
 class MDPrankMain(object):
     """ Main class to run algorithms and experiments. """
-    def __init__(self, args, init=None, sample=None):
+    def __init__(self, args, init=None, data=None, sample=None):
         """
-        Initialize GPSMain
+        Initialize MDPrank Main
         Args:
-            config: Hyperparameters for experiment
-            quit_on_end: When true, quit automatically on completion
+            args: arguments for experiment
+            init: the init way of model parameter
+            sample: the samling number for multi-learners
         """
 
         if sample is None:
@@ -53,41 +54,66 @@ class MDPrankMain(object):
                                 filename=os.path.join(exp_dir, "exp" + self.sample + ".log"),
                                 filemode='w')
 
-        data_dir = os.path.join(project_dir, 'data')
-
         output_dir = os.path.join(project_dir, "experiments", args.experiment, "data_files")
-        self.train_outputPath = os.path.join(output_dir, args.train_output)
-        self.valid_outputPath = os.path.join(output_dir, args.valid_output)
-        self.test_outputPath = os.path.join(output_dir, args.test_output)
+        if len(args.folder) > 0:
+            output_dir = os.path.join(output_dir, args.folder)
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+
+        def append_sample_suffix(path, sample_suffix):
+            if sample_suffix is None or len(sample_suffix) == 0:
+                return path
+            path_arg = path.split(',')
+            if len(path_arg) <= 1:
+                return path + sample_suffix
+            else:
+                return '.'.join(path_arg[:-1]) + sample_suffix + '.' + path_arg[-1]
+
+        self.train_outputPath = os.path.join(output_dir, append_sample_suffix(args.train_output, self.sample))
+        self.valid_outputPath = os.path.join(output_dir, append_sample_suffix(args.valid_output, self.sample))
+        self.test_outputPath = os.path.join(output_dir, append_sample_suffix(args.test_output, self.sample))
 
         self.hyperparams = imp.load_source('hyperparams', hyperparams_file)
         if args.silent:
             self.hyperparams.config['verbose'] = False
             self.hyperparams.ALGconfig['verbose'] = False
 
-        ## init algorithm module
-        self.alg = MDPrankAlg(self.hyperparams.ALGconfig)
+        ## init data
+        self.datadealer = LectorDataDealer(self.hyperparams.DATAconfig)
+        if data is None:
+            data_dir = os.path.join(project_dir, 'data')
+            #data_dir = None
+            time0 = datetime.datetime.now()
+            trainingData = self.load_data(args.training_set, path_prefix=data_dir, nQuery_sample=None)
+            validationData = self.load_data(args.training_set, path_prefix=data_dir, nQuery_sample=None)
+            testData = self.load_data(args.training_set, path_prefix=data_dir, nQuery_sample=None)
+            print("data read, %0.2fs used" % ((datetime.datetime.now() - time0).total_seconds()))
+        else:
+            trainingData, validationData, testData = data
 
-        ## init environment module
-        self.lectordatadealer = LectorDataDealer(self.hyperparams.DATAconfig)
-        trainingData_raw = self.lectordatadealer.load_data(os.path.join(data_dir, args.training_set))
-        #trainingData = self.lectordatadealer.getPartData(trainingData_raw, 2, 2, 18)
-        #trainingData = self.lectordatadealer.getPartData(trainingData_raw, 1, 2, 8)
-        trainingData = trainingData_raw
-        validationData = self.lectordatadealer.load_data(os.path.join(data_dir, args.valid_set))
-        testData = self.lectordatadealer.load_data(os.path.join(data_dir, args.test_set))
-
-        logging.info("%d train data, %d validation data, %d test data" % (len(trainingData), len(validationData), len(testData)))
+        logging.info(
+            "%d train data, %d validation data, %d test data" % (len(trainingData), len(validationData), len(testData)))
         if self.hyperparams.config['verbose']:
             print("%d train data, %d validation data, %d test data" % (len(trainingData), len(validationData), len(testData)))
 
+        dump = False
+        if dump:
+            dump_dir = os.path.join(project_dir, 'data', args.experiment)
+            if len(args.folder) > 0:
+                dump_dir = os.path.join(dump_dir, args.folder)
+            if not os.path.exists(dump_dir):
+                os.makedirs(dump_dir)
 
-        self.nTheta = self.lectordatadealer.nFeature
-        env = MDPrankEnvironment(self.hyperparams.ENVconfig, self.lectordatadealer)
+            self.datadealer.dump_pickle(data, os.path.join(trainingData, "trainingData.pkl"))
+            self.datadealer.dump_pickle(data, os.path.join(validationData, "validationData.pkl"))
+            self.datadealer.dump_pickle(data, os.path.join(testData, "testData.pkl"))
+
+        ## init environment module
+        self.nTheta = self.datadealer.nFeature
+        env = MDPrankEnvironment(self.hyperparams.ENVconfig, self.datadealer)
         env.setTrainData(trainingData)
         env.setValidData(validationData)
         env.setTestData(testData)
-        self.alg.initEnv(env)
 
         logging.info("model has %d features" % self.nTheta)
         if self.hyperparams.config['verbose']:
@@ -125,7 +151,8 @@ class MDPrankMain(object):
                     # assert len(theta0) == self.nTheta
                     theta0 = np.array(theta0[:self.nTheta])
             except:
-                pass
+                logging.warning("WARNING: fail to read initial parameter from file!")
+                print("WARNING: fail to read initial parameter from file!")
 
         logging.info("init param: " + ','.join([str(th) for th in theta0]))
         if self.hyperparams.config['verbose']:
@@ -133,11 +160,32 @@ class MDPrankMain(object):
             print(theta0)
 
         agent = MDPrankAgent(self.hyperparams.AGEconfig, theta0)
+
+        ## init algorithm module
+        self.alg = MDPrankAlg(self.hyperparams.ALGconfig)
+        self.alg.initEnv(env)
         self.alg.initAgent(agent)
 
         logging.info("Init successfully")
 
         return
+
+    def load_data(self, data_path, path_prefix=None, nQuery_sample=None):
+        if path_prefix is not None:
+            data_path = os.path.join(path_prefix, data_path)
+
+
+        if data_path.split('.')[-1] == 'pkl':
+            data_raw = self.datadealer.load_pickle(data_path)
+        else:
+            data_raw = self.datadealer.load_data(data_path)
+
+        if nQuery_sample is None:
+            data = data_raw
+        else:
+            data = self.datadealer.getPartData(data_raw, nQuery_sample)
+
+        return data
 
     def learn(self):
         train_outPath = self.train_outputPath + self.sample
@@ -182,14 +230,24 @@ def main():
     parser.add_argument('--param_out', type=str, default="theta1.txt",
                         help='param out')
 
+
+    parser.add_argument('--folder', type=str, default="", help="folder of outputs")
+    parser.add_argument('--nLearner', type=str, default="1", help="number of learners")
+
     parser.add_argument('-s', '--silent', action='store_true',
                         help='silent debug print outs')
 
     args = parser.parse_args()
 
+    try:
+        nLearner = int(args.nLearner)
+    except:
+        nLearner = 1
 
-    singleLearn(args, init_theta=args.param_init, out_theta=args.param_out)
-    #multiLearn(args, nLearner=10, init_theta=args.param_init)
+    if nLearner > 1:
+        multiLearn(args, nLearner=nLearner, init_theta=args.param_init, out_theta=args.param_out)
+    else:
+        singleLearn(args, init_theta=args.param_init, out_theta=args.param_out)
 
     return
 
@@ -197,6 +255,8 @@ def singleLearn(args, init_theta="random", out_theta=None):
 
     # path to store experimental data
     output_dir = os.path.join(project_dir, "experiments", args.experiment, "data_files")
+    if len(args.folder) > 0:
+        output_dir = os.path.join(output_dir, args.folder)
 
     mdprank = MDPrankMain(args, init=init_theta)
 
@@ -225,6 +285,12 @@ def singleLearn(args, init_theta="random", out_theta=None):
 def multiLearn(args, nLearner=1, init_theta="random", out_theta=None):
     # path to store experimental data
     output_dir = os.path.join(project_dir, "experiments", args.experiment, "data_files")
+    if len(args.folder) > 0:
+        output_dir = os.path.join(output_dir, args.folder)
+
+    # a dummy object in order to read data
+    dataReader = MDPrankMain(args, init=init_theta)
+    data = (dataReader.alg.env.data, dataReader.alg.env.validData, dataReader.alg.env.testData)
 
     learners = list()
     metric_valid = np.zeros(nLearner)
@@ -232,7 +298,7 @@ def multiLearn(args, nLearner=1, init_theta="random", out_theta=None):
 
     theta_new_list = list()
     for i in range(nLearner):
-        learners.append(MDPrankMain(args, init=init_theta, sample=i))
+        learners.append(MDPrankMain(args, init=init_theta, data=data, sample=i))
         theta_new = learners[i].learn()
         #output_path = output_dir + "theta1_" + str(i) + ".txt"
         #write_vector(theta_new, output_path)
