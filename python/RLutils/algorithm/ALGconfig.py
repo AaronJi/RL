@@ -8,5 +8,6 @@ ALGconfig = {
     'absErr': 1.0e-3,
     'nAbsErr': 1,
     'eval_valid_in_iters': False,
-    'eval_test_in_iters': False
+    'eval_test_in_iters': False,
+    'update_by': 'episode',  # batch, episode, step
 }

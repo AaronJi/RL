@@ -24,6 +24,10 @@ class DataDealer(object):
     def load_data(self, dataPath):
         raise NotImplementedError("Must be implemented in subclass.")
 
+    @abstractmethod
+    def next_batch(self, batchsize):
+        raise NotImplementedError("Must be implemented in subclass.")
+
     def dump_pickle(self, data, dumpFilePath):
         if data is None:
             return

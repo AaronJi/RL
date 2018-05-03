@@ -93,6 +93,7 @@ class MDPrankAgent(Agent):
 
     # fast solution for MDP rank; LOSS the generalization
     def cal_hvals_from_init(self, candidates):
+
         h_dict = {}
         for i, candidate in enumerate(candidates):
             x = candidate[0]

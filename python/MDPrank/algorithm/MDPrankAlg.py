@@ -13,7 +13,7 @@ src_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file
 sys.path.append(src_dir)
 
 from RLutils.algorithm.ALGconfig import ALGconfig
-from RLutils.algorithm.policy_gradient import cal_policy_gradient, cal_longterm_ret
+from RLutils.algorithm.policy_gradient import cal_policy_gradient, cal_longterm_ret, cal_longterm_ret_episode
 from RLutils.algorithm.Optimizer import Optimizer
 from RLutils.algorithm.utils import softmax, softmax_power, scaler
 from RLutils.environment.rankMetric import NDCG
@@ -45,6 +45,156 @@ class MDPrankAlg(object):
         logging.info("init environment")
         return
 
+    def batch_learn(self, init_theta, batch_train_data, train_outputPath):
+        nParallel = 1
+
+        with open(train_outputPath, "w") as output_file:
+            if nParallel == 1:
+                out_theta = self.thread_learn(init_theta, batch_train_data, output_file)
+            else:
+                ## TODO: import multiprocessing
+                out_theta = self.thread_learn(init_theta, batch_train_data, output_file)
+            output_file.close()
+
+        return out_theta
+
+    def thread_learn(self, init_theta, batch_train_data, output_file):
+        logging.debug("#### A new thread ###")
+
+        queryList = batch_train_data.keys()
+
+        ## TODO: change this when multi-threading!
+        self.agent.theta = init_theta
+
+        iAbsErr = 0
+        nStep = 0
+
+        delta_theta = np.zeros(self.agent.nParam)
+
+        while(True):
+            logging.debug("### The %dth iteration: ###" % nStep)
+            time_start_iter = datetime.datetime.now()
+
+            G0_allQueries = np.zeros(len(queryList))
+            NDCG_allQueries = np.zeros(len(queryList))
+
+            for iq, query in enumerate(queryList):
+                logging.debug("## The %dth query: %s" % (iq, query))
+
+                if 'fast_cal' not in self._hyperparams or not self._hyperparams['fast_cal']:
+                    episode = self.sampleAnEpisode(query, offline=True)
+                else:
+                    episode, h_dict, grad_theta_list = self.sampleAnEpisode_fast(query, offline=True)
+
+                M = len(episode)
+
+                labels = self.getLabelsFromEpisode(episode)
+                logging.debug('episode label sequence: [' + ','.join([str(l) for l in labels]) + ']')
+
+                rewards = self.getRewardsFromEpisode(episode)
+                logging.debug('episode rewards sequence: [' + ','.join([str(r) for r in rewards]) + ']')
+
+                NDCG_allQueries[iq] = NDCG(labels)
+
+                Gt_episode = cal_longterm_ret_episode(rewards, self._hyperparams["discount"])
+
+                for t in range(M - 1):
+                    # for the very last step, there is only one candidate to rank and only one possible action; the policy gradient then must be zero
+
+                    #Gt = cal_longterm_ret(rewards, t, self._hyperparams["discount"])
+                    Gt = Gt_episode[t]
+                    logging.debug("# step %d, Gt = %f" % (t, Gt))
+
+                    if 'fast_cal' not in self._hyperparams or not self._hyperparams['fast_cal']:
+                        state, action, reward = episode[t]
+                        grad_theta = self.calGradParam(state, action)
+                    else:
+                        grad_theta = grad_theta_list[t]
+
+                    delta_theta += cal_policy_gradient(t, Gt, self._hyperparams["discount"], grad_theta)
+
+                    if 'update_by' in self._hyperparams and self._hyperparams['update_by'] == 'step':
+                        self.update_policy(delta_theta)
+                        delta_theta = np.zeros(self.agent.nParam)
+
+                    if t == 0:
+                        G0_allQueries[iq] = Gt
+
+
+
+                if 'update_by' in self._hyperparams and self._hyperparams['update_by'] == 'episode':
+                    self.update_policy(delta_theta)
+                    delta_theta = np.zeros(self.agent.nParam)
+
+            if 'absErr' in self._hyperparams and np.linalg.norm(delta_theta) <= self._hyperparams['absErr']:
+                iAbsErr += 1
+
+                if iAbsErr >= self._hyperparams['nAbsErr']:
+                    output_file.write("iterations terminate with absError reached\n")
+                    logging.debug("iterations terminate with absError reached")
+                    if self._hyperparams['verbose']:
+                        print("iterations terminate with absError reached")
+                    break
+
+            nStep += 1
+            if 'nIter_batch' in self._hyperparams and nStep > self._hyperparams['nIter_batch']:
+                output_file.write("iterations terminate with max limit of iteration steps reached\n")
+                logging.debug("iterations terminate with max limit of iteration steps reached")
+                if self._hyperparams['verbose']:
+                    print("iterations terminate with max limit of iteration steps reached")
+                break
+
+            cpuTime_iter = (datetime.datetime.now() - time_start_iter).total_seconds()
+
+            outputData = [nStep, cpuTime_iter, np.linalg.norm(delta_theta), np.mean(G0_allQueries),
+                          np.mean(NDCG_allQueries)]
+            outputLine = "%dth iteration: compute time = %ds, step norm = %0.3f, averaged G0 = %0.3f, averaged metric = %0.3f" % (
+            nStep, cpuTime_iter, np.linalg.norm(delta_theta), np.mean(G0_allQueries), np.mean(NDCG_allQueries))
+            logging.debug(
+                "# after this iteration: compute time = %ds, norm of grad_theta = %0.3f, averaged G0 = %0.3f, averaged metric = %0.3f" % (
+                cpuTime_iter, np.linalg.norm(delta_theta), np.mean(G0_allQueries), np.mean(NDCG_allQueries)))
+
+            # evaluate validation and test sets performance
+            if self._hyperparams['eval_valid_in_iters']:
+                NDCG_mean_valid, NDCG_queries_valid = self.eval(dataSet="validation")
+                outputData.append(NDCG_mean_valid)
+                outputLine += ", valid metric = %0.3f" % NDCG_mean_valid
+                logging.debug("Evaluate validation set: metric = %0.3f" % NDCG_mean_valid)
+            if self._hyperparams['eval_test_in_iters']:
+                NDCG_mean_test, NDCG_queries_test = self.eval(dataSet="test")
+                outputData.append(NDCG_mean_test)
+                outputLine += ", test metric = %0.3f" % NDCG_mean_test
+                logging.debug("Evaluate test set: metric = %0.3f" % NDCG_mean_test)
+
+            # print iteration results
+            outputData.extend(list(self.agent.theta))
+            outputData = [str(d) for d in outputData]
+            output_file.write('\t'.join(outputData) + '\n')
+
+            # if self._hyperparams['verbose']:
+            print(outputLine)
+
+            if 'update_by' in self._hyperparams and self._hyperparams['update_by'] == 'batch':
+                self.update_policy(delta_theta)
+                delta_theta = np.zeros(self.agent.nParam)
+
+        out_theta = self.agent.theta
+
+        return out_theta
+
+    def update_policy(self, delta_theta):
+        logging.debug("Before update: theta = [" + ','.join([str(dt) for dt in self.agent.theta]) + ']')
+        self.agent.theta = self.opt.Gradient_Descent(self.agent.theta, delta_theta, self._hyperparams["eta"])
+        logging.debug("After update: theta = [" + ','.join([str(dt) for dt in self.agent.theta]) + ']')
+
+        # if process new theta with sigmoid function, as indicated in the diversification paper
+        if 'param_with_scale' in self._hyperparams:
+            self.agent.theta = scaler(self.agent.theta, self._hyperparams['param_with_scale'])
+            logging.debug("After scaling: theta = [" + ','.join([str(dt) for dt in self.agent.theta]) + ']')
+
+        return
+
+
     def learn(self, train_outputPath):
         time_start = datetime.datetime.now()
 
@@ -60,7 +210,6 @@ class MDPrankAlg(object):
 
         iAbsErr = 0
         nStep = 0
-        cpuTimes = []
 
         with open(train_outputPath, "w") as file:
 
@@ -122,7 +271,6 @@ class MDPrankAlg(object):
                     logging.debug("After scaling: theta = [" + ','.join([str(dt) for dt in self.agent.theta]) + ']')
 
                 cpuTime_iter = (datetime.datetime.now() - time_start_iter).total_seconds()
-                cpuTimes.append(cpuTime_iter)
 
                 outputData = [nStep, cpuTime_iter, np.linalg.norm(delta_theta), np.mean(G0_allQueries), np.mean(NDCG_allQueries)]
                 outputLine = "%dth iteration: compute time = %ds, step norm = %0.3f, averaged G0 = %0.3f, averaged metric = %0.3f" % (nStep, cpuTime_iter, np.linalg.norm(delta_theta), np.mean(G0_allQueries), np.mean(NDCG_allQueries))
@@ -203,6 +351,7 @@ class MDPrankAlg(object):
             Gt += discount_rt*rk
             discount_rt = discount_rt*self._hyperparams["discount"]
         return Gt
+
 
     # the direction that most increase the probability of repeating the action on future visits to state, Equation (4)
     def calGradParam(self, state, action):

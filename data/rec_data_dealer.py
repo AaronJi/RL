@@ -165,6 +165,28 @@ class RecDataDealer(DataDealer):
                 data[uid] = data_raw[uid]
         return data
 
+    def set_batched_data(self, data, batch_size):
+        self.data = data
+        self.nData = len(data)
+        self.query_list = list(data.keys())
+        self.nBatch = int(np.floor(self.nData / batch_size))
+        self.nBatch_sampled = 0
+        self.current_batch_locator = 0
+
+        return
+
+    def next_batch(self, batch_size):
+        if self.data is None:
+            return None
+
+        if self.current_batch_locator + batch_size >= self.nData:
+            return None
+
+        batch_query_list = self.query_list[self.current_batch_locator: self.current_batch_locator + batch_size]
+        self.current_batch_locator += batch_size
+
+        return {k: self.data[k] for k in batch_query_list}
+
     @staticmethod
     def getQueries(data):
         return list(data.keys())

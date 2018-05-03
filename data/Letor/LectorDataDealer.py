@@ -16,6 +16,7 @@ class LectorDataDealer(RecDataDealer):
 
     def __init__(self, hyperparams):
         super(LectorDataDealer, self).__init__(hyperparams)
+        self.data = None
         return
 
     # return a dict, whose key is query id, value is the querydata in a dict format
@@ -79,8 +80,6 @@ class LectorDataDealer(RecDataDealer):
                 data = self.data_normalize_by_column(data)
 
             return data
-
-
 
 def getDocInfo(data, qid, docid):
     try:
