@@ -17,8 +17,8 @@ ALGconfig = {
     'param_with_scale': 'minMax',  # minMax, sigmoid, None
     'update_by': 'batch',  # batch, episode, step
     'verbose': True,
-    'eval_valid_in_iters': True,
-    'eval_test_in_iters': True,
+    'eval_valid_in_iters': False,
+    'eval_test_in_iters': False,
     'fast_cal': True,
     "softmax_power": 1
 }

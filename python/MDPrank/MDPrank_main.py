@@ -5,7 +5,6 @@ import imp
 import os
 import sys
 import argparse
-import threading
 import datetime
 import traceback
 import numpy as np
@@ -23,7 +22,7 @@ from environment.MDPrankEnvironment import MDPrankEnvironment
 
 class MDPrankMain(object):
     """ Main class to run algorithms and experiments. """
-    def __init__(self, args, init=None, data=None, sample=None):
+    def __init__(self, args, init=None, data=None):
         """
         Initialize MDPrank Main
         Args:
@@ -31,11 +30,6 @@ class MDPrankMain(object):
             init: the init way of model parameter
             sample: the samling number for multi-learners
         """
-
-        if sample is None:
-            self.sample = ""
-        else:
-            self.sample = '_' + str(sample)
 
         exp_name = args.experiment
         exp_dir = os.path.join(project_dir, 'experiments', exp_name)
@@ -45,13 +39,13 @@ class MDPrankMain(object):
             logging.basicConfig(level=logging.INFO,
                                 format='%(asctime)s %(name)-8s %(levelname)-8s %(message)s',
                                 datefmt='%m-%d %H:%M',
-                                filename=os.path.join(exp_dir, "exp" + self.sample + ".log"),
+                                filename=os.path.join(exp_dir, "exp.log"),
                                 filemode='w')
         else:
             logging.basicConfig(level=logging.DEBUG,
                                 format='%(asctime)s %(name)-8s %(levelname)-8s %(message)s',
                                 datefmt='%m-%d %H:%M',
-                                filename=os.path.join(exp_dir, "exp" + self.sample + ".log"),
+                                filename=os.path.join(exp_dir, "exp.log"),
                                 filemode='w')
 
         output_dir = os.path.join(project_dir, "experiments", args.experiment, "data_files")
@@ -69,9 +63,11 @@ class MDPrankMain(object):
             else:
                 return '.'.join(path_arg[:-1]) + sample_suffix + '.' + path_arg[-1]
 
-        self.train_outputPath = os.path.join(output_dir, append_sample_suffix(args.train_output, self.sample))
-        self.valid_outputPath = os.path.join(output_dir, append_sample_suffix(args.valid_output, self.sample))
-        self.test_outputPath = os.path.join(output_dir, append_sample_suffix(args.test_output, self.sample))
+        #self.train_outputPath = os.path.join(output_dir, append_sample_suffix(args.train_output, self.sample))
+
+        self.train_outputPath = os.path.join(output_dir, args.train_output)
+        self.valid_outputPath = os.path.join(output_dir, args.valid_output)
+        self.test_outputPath = os.path.join(output_dir, args.test_output)
 
         self.hyperparams = imp.load_source('hyperparams', hyperparams_file)
         if args.silent:
@@ -112,7 +108,6 @@ class MDPrankMain(object):
             self.datadealer.dump_pickle(data, os.path.join(testData, "testData.pkl"))
 
         ## init environment module
-
         env = MDPrankEnvironment(self.hyperparams.ENVconfig, self.datadealer)
         env.setTrainData(trainingData)
         env.setValidData(validationData)
@@ -190,22 +185,22 @@ class MDPrankMain(object):
 
         return data
 
-    def learn(self, batch_data=None, init_theta=None):
-        train_outPath = self.train_outputPath + self.sample
+    def learn(self, batch_data=None, init_theta=None, nSamples=1):
 
         if batch_data is None:
-            self.alg.learn(train_outPath)
+            self.alg.learn(self.train_outputPath)
+            out_theta = self.alg.agent.theta
         else:
             if init_theta is None:
                 init_theta = self.alg.agent.theta
-            self.alg.batch_learn(init_theta, batch_data, train_outPath)
+            out_theta = self.alg.batch_learn(init_theta, batch_data, self.train_outputPath, nSamples)
 
         logging.info("new param after learning: " + ','.join([str(th) for th in self.alg.agent.theta]))
         if self.hyperparams.config['verbose']:
             print("new param:")
-            print(self.alg.agent.theta)
+            print(out_theta)
 
-        return self.alg.agent.theta
+        return out_theta
 
 
     def eval(self, dataSet="test"):
@@ -242,6 +237,7 @@ def main():
 
 
     parser.add_argument('--folder', type=str, default="", help="folder of outputs")
+    parser.add_argument('--batch_size', type=str, default="-1", help="size of batch")
     parser.add_argument('--nLearner', type=str, default="1", help="number of learners")
 
     parser.add_argument('-s', '--silent', action='store_true',
@@ -250,18 +246,32 @@ def main():
     args = parser.parse_args()
 
     try:
+        batch_size = int(args.batch_size)
+    except:
+        batch_size = -1
+
+    try:
         nLearner = int(args.nLearner)
     except:
         nLearner = 1
 
+    if nLearner <= 0:
+        nLearner = 1
+
+    print("batch size = %d, number of learners = %d" % (batch_size, nLearner))
+    learn(args, init_theta="random", out_theta=args.param_out, batch_size=batch_size, nSamples=nLearner)
+
+    '''
     if nLearner > 1:
         multiLearn(args, nLearner=nLearner, init_theta=args.param_init, out_theta=args.param_out)
     else:
-        #singleLearn(args, init_theta=args.param_init, out_theta=args.param_out)
-        singleLearn(args, init_theta="random", out_theta=args.param_out, batch_size=10)
+        singleLearn(args, init_theta=args.param_init, out_theta=args.param_out)    
+    '''
+
     return
 
-def singleLearn1(args, init_theta="random", out_theta=None):
+'''
+def singleLearn(args, init_theta="random", out_theta=None):
 
     # path to store experimental data
     output_dir = os.path.join(project_dir, "experiments", args.experiment, "data_files")
@@ -290,49 +300,7 @@ def singleLearn1(args, init_theta="random", out_theta=None):
     print("%ds used" % ((datetime.datetime.now() - time0).total_seconds()))
 
     return
-
-def singleLearn(args, init_theta="random", out_theta=None, batch_size=10):
-    # path to store experimental data
-    output_dir = os.path.join(project_dir, "experiments", args.experiment, "data_files")
-    if len(args.folder) > 0:
-        output_dir = os.path.join(output_dir, args.folder)
-
-    # a dummy object in order to read data
-    dataReader = MDPrankMain(args, init=init_theta)
-    data = (dataReader.alg.env.data, dataReader.alg.env.validData, dataReader.alg.env.testData)
-    dataReader.datadealer.set_batched_data(data[0], batch_size)
-
-    mdprank = MDPrankMain(args, init=init_theta, data=data)
-    if batch_size is None:
-        theta_new = mdprank.learn()
-    else:
-        batch_theta = mdprank.alg.agent.theta
-        for i in range(dataReader.datadealer.nBatch):
-            print("##### batch %d" % i)
-            batch_data = dataReader.datadealer.next_batch(batch_size)
-            batch_theta = mdprank.learn(batch_data, batch_theta)
-        theta_new = batch_theta
-
-    if out_theta is not None:
-        output_path = os.path.join(output_dir, out_theta)
-        write_vector(theta_new, output_path)
-
-    time0 = datetime.datetime.now()
-    NDCG_mean = mdprank.eval(dataSet="validation")
-    logging.info("Evaluation: averaged NDCG of validation set = %0.3f" % NDCG_mean)
-    print("Evaluation: averaged NDCG of validation set = %0.3f" % NDCG_mean)
-    logging.info("%ds used" % ((datetime.datetime.now() - time0).total_seconds()))
-    print("%ds used" % ((datetime.datetime.now() - time0).total_seconds()))
-
-    time0 = datetime.datetime.now()
-    NDCG_mean = mdprank.eval(dataSet="test")
-    logging.info("Evaluation: averaged NDCG of test set = %0.3f" % NDCG_mean)
-    print("Evaluation: averaged NDCG of test set = %0.3f" % NDCG_mean)
-    logging.info("%ds used" % ((datetime.datetime.now() - time0).total_seconds()))
-    print("%ds used" % ((datetime.datetime.now() - time0).total_seconds()))
-
-    return
-
+    
 def multiLearn(args, nLearner=1, init_theta="random", out_theta=None):
     # path to store experimental data
     output_dir = os.path.join(project_dir, "experiments", args.experiment, "data_files")
@@ -369,7 +337,49 @@ def multiLearn(args, nLearner=1, init_theta="random", out_theta=None):
     write_vector(metric_test, output_dir + "metric_test.txt")
 
     return
+    
+'''
 
+def learn(args, init_theta="random", out_theta=None, batch_size=10, nSamples=1):
+    # path to store experimental data
+    output_dir = os.path.join(project_dir, "experiments", args.experiment, "data_files")
+    if len(args.folder) > 0:
+        output_dir = os.path.join(output_dir, args.folder)
+
+    # a dummy object in order to read data
+    dataReader = MDPrankMain(args, init=init_theta)
+    data = (dataReader.alg.env.data, dataReader.alg.env.validData, dataReader.alg.env.testData)
+    dataReader.datadealer.set_batched_data(data[0], batch_size)
+
+    mdprank = MDPrankMain(args, init=init_theta, data=data)
+    if batch_size is None or batch_size <= 0:
+        theta_new = mdprank.learn()
+    else:
+        batch_theta = mdprank.alg.agent.theta
+        for i in range(dataReader.datadealer.nBatch):
+            batch_data = dataReader.datadealer.next_batch(batch_size)
+            batch_theta = mdprank.learn(batch_data, batch_theta, nSamples=nSamples)
+        theta_new = batch_theta
+
+    if out_theta is not None:
+        output_path = os.path.join(output_dir, out_theta)
+        write_vector(theta_new, output_path)
+
+    time0 = datetime.datetime.now()
+    NDCG_mean = mdprank.eval(dataSet="validation")
+    logging.info("Evaluation: averaged NDCG of validation set = %0.3f" % NDCG_mean)
+    print("Evaluation: averaged NDCG of validation set = %0.3f" % NDCG_mean)
+    logging.info("%ds used" % ((datetime.datetime.now() - time0).total_seconds()))
+    print("%ds used" % ((datetime.datetime.now() - time0).total_seconds()))
+
+    time0 = datetime.datetime.now()
+    NDCG_mean = mdprank.eval(dataSet="test")
+    logging.info("Evaluation: averaged NDCG of test set = %0.3f" % NDCG_mean)
+    print("Evaluation: averaged NDCG of test set = %0.3f" % NDCG_mean)
+    logging.info("%ds used" % ((datetime.datetime.now() - time0).total_seconds()))
+    print("%ds used" % ((datetime.datetime.now() - time0).total_seconds()))
+
+    return
 
 def write_vector(vec, output_path):
 

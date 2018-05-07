@@ -8,6 +8,7 @@ import copy
 import numpy as np
 import datetime
 import logging
+from multiprocessing import Pool
 
 src_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.append(src_dir)
@@ -45,138 +46,158 @@ class MDPrankAlg(object):
         logging.info("init environment")
         return
 
-    def batch_learn(self, init_theta, batch_train_data, train_outputPath):
-        nParallel = 1
+    def batch_learn(self, init_theta, batch_train_data, train_outputPath, nParallel=1):
+        if nParallel <= 1:
+            thread_arg = [init_theta, batch_train_data, train_outputPath]
+            out_theta = self.thread_learn(thread_arg)
+        else:
+            out_theta = np.zeros(self.agent.nParam)
 
-        with open(train_outputPath, "w") as output_file:
-            if nParallel == 1:
-                out_theta = self.thread_learn(init_theta, batch_train_data, output_file)
-            else:
-                ## TODO: import multiprocessing
-                out_theta = self.thread_learn(init_theta, batch_train_data, output_file)
-            output_file.close()
+            ## TODO: multiprocessing has bug when mapped function is inside an object; this issue is fixed in python 3.4
+            '''
+            thread_args = [thread_arg]*nParallel
+            pool = Pool(processes=nParallel)
+            out_theta_threads = pool.map(self.thread_learn, thread_args)
+            pool.close()
+            pool.join()
+            for i in range(nParallel):
+                out_theta += out_theta_threads[i]       
+            '''
+
+            for i in range(nParallel):
+                train_outputPath_thread = train_outputPath + '_' + str(i)
+                thread_arg = [init_theta, batch_train_data, train_outputPath_thread]
+
+                out_theta_thread = self.thread_learn(thread_arg)
+                out_theta += out_theta_thread
+
+            out_theta /= nParallel
 
         return out_theta
 
-    def thread_learn(self, init_theta, batch_train_data, output_file):
-        logging.debug("#### A new thread ###")
+    def thread_learn(self, thread_args):
+        init_theta = thread_args[0]
+        batch_train_data = thread_args[1]
+        train_outputPath = thread_args[2]
 
-        queryList = batch_train_data.keys()
+        with open(train_outputPath, "w") as output_file:
+            logging.debug("#### A new thread ###")
 
-        ## TODO: change this when multi-threading!
-        self.agent.theta = init_theta
+            queryList = batch_train_data.keys()
 
-        iAbsErr = 0
-        nStep = 0
+            ## TODO: change this when multi-threading!
+            self.agent.theta = init_theta
 
-        delta_theta = np.zeros(self.agent.nParam)
+            iAbsErr = 0
+            nStep = 0
 
-        while(True):
-            logging.debug("### The %dth iteration: ###" % nStep)
-            time_start_iter = datetime.datetime.now()
+            delta_theta = np.zeros(self.agent.nParam)
 
-            G0_allQueries = np.zeros(len(queryList))
-            NDCG_allQueries = np.zeros(len(queryList))
+            while (True):
+                logging.debug("### The %dth iteration: ###" % nStep)
+                time_start_iter = datetime.datetime.now()
 
-            for iq, query in enumerate(queryList):
-                logging.debug("## The %dth query: %s" % (iq, query))
+                G0_allQueries = np.zeros(len(queryList))
+                NDCG_allQueries = np.zeros(len(queryList))
 
-                if 'fast_cal' not in self._hyperparams or not self._hyperparams['fast_cal']:
-                    episode = self.sampleAnEpisode(query, offline=True)
-                else:
-                    episode, h_dict, grad_theta_list = self.sampleAnEpisode_fast(query, offline=True)
-
-                M = len(episode)
-
-                labels = self.getLabelsFromEpisode(episode)
-                logging.debug('episode label sequence: [' + ','.join([str(l) for l in labels]) + ']')
-
-                rewards = self.getRewardsFromEpisode(episode)
-                logging.debug('episode rewards sequence: [' + ','.join([str(r) for r in rewards]) + ']')
-
-                NDCG_allQueries[iq] = NDCG(labels)
-
-                Gt_episode = cal_longterm_ret_episode(rewards, self._hyperparams["discount"])
-
-                for t in range(M - 1):
-                    # for the very last step, there is only one candidate to rank and only one possible action; the policy gradient then must be zero
-
-                    #Gt = cal_longterm_ret(rewards, t, self._hyperparams["discount"])
-                    Gt = Gt_episode[t]
-                    logging.debug("# step %d, Gt = %f" % (t, Gt))
+                for iq, query in enumerate(queryList):
+                    logging.debug("## The %dth query: %s" % (iq, query))
 
                     if 'fast_cal' not in self._hyperparams or not self._hyperparams['fast_cal']:
-                        state, action, reward = episode[t]
-                        grad_theta = self.calGradParam(state, action)
+                        episode = self.sampleAnEpisode(query, offline=True)
                     else:
-                        grad_theta = grad_theta_list[t]
+                        episode, h_dict, grad_theta_list = self.sampleAnEpisode_fast(query, offline=True)
 
-                    delta_theta += cal_policy_gradient(t, Gt, self._hyperparams["discount"], grad_theta)
+                    M = len(episode)
 
-                    if 'update_by' in self._hyperparams and self._hyperparams['update_by'] == 'step':
+                    labels = self.getLabelsFromEpisode(episode)
+                    logging.debug('episode label sequence: [' + ','.join([str(l) for l in labels]) + ']')
+
+                    rewards = self.getRewardsFromEpisode(episode)
+                    logging.debug('episode rewards sequence: [' + ','.join([str(r) for r in rewards]) + ']')
+
+                    NDCG_allQueries[iq] = NDCG(labels)
+
+                    Gt_episode = cal_longterm_ret_episode(rewards, self._hyperparams["discount"])
+
+                    for t in range(M - 1):
+                        # for the very last step, there is only one candidate to rank and only one possible action; the policy gradient then must be zero
+
+                        # Gt = cal_longterm_ret(rewards, t, self._hyperparams["discount"])
+                        Gt = Gt_episode[t]
+                        logging.debug("# step %d, Gt = %f" % (t, Gt))
+
+                        if 'fast_cal' not in self._hyperparams or not self._hyperparams['fast_cal']:
+                            state, action, reward = episode[t]
+                            grad_theta = self.calGradParam(state, action)
+                        else:
+                            grad_theta = grad_theta_list[t]
+
+                        delta_theta += cal_policy_gradient(t, Gt, self._hyperparams["discount"], grad_theta)
+
+                        if 'update_by' in self._hyperparams and self._hyperparams['update_by'] == 'step':
+                            self.update_policy(delta_theta)
+                            delta_theta = np.zeros(self.agent.nParam)
+
+                        if t == 0:
+                            G0_allQueries[iq] = Gt
+
+                    if 'update_by' in self._hyperparams and self._hyperparams['update_by'] == 'episode':
                         self.update_policy(delta_theta)
                         delta_theta = np.zeros(self.agent.nParam)
 
-                    if t == 0:
-                        G0_allQueries[iq] = Gt
+                if 'absErr' in self._hyperparams and np.linalg.norm(delta_theta) <= self._hyperparams['absErr']:
+                    iAbsErr += 1
 
+                    if iAbsErr >= self._hyperparams['nAbsErr']:
+                        output_file.write("iterations terminate with absError reached\n")
+                        logging.debug("iterations terminate with absError reached")
+                        if self._hyperparams['verbose']:
+                            print("iterations terminate with absError reached")
+                        break
 
-
-                if 'update_by' in self._hyperparams and self._hyperparams['update_by'] == 'episode':
-                    self.update_policy(delta_theta)
-                    delta_theta = np.zeros(self.agent.nParam)
-
-            if 'absErr' in self._hyperparams and np.linalg.norm(delta_theta) <= self._hyperparams['absErr']:
-                iAbsErr += 1
-
-                if iAbsErr >= self._hyperparams['nAbsErr']:
-                    output_file.write("iterations terminate with absError reached\n")
-                    logging.debug("iterations terminate with absError reached")
+                nStep += 1
+                if 'nIter_batch' in self._hyperparams and nStep > self._hyperparams['nIter_batch']:
+                    output_file.write("iterations terminate with max limit of iteration steps reached\n")
+                    logging.debug("iterations terminate with max limit of iteration steps reached")
                     if self._hyperparams['verbose']:
-                        print("iterations terminate with absError reached")
+                        print("iterations terminate with max limit of iteration steps reached")
                     break
 
-            nStep += 1
-            if 'nIter_batch' in self._hyperparams and nStep > self._hyperparams['nIter_batch']:
-                output_file.write("iterations terminate with max limit of iteration steps reached\n")
-                logging.debug("iterations terminate with max limit of iteration steps reached")
-                if self._hyperparams['verbose']:
-                    print("iterations terminate with max limit of iteration steps reached")
-                break
+                cpuTime_iter = (datetime.datetime.now() - time_start_iter).total_seconds()
 
-            cpuTime_iter = (datetime.datetime.now() - time_start_iter).total_seconds()
+                outputData = [nStep, cpuTime_iter, np.linalg.norm(delta_theta), np.mean(G0_allQueries),
+                              np.mean(NDCG_allQueries)]
+                outputLine = "%dth iteration: compute time = %ds, step norm = %0.3f, averaged G0 = %0.3f, averaged metric = %0.3f" % (
+                    nStep, cpuTime_iter, np.linalg.norm(delta_theta), np.mean(G0_allQueries), np.mean(NDCG_allQueries))
+                logging.debug(
+                    "# after this iteration: compute time = %ds, norm of grad_theta = %0.3f, averaged G0 = %0.3f, averaged metric = %0.3f" % (
+                        cpuTime_iter, np.linalg.norm(delta_theta), np.mean(G0_allQueries), np.mean(NDCG_allQueries)))
 
-            outputData = [nStep, cpuTime_iter, np.linalg.norm(delta_theta), np.mean(G0_allQueries),
-                          np.mean(NDCG_allQueries)]
-            outputLine = "%dth iteration: compute time = %ds, step norm = %0.3f, averaged G0 = %0.3f, averaged metric = %0.3f" % (
-            nStep, cpuTime_iter, np.linalg.norm(delta_theta), np.mean(G0_allQueries), np.mean(NDCG_allQueries))
-            logging.debug(
-                "# after this iteration: compute time = %ds, norm of grad_theta = %0.3f, averaged G0 = %0.3f, averaged metric = %0.3f" % (
-                cpuTime_iter, np.linalg.norm(delta_theta), np.mean(G0_allQueries), np.mean(NDCG_allQueries)))
+                # evaluate validation and test sets performance
+                if self._hyperparams['eval_valid_in_iters']:
+                    NDCG_mean_valid, NDCG_queries_valid = self.eval(dataSet="validation")
+                    outputData.append(NDCG_mean_valid)
+                    outputLine += ", valid metric = %0.3f" % NDCG_mean_valid
+                    logging.debug("Evaluate validation set: metric = %0.3f" % NDCG_mean_valid)
+                if self._hyperparams['eval_test_in_iters']:
+                    NDCG_mean_test, NDCG_queries_test = self.eval(dataSet="test")
+                    outputData.append(NDCG_mean_test)
+                    outputLine += ", test metric = %0.3f" % NDCG_mean_test
+                    logging.debug("Evaluate test set: metric = %0.3f" % NDCG_mean_test)
 
-            # evaluate validation and test sets performance
-            if self._hyperparams['eval_valid_in_iters']:
-                NDCG_mean_valid, NDCG_queries_valid = self.eval(dataSet="validation")
-                outputData.append(NDCG_mean_valid)
-                outputLine += ", valid metric = %0.3f" % NDCG_mean_valid
-                logging.debug("Evaluate validation set: metric = %0.3f" % NDCG_mean_valid)
-            if self._hyperparams['eval_test_in_iters']:
-                NDCG_mean_test, NDCG_queries_test = self.eval(dataSet="test")
-                outputData.append(NDCG_mean_test)
-                outputLine += ", test metric = %0.3f" % NDCG_mean_test
-                logging.debug("Evaluate test set: metric = %0.3f" % NDCG_mean_test)
+                # print iteration results
+                outputData.extend(list(self.agent.theta))
+                outputData = [str(d) for d in outputData]
+                output_file.write('\t'.join(outputData) + '\n')
 
-            # print iteration results
-            outputData.extend(list(self.agent.theta))
-            outputData = [str(d) for d in outputData]
-            output_file.write('\t'.join(outputData) + '\n')
+                # if self._hyperparams['verbose']:
+                print(outputLine)
 
-            # if self._hyperparams['verbose']:
-            print(outputLine)
-
-            if 'update_by' in self._hyperparams and self._hyperparams['update_by'] == 'batch':
-                self.update_policy(delta_theta)
-                delta_theta = np.zeros(self.agent.nParam)
+                if 'update_by' in self._hyperparams and self._hyperparams['update_by'] == 'batch':
+                    self.update_policy(delta_theta)
+                    delta_theta = np.zeros(self.agent.nParam)
+            output_file.close()
 
         out_theta = self.agent.theta
 
