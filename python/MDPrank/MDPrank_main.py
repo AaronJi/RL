@@ -54,6 +54,7 @@ class MDPrankMain(object):
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
 
+        '''
         def append_sample_suffix(path, sample_suffix):
             if sample_suffix is None or len(sample_suffix) == 0:
                 return path
@@ -63,8 +64,8 @@ class MDPrankMain(object):
             else:
                 return '.'.join(path_arg[:-1]) + sample_suffix + '.' + path_arg[-1]
 
-        #self.train_outputPath = os.path.join(output_dir, append_sample_suffix(args.train_output, self.sample))
-
+        self.train_outputPath = os.path.join(output_dir, append_sample_suffix(args.train_output, self.sample))        
+        '''
         self.train_outputPath = os.path.join(output_dir, args.train_output)
         self.valid_outputPath = os.path.join(output_dir, args.valid_output)
         self.test_outputPath = os.path.join(output_dir, args.test_output)
@@ -77,23 +78,20 @@ class MDPrankMain(object):
         ## init data
         self.datadealer = LectorDataDealer(self.hyperparams.DATAconfig)
         if data is None:
+            nQuery_sample = None
+
             data_dir = os.path.join(project_dir, 'data')
             #data_dir = None
             time0 = datetime.datetime.now()
-            trainingData = self.load_data(args.training_set, path_prefix=data_dir, nQuery_sample=None)
-            validationData = self.load_data(args.training_set, path_prefix=data_dir, nQuery_sample=None)
-            testData = self.load_data(args.training_set, path_prefix=data_dir, nQuery_sample=None)
+            trainingData = self.load_data(args.training_set, path_prefix=data_dir, nQuery_sample=nQuery_sample)
+            validationData = self.load_data(args.training_set, path_prefix=data_dir, nQuery_sample=nQuery_sample)
+            testData = self.load_data(args.training_set, path_prefix=data_dir, nQuery_sample=nQuery_sample)
             print("data read, %0.2fs used" % ((datetime.datetime.now() - time0).total_seconds()))
 
             self.nTheta = self.datadealer.nFeature
         else:
             trainingData, validationData, testData = data
             self.nTheta = len(trainingData[trainingData.keys()[0]][trainingData[trainingData.keys()[0]].keys()[0]][0])
-
-        logging.info(
-            "%d train data, %d validation data, %d test data" % (len(trainingData), len(validationData), len(testData)))
-        if self.hyperparams.config['verbose']:
-            print("%d train data, %d validation data, %d test data" % (len(trainingData), len(validationData), len(testData)))
 
         dump = False
         if dump:
@@ -106,6 +104,11 @@ class MDPrankMain(object):
             self.datadealer.dump_pickle(data, os.path.join(trainingData, "trainingData.pkl"))
             self.datadealer.dump_pickle(data, os.path.join(validationData, "validationData.pkl"))
             self.datadealer.dump_pickle(data, os.path.join(testData, "testData.pkl"))
+
+        logging.info("%d train data, %d validation data, %d test data" % (len(trainingData), len(validationData), len(testData)))
+        if self.hyperparams.config['verbose']:
+            print("%d train data, %d validation data, %d test data" % (len(trainingData), len(validationData), len(testData)))
+
 
         ## init environment module
         env = MDPrankEnvironment(self.hyperparams.ENVconfig, self.datadealer)
