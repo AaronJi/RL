@@ -30,12 +30,7 @@ class RecDataDealer(DataDealer):
                         if len(feature_name) > 0 :
                             self.nFeature += 1
                             self.feature_names.append(feature_name)
-
-                    # if there is an intercept in the linear model, add a dummy feature to match the intercept
-                    if 'with_linear_intercept' in self._hyperparams and self._hyperparams['with_linear_intercept']:
-                        self.nFeature += 1
-                        self.feature_names.append('dummy_intercept')
-                file.close()
+                    file.close()
             except:
                 print("error: feature file can not read")
                 sys.exit(1)
@@ -65,6 +60,11 @@ class RecDataDealer(DataDealer):
             print("error: data file can not read")
             sys.exit(1)
 
+        # if there is an intercept in the linear model, add a dummy feature to match the intercept
+        if 'with_linear_intercept' in self._hyperparams and self._hyperparams['with_linear_intercept']:
+            self.nFeature += 1
+            self.feature_names.append('dummy_intercept')
+            
         # if required, normalize the feature vectors according to min and max of each query results
         if self._hyperparams['normalization']:
             data = self.data_normalize_by_column(data)
