@@ -16,7 +16,7 @@ sys.path.append(src_dir)
 from RLutils.algorithm.ALGconfig import ALGconfig
 from RLutils.algorithm.policy_gradient import cal_policy_gradient, cal_longterm_ret, cal_longterm_ret_episode
 from RLutils.algorithm.Optimizer import Optimizer
-from RLutils.algorithm.utils import softmax, softmax_power, scaler
+from RLutils.algorithm.utils import softmax, softmax_power, scaler, sort_dict_by_value
 from RLutils.environment.rankMetric import NDCG
 
 class MDPrankAlg(object):
@@ -362,20 +362,45 @@ class MDPrankAlg(object):
 
         return NDCG_mean, NDCG_queries
 
+    def predict_listwise(self, dataSet="test"):
+        predict_result = []
+
+        queryList = self.env.getQueries(dataSet)
+        logging.debug("#### start prediction, totally %d queries" % len(queryList))
+
+        for query in queryList:
+            queryResult = self.env.getQueryResult(query, dataSet)
+            queryPred = {}
+            for item in queryResult:
+                candidate = queryResult[item]
+                score = self.agent.score_pointwise(candidate[0])
+                queryPred[item] = score
+
+            queryPred_sorted = sort_dict_by_value(queryPred)
+
+            rec_list = query + ' '
+            for item, score in queryPred_sorted:
+                rec_list += item + '=%0.3f|' % score
+            if len(rec_list) > 0:
+                rec_list = rec_list[:-1]
+
+            predict_result.append(rec_list)
+        return predict_result
+
+
     def predict_pointwise(self, dataSet="test"):
         predict_result = []
 
         queryList = self.env.getQueries(dataSet)
-        logging.debug("#### start evaluation, totally %d queries" % len(queryList))
+        logging.debug("#### start prediction, totally %d queries" % len(queryList))
 
-        NDCG_queries = np.zeros(len(queryList))
         for query in queryList:
             queryResult = self.env.getQueryResult(query, dataSet)
             for item in queryResult:
                 candidate = queryResult[item]
                 score = self.agent.score_pointwise(candidate[0])
 
-                predict_result.append([query, item, str(score)])
+                predict_result.append('\t'.join([query, item, str(score)]))
         return predict_result
 
     # the long-term return of the sampled episode starting from t, Equation (3)

@@ -45,3 +45,13 @@ def scaler(theta, scale_way):
         return minMaxScale(theta)
 
     return theta
+
+def get_dict_subset(d, sub_key_list):
+    return {k: v for k, v in d.items() if k in sub_key_list}
+
+def sort_dict_by_value(d, reverse=True):
+    #d = sorted(d.items(), key=lambda x: x[1], reverse=reverse)
+
+    import operator
+    d = sorted(d.items(), key=operator.itemgetter(1), reverse=reverse)
+    return d

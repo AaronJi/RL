@@ -218,8 +218,11 @@ class MDPrankMain(object):
         NDCG_mean, NDCG_queries = self.alg.eval(dataSet=dataSet)
         return NDCG_mean
 
-    def predict_pointwise(self, dataSet="test"):
-        predict_result = self.alg.predict_pointwise(dataSet=dataSet)
+    def predict(self, dataSet="test"):
+        if self.hyperparams.ALGconfig['predict_syntax'] == 'listwise':
+            predict_result = self.alg.predict_listwise(dataSet=dataSet)
+        else:
+            predict_result = self.alg.predict_pointwise(dataSet=dataSet)
         return predict_result
 
 def safe_len(data):
@@ -283,11 +286,11 @@ def main():
         learn(args, out_theta=args.param_out, batch_size=batch_size, nSamples=nLearner)
 
     if args.mode == "predict":
-        pointwise_predict(args)
+        predict(args)
 
     return
 
-def pointwise_predict(args):
+def predict(args):
     # path to store experimental data
     output_dir = os.path.join(project_dir, "experiments", args.experiment, "data_files")
     if len(args.folder) > 0:
@@ -296,9 +299,8 @@ def pointwise_predict(args):
     # a dummy object in order to read data
     predictor = MDPrankMain(args)
 
-    predict_result = predictor.predict_pointwise(dataSet="test")
+    predict_result = predictor.predict(dataSet="test")
 
-    predict_result = ['\t'.join(result) for result in predict_result]
     output_path = os.path.join(output_dir, args.test_output)
     write_vector(predict_result, output_path)
 

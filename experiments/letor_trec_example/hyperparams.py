@@ -20,7 +20,8 @@ ALGconfig = {
     'eval_valid_in_iters': True,
     'eval_test_in_iters': True,
     'fast_cal': True,
-    "softmax_power": 1
+    "softmax_power": 1,
+    'predict_syntax': 'listwise'  # listwise, pointwise
 }
 
 AGEconfig = {
