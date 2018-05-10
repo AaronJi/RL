@@ -15,11 +15,35 @@ from RLutils.algorithm.utils import softmax, softmax_power
 
 class MDPrankAgent(Agent):
 
-    def __init__(self, hyperparams, theta0):
+    def __init__(self, hyperparams, theta0=None):
         super(MDPrankAgent, self).__init__(hyperparams)
-        self.theta = theta0
-        self.nParam = len(theta0)
+        if theta0 is None:
+            self.theta = None
+            self.nParam = 0
+        else:
+            self.theta = theta0
+            self.nParam = len(theta0)
         return
+
+
+    def load_policy(self, policy_path):
+        # read theta from file
+        try:
+            with open(policy_path, "r") as file:
+                theta0 = []
+                lines = file.readlines()
+
+                for line in lines:
+                    v = line.rstrip('\n').rstrip('\r')
+                    theta0.append(float(v))
+                file.close()
+
+                self.nParam = len(theta0)
+                self.theta = np.array(theta0)
+        except:
+            pass
+        return
+
 
     # perform an action according to the policy, given the current state
     # can be provided with a pre-calculated policy pi to improve the speed
@@ -101,4 +125,8 @@ class MDPrankAgent(Agent):
             h_dict.update({i: h})
 
         return h_dict
+
+    # predit a single score
+    def score_pointwise(self, x):
+        return np.exp(np.dot(self.theta, x))
 

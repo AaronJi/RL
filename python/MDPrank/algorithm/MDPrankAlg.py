@@ -362,6 +362,22 @@ class MDPrankAlg(object):
 
         return NDCG_mean, NDCG_queries
 
+    def predict_pointwise(self, dataSet="test"):
+        predict_result = []
+
+        queryList = self.env.getQueries(dataSet)
+        logging.debug("#### start evaluation, totally %d queries" % len(queryList))
+
+        NDCG_queries = np.zeros(len(queryList))
+        for query in queryList:
+            queryResult = self.env.getQueryResult(query, dataSet)
+            for item in queryResult:
+                candidate = queryResult[item]
+                score = self.agent.score_pointwise(candidate[0])
+
+                predict_result.append([query, item, str(score)])
+        return predict_result
+
     # the long-term return of the sampled episode starting from t, Equation (3)
     def calLongTermReturn(self, episode, t):
         Gt = 0.0

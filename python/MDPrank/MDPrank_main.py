@@ -21,8 +21,9 @@ from agent.MDPrankAgent import MDPrankAgent
 from environment.MDPrankEnvironment import MDPrankEnvironment
 
 class MDPrankMain(object):
+
     """ Main class to run algorithms and experiments. """
-    def __init__(self, args, init=None, data=None):
+    def __init__(self, args, data=None):
         """
         Initialize MDPrank Main
         Args:
@@ -81,11 +82,19 @@ class MDPrankMain(object):
             nQuery_sample = None
 
             data_dir = os.path.join(project_dir, 'data')
-            #data_dir = None
             time0 = datetime.datetime.now()
-            trainingData = self.load_data(args.training_set, path_prefix=data_dir, nQuery_sample=nQuery_sample)
-            validationData = self.load_data(args.training_set, path_prefix=data_dir, nQuery_sample=nQuery_sample)
-            testData = self.load_data(args.training_set, path_prefix=data_dir, nQuery_sample=nQuery_sample)
+            if len(args.training_set) > 0:
+                trainingData = self.load_data(args.training_set, path_prefix=data_dir, nQuery_sample=nQuery_sample)
+            else:
+                trainingData = None
+            if len(args.valid_set) > 0:
+                validationData = self.load_data(args.valid_set, path_prefix=data_dir, nQuery_sample=nQuery_sample)
+            else:
+                validationData = None
+            if len(args.test_set) > 0:
+                testData = self.load_data(args.test_set, path_prefix=data_dir, nQuery_sample=nQuery_sample)
+            else:
+                testData = None
             print("data read, %0.2fs used" % ((datetime.datetime.now() - time0).total_seconds()))
 
             self.nTheta = self.datadealer.nFeature
@@ -105,9 +114,9 @@ class MDPrankMain(object):
             self.datadealer.dump_pickle(data, os.path.join(validationData, "validationData.pkl"))
             self.datadealer.dump_pickle(data, os.path.join(testData, "testData.pkl"))
 
-        logging.info("%d train data, %d validation data, %d test data" % (len(trainingData), len(validationData), len(testData)))
+        logging.info("%d train data, %d validation data, %d test data" % (safe_len(trainingData), safe_len(validationData), safe_len(testData)))
         if self.hyperparams.config['verbose']:
-            print("%d train data, %d validation data, %d test data" % (len(trainingData), len(validationData), len(testData)))
+            print("%d train data, %d validation data, %d test data" % (safe_len(trainingData), safe_len(validationData), safe_len(testData)))
 
 
         ## init environment module
@@ -122,9 +131,9 @@ class MDPrankMain(object):
 
         ## init agent module
         theta0 = np.zeros(self.nTheta)
-        if init is None or init == "zero":
+        if args.param_init is None or args.param_init == "zero":
             pass
-        elif init == "random":
+        elif args.param_init == "random":
             # the initial parameter of agent, with range [-1, 1]
             theta0 = np.random.rand(self.nTheta) * 2 - 1
 
@@ -138,7 +147,7 @@ class MDPrankMain(object):
         else:
             # read theta from file
             try:
-                read_theta = os.path.join(output_dir, init)
+                read_theta = os.path.join(output_dir, args.param_init)
 
                 with open(read_theta, "r") as file:
                     theta0 = []
@@ -156,9 +165,9 @@ class MDPrankMain(object):
                 print("WARNING: fail to read initial parameter from file!")
 
         logging.info("init param: " + ','.join([str(th) for th in theta0]))
-        if self.hyperparams.config['verbose']:
-            print("init param:")
-            print(theta0)
+        #if self.hyperparams.config['verbose']:
+        print("init param:")
+        print(theta0)
 
         agent = MDPrankAgent(self.hyperparams.AGEconfig, theta0)
 
@@ -205,11 +214,19 @@ class MDPrankMain(object):
 
         return out_theta
 
-
     def eval(self, dataSet="test"):
         NDCG_mean, NDCG_queries = self.alg.eval(dataSet=dataSet)
         return NDCG_mean
 
+    def predict_pointwise(self, dataSet="test"):
+        predict_result = self.alg.predict_pointwise(dataSet=dataSet)
+        return predict_result
+
+def safe_len(data):
+    if data is None:
+        return 0
+    else:
+        return len(data)
 
 def main():
     """ Main function to be run. """
@@ -217,13 +234,13 @@ def main():
     parser = argparse.ArgumentParser(description='Run the MDP rank algorithm.')
 
     parser.add_argument('experiment', type=str, help='experiment name')
+    parser.add_argument('--mode', type=str, default="train", help='study mode')
 
-    # TD2003/Fold1
-    parser.add_argument('--training_set', type=str, default="Letor/OHSUMED/Data/Fold1/trainingset.txt",
+    parser.add_argument('--training_set', type=str, default="",
                         help='training set')
-    parser.add_argument('--valid_set', type=str, default="Letor/OHSUMED/Data/Fold1/validationset.txt",
+    parser.add_argument('--valid_set', type=str, default="",
                         help='validation set')
-    parser.add_argument('--test_set', type=str, default="Letor/OHSUMED/Data/Fold1/testset.txt",
+    parser.add_argument('--test_set', type=str, default="",
                         help='test set')
 
     parser.add_argument('--test_output', type=str, default="testoutput.txt",
@@ -248,113 +265,57 @@ def main():
 
     args = parser.parse_args()
 
-    try:
-        batch_size = int(args.batch_size)
-    except:
-        batch_size = -1
+    if args.mode == "train":
+        try:
+            batch_size = int(args.batch_size)
+        except:
+            batch_size = -1
 
-    try:
-        nLearner = int(args.nLearner)
-    except:
-        nLearner = 1
+        try:
+            nLearner = int(args.nLearner)
+        except:
+            nLearner = 1
 
-    if nLearner <= 0:
-        nLearner = 1
+        if nLearner <= 0:
+            nLearner = 1
 
-    print("batch size = %d, number of learners = %d" % (batch_size, nLearner))
-    learn(args, init_theta="random", out_theta=args.param_out, batch_size=batch_size, nSamples=nLearner)
+        print("batch size = %d, number of learners = %d" % (batch_size, nLearner))
+        learn(args, out_theta=args.param_out, batch_size=batch_size, nSamples=nLearner)
 
-    '''
-    if nLearner > 1:
-        multiLearn(args, nLearner=nLearner, init_theta=args.param_init, out_theta=args.param_out)
-    else:
-        singleLearn(args, init_theta=args.param_init, out_theta=args.param_out)    
-    '''
+    if args.mode == "predict":
+        pointwise_predict(args)
 
     return
 
-'''
-def singleLearn(args, init_theta="random", out_theta=None):
-
-    # path to store experimental data
-    output_dir = os.path.join(project_dir, "experiments", args.experiment, "data_files")
-    if len(args.folder) > 0:
-        output_dir = os.path.join(output_dir, args.folder)
-
-    mdprank = MDPrankMain(args, init=init_theta)
-
-    theta_new = mdprank.learn()
-    if out_theta is not None:
-        output_path = os.path.join(output_dir, out_theta)
-        write_vector(theta_new, output_path)
-
-    time0 = datetime.datetime.now()
-    NDCG_mean = mdprank.eval(dataSet="validation")
-    logging.info("Evaluation: averaged NDCG of validation set = %0.3f" % NDCG_mean)
-    print("Evaluation: averaged NDCG of validation set = %0.3f" % NDCG_mean)
-    logging.info("%ds used" % ((datetime.datetime.now() - time0).total_seconds()))
-    print("%ds used" % ((datetime.datetime.now() - time0).total_seconds()))
-
-    time0 = datetime.datetime.now()
-    NDCG_mean = mdprank.eval(dataSet="test")
-    logging.info("Evaluation: averaged NDCG of test set = %0.3f" % NDCG_mean)
-    print("Evaluation: averaged NDCG of test set = %0.3f" % NDCG_mean)
-    logging.info("%ds used" % ((datetime.datetime.now() - time0).total_seconds()))
-    print("%ds used" % ((datetime.datetime.now() - time0).total_seconds()))
-
-    return
-    
-def multiLearn(args, nLearner=1, init_theta="random", out_theta=None):
+def pointwise_predict(args):
     # path to store experimental data
     output_dir = os.path.join(project_dir, "experiments", args.experiment, "data_files")
     if len(args.folder) > 0:
         output_dir = os.path.join(output_dir, args.folder)
 
     # a dummy object in order to read data
-    dataReader = MDPrankMain(args, init=init_theta)
-    data = (dataReader.alg.env.data, dataReader.alg.env.validData, dataReader.alg.env.testData)
+    predictor = MDPrankMain(args)
 
-    learners = list()
-    metric_valid = np.zeros(nLearner)
-    metric_test = np.zeros(nLearner)
+    predict_result = predictor.predict_pointwise(dataSet="test")
 
-    theta_new_list = list()
-    for i in range(nLearner):
-        learners.append(MDPrankMain(args, init=init_theta, data=data, sample=i))
-        theta_new = learners[i].learn()
-        #output_path = output_dir + "theta1_" + str(i) + ".txt"
-        #write_vector(theta_new, output_path)
-        theta_new_list.append(theta_new)
-
-        metric_valid[i] = learners[i].eval(dataSet="validation")
-        metric_test[i] = learners[i].eval(dataSet="test")
-
-    if out_theta is not None:
-        output_path = os.path.join(output_dir, out_theta)
-        write_vector(np.mean(np.array(theta_new_list), axis=0), output_path)
-
-    logging.info("Evaluation: averaged metric of validation set = %0.3f" % np.mean(metric_valid))
-    print("Evaluation: averaged metric of validation set = %0.3f" % np.mean(metric_valid))
-    print("Evaluation: averaged metric of test set = %0.3f" % np.mean(metric_test))
-    write_vector(metric_valid, output_dir + "metric_valid.txt")
-    write_vector(metric_test, output_dir + "metric_test.txt")
+    predict_result = ['\t'.join(result) for result in predict_result]
+    output_path = os.path.join(output_dir, args.test_output)
+    write_vector(predict_result, output_path)
 
     return
-    
-'''
 
-def learn(args, init_theta="random", out_theta=None, batch_size=10, nSamples=1):
+def learn(args, out_theta=None, batch_size=10, nSamples=1):
     # path to store experimental data
     output_dir = os.path.join(project_dir, "experiments", args.experiment, "data_files")
     if len(args.folder) > 0:
         output_dir = os.path.join(output_dir, args.folder)
 
     # a dummy object in order to read data
-    dataReader = MDPrankMain(args, init=init_theta)
+    dataReader = MDPrankMain(args)
     data = (dataReader.alg.env.data, dataReader.alg.env.validData, dataReader.alg.env.testData)
     dataReader.datadealer.set_batched_data(data[0], batch_size)
 
-    mdprank = MDPrankMain(args, init=init_theta, data=data)
+    mdprank = MDPrankMain(args, data=data)
     if batch_size is None or batch_size <= 0:
         theta_new = mdprank.learn()
     else:
@@ -368,19 +329,21 @@ def learn(args, init_theta="random", out_theta=None, batch_size=10, nSamples=1):
         output_path = os.path.join(output_dir, out_theta)
         write_vector(theta_new, output_path)
 
-    time0 = datetime.datetime.now()
-    NDCG_mean = mdprank.eval(dataSet="validation")
-    logging.info("Evaluation: averaged NDCG of validation set = %0.3f" % NDCG_mean)
-    print("Evaluation: averaged NDCG of validation set = %0.3f" % NDCG_mean)
-    logging.info("%ds used" % ((datetime.datetime.now() - time0).total_seconds()))
-    print("%ds used" % ((datetime.datetime.now() - time0).total_seconds()))
+    if len(args.valid_set) > 0:
+        time0 = datetime.datetime.now()
+        NDCG_mean = mdprank.eval(dataSet="validation")
+        logging.info("Evaluation: averaged NDCG of validation set = %0.3f" % NDCG_mean)
+        print("Evaluation: averaged NDCG of validation set = %0.3f" % NDCG_mean)
+        logging.info("%ds used" % ((datetime.datetime.now() - time0).total_seconds()))
+        print("%ds used" % ((datetime.datetime.now() - time0).total_seconds()))
 
-    time0 = datetime.datetime.now()
-    NDCG_mean = mdprank.eval(dataSet="test")
-    logging.info("Evaluation: averaged NDCG of test set = %0.3f" % NDCG_mean)
-    print("Evaluation: averaged NDCG of test set = %0.3f" % NDCG_mean)
-    logging.info("%ds used" % ((datetime.datetime.now() - time0).total_seconds()))
-    print("%ds used" % ((datetime.datetime.now() - time0).total_seconds()))
+    if len(args.test_set) > 0:
+        time0 = datetime.datetime.now()
+        NDCG_mean = mdprank.eval(dataSet="test")
+        logging.info("Evaluation: averaged NDCG of test set = %0.3f" % NDCG_mean)
+        print("Evaluation: averaged NDCG of test set = %0.3f" % NDCG_mean)
+        logging.info("%ds used" % ((datetime.datetime.now() - time0).total_seconds()))
+        print("%ds used" % ((datetime.datetime.now() - time0).total_seconds()))
 
     return
 

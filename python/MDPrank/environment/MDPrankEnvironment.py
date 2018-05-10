@@ -78,7 +78,13 @@ class MDPrankEnvironment(RankEnvironment):
 
         return RecDataDealer.getQueryData(self.data, query)
 
+    def getQueryResult(self, query, mode="train"):
+        if mode == "validation":
+            return RecDataDealer.getQueryResult(self.validData, query)
+        if mode == "test":
+            return RecDataDealer.getQueryResult(self.testData, query)
 
+        return RecDataDealer.getQueryResult(self.data, query)
 
 
 

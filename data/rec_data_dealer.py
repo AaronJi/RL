@@ -64,7 +64,7 @@ class RecDataDealer(DataDealer):
         if 'with_linear_intercept' in self._hyperparams and self._hyperparams['with_linear_intercept']:
             self.nFeature += 1
             self.feature_names.append('dummy_intercept')
-            
+
         # if required, normalize the feature vectors according to min and max of each query results
         if self._hyperparams['normalization']:
             data = self.data_normalize_by_column(data)
@@ -202,6 +202,13 @@ class RecDataDealer(DataDealer):
     def getQueryData(data, uid):
         try:
             return [data[uid][iid] for iid in data[uid]]
+        except KeyError:
+            return None
+
+    @staticmethod
+    def getQueryResult(data, uid):
+        try:
+            return data[uid]
         except KeyError:
             return None
 
