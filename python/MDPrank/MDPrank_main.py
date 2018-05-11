@@ -184,7 +184,6 @@ class MDPrankMain(object):
         if path_prefix is not None:
             data_path = os.path.join(path_prefix, data_path)
 
-
         if data_path.split('.')[-1] == 'pkl':
             data_raw = self.datadealer.load_pickle(data_path)
         else:
@@ -219,7 +218,7 @@ class MDPrankMain(object):
         return NDCG_mean
 
     def predict(self, dataSet="test"):
-        if self.hyperparams.ALGconfig['predict_syntax'] == 'listwise':
+        if 'predict_syntax' in self.hyperparams.ALGconfig and self.hyperparams.ALGconfig['predict_syntax'] == 'listwise':
             predict_result = self.alg.predict_listwise(dataSet=dataSet)
         else:
             predict_result = self.alg.predict_pointwise(dataSet=dataSet)
