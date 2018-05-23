@@ -45,6 +45,9 @@ class RecDataDealer(DataDealer):
 
                 for line in lines:
                     uid, iid, label, feature_vec = self.parse_rec_line(line.rstrip('\n').rstrip('\r'))
+                    if uid is None or iid is None or label is None or feature_vec is None:
+                        continue
+                    
                     # if there is an intercept in the linear model, add a dummy feature to match the intercept
                     if 'with_linear_intercept' in self._hyperparams and self._hyperparams['with_linear_intercept']:
                         feature_vec = np.hstack((feature_vec, np.array([1])))
@@ -120,6 +123,7 @@ class RecDataDealer(DataDealer):
 
                 feature_vec[iFeature] = vFeature
         except:
+            print("warning: fail to parse the line: " + line)
             return None
 
         return uid, iid, label, feature_vec

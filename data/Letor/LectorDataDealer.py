@@ -73,7 +73,7 @@ class LectorDataDealer(RecDataDealer):
                         data[qid][docid] = (feature_vec, label)
 
                 except:
-                    print("Unexpected error:", sys.exc_info()[0])
+                    print("Unexpected error: %s, line = %s" % (sys.exc_info()[0], line))
 
             # if required, normalize the feature vectors according to min and max of each query results
             if self._hyperparams['normalization']:
