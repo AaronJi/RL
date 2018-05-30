@@ -10,7 +10,8 @@ w_grad_a_with_s: the direction of param which most increases the possibility of 
 import numpy as np
 
 def cal_policy_gradient(t, Gt, discount, w_grad_a_with_s):
-    delta_w = discount**t*Gt*w_grad_a_with_s
+    #delta_w = discount**t*Gt*w_grad_a_with_s  # paper may have bug?
+    delta_w = Gt*w_grad_a_with_s
     return delta_w
 
 def cal_longterm_ret(rewards, t, discount, t_end=None):
@@ -24,7 +25,6 @@ def cal_longterm_ret(rewards, t, discount, t_end=None):
         discount_rt = discount_rt*discount
     return Gt
 
-
 def cal_longterm_ret_episode(rewards, discount):
 
     nT = len(rewards)
@@ -37,7 +37,6 @@ def cal_longterm_ret_episode(rewards, discount):
             Gt_episode[t] = rewards[t] + discount*Gt_episode[t+1]
 
     return Gt_episode
-
 
 
 if __name__ == "__main__":

@@ -378,7 +378,7 @@ class MDPrankAlg(object):
 
             queryPred_sorted = sort_dict_by_value(queryPred)
 
-            rec_list = query + ' '
+            rec_list = self._hyperparams['predict_prefix'] + ' ' + query + ' '
             for item, score in queryPred_sorted:
                 rec_list += item + '=%0.3f|' % score
             if len(rec_list) > 0:
@@ -402,18 +402,6 @@ class MDPrankAlg(object):
 
                 predict_result.append('\t'.join([query, item, str(score)]))
         return predict_result
-
-    # the long-term return of the sampled episode starting from t, Equation (3)
-    def calLongTermReturn(self, episode, t):
-        Gt = 0.0
-
-        discount_rt = 1.0
-        for k in range(t, len(episode)):
-            rk = episode[k][2]
-            Gt += discount_rt*rk
-            discount_rt = discount_rt*self._hyperparams["discount"]
-        return Gt
-
 
     # the direction that most increase the probability of repeating the action on future visits to state, Equation (4)
     def calGradParam(self, state, action):
