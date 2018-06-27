@@ -15,7 +15,7 @@ from RLutils.agent.Agent import Agent
 
 class ADP_scheduling_agent(Agent):
 
-    def __init__(self, hyperparams, T, n):
+    def __init__(self, hyperparams, T, n, nR):
         super(ADP_scheduling_agent, self).__init__(hyperparams)
 
         # initialize the value function
@@ -28,7 +28,7 @@ class ADP_scheduling_agent(Agent):
             vLen = np.zeros((1, n * self._hyperparams['tau_max']))
             for tau in range(self._hyperparams['tau_max']):
                 for i in range(n):
-                    vLen[0, tau*n+i] = self.Rmax[i]
+                    vLen[0, tau*n+i] = nR+1
             self.Qfun['vT'][t] = v
             self.Qfun['vLenT'][t] = vLen
             for tau in range(self._hyperparams['tau_max']):

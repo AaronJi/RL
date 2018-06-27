@@ -67,7 +67,7 @@ def main():
     env.setTrainData((time_space_info, init_resource, task))
     env.setTestData((time_space_info, init_resource, task))
 
-    age = ADP_scheduling_agent(hyperparams.AGEconfig, T, n)
+    age = ADP_scheduling_agent(hyperparams.AGEconfig, T, n, nR)
 
 
 

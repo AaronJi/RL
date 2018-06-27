@@ -1,0 +1,1042 @@
+[
+    {
+        "distance": 1.0, 
+        "dest": "0", 
+        "time": 1, 
+        "start": "4", 
+        "income": 5.813101271838252, 
+        "duration": 1.0
+    }, 
+    {
+        "distance": 3.605551275463989, 
+        "dest": "4", 
+        "time": 2, 
+        "start": "15", 
+        "income": 4.770749370839392, 
+        "duration": 4.0
+    }, 
+    {
+        "distance": 1.0, 
+        "dest": "7", 
+        "time": 2, 
+        "start": "3", 
+        "income": 5.067310832194881, 
+        "duration": 1.0
+    }, 
+    {
+        "distance": 1.4142135623730951, 
+        "dest": "14", 
+        "time": 4, 
+        "start": "11", 
+        "income": 5.206498837211064, 
+        "duration": 1.0
+    }, 
+    {
+        "distance": 2.0, 
+        "dest": "11", 
+        "time": 4, 
+        "start": "9", 
+        "income": 5.614957315693557, 
+        "duration": 2.0
+    }, 
+    {
+        "distance": 2.23606797749979, 
+        "dest": "2", 
+        "time": 6, 
+        "start": "4", 
+        "income": 6.429660766475095, 
+        "duration": 2.0
+    }, 
+    {
+        "distance": 4.242640687119285, 
+        "dest": "3", 
+        "time": 6, 
+        "start": "12", 
+        "income": 4.490347818248346, 
+        "duration": 4.0
+    }, 
+    {
+        "distance": 1.0, 
+        "dest": "11", 
+        "time": 6, 
+        "start": "7", 
+        "income": 4.561925698388814, 
+        "duration": 1.0
+    }, 
+    {
+        "distance": 2.8284271247461903, 
+        "dest": "6", 
+        "time": 6, 
+        "start": "12", 
+        "income": 3.4929039764649996, 
+        "duration": 3.0
+    }, 
+    {
+        "distance": 1.0, 
+        "dest": "9", 
+        "time": 6, 
+        "start": "8", 
+        "income": 6.149076125381565, 
+        "duration": 1.0
+    }, 
+    {
+        "distance": 1.0, 
+        "dest": "6", 
+        "time": 7, 
+        "start": "2", 
+        "income": 6.11971196218896, 
+        "duration": 1.0
+    }, 
+    {
+        "distance": 2.0, 
+        "dest": "13", 
+        "time": 7, 
+        "start": "5", 
+        "income": 4.542077579596097, 
+        "duration": 2.0
+    }, 
+    {
+        "distance": 2.0, 
+        "dest": "9", 
+        "time": 7, 
+        "start": "11", 
+        "income": 5.42539339846965, 
+        "duration": 2.0
+    }, 
+    {
+        "distance": 1.4142135623730951, 
+        "dest": "2", 
+        "time": 7, 
+        "start": "5", 
+        "income": 4.97202881653022, 
+        "duration": 1.0
+    }, 
+    {
+        "distance": 2.0, 
+        "dest": "3", 
+        "time": 7, 
+        "start": "11", 
+        "income": 4.6356656880656875, 
+        "duration": 2.0
+    }, 
+    {
+        "distance": 1.4142135623730951, 
+        "dest": "6", 
+        "time": 7, 
+        "start": "9", 
+        "income": 4.321222610545219, 
+        "duration": 1.0
+    }, 
+    {
+        "distance": 1.0, 
+        "dest": "6", 
+        "time": 7, 
+        "start": "10", 
+        "income": 5.619801063322814, 
+        "duration": 1.0
+    }, 
+    {
+        "distance": 2.23606797749979, 
+        "dest": "14", 
+        "time": 7, 
+        "start": "8", 
+        "income": 6.7911684612099155, 
+        "duration": 2.0
+    }, 
+    {
+        "distance": 3.1622776601683795, 
+        "dest": "8", 
+        "time": 7, 
+        "start": "15", 
+        "income": 5.160658540348122, 
+        "duration": 3.0
+    }, 
+    {
+        "distance": 1.0, 
+        "dest": "3", 
+        "time": 8, 
+        "start": "2", 
+        "income": 4.141014679369958, 
+        "duration": 1.0
+    }, 
+    {
+        "distance": 2.23606797749979, 
+        "dest": "15", 
+        "time": 8, 
+        "start": "9", 
+        "income": 5.999829693250188, 
+        "duration": 2.0
+    }, 
+    {
+        "distance": 3.605551275463989, 
+        "dest": "15", 
+        "time": 8, 
+        "start": "1", 
+        "income": 5.431034149203405, 
+        "duration": 4.0
+    }, 
+    {
+        "distance": 1.4142135623730951, 
+        "dest": "2", 
+        "time": 8, 
+        "start": "7", 
+        "income": 3.769365030791592, 
+        "duration": 1.0
+    }, 
+    {
+        "distance": 2.0, 
+        "dest": "6", 
+        "time": 8, 
+        "start": "4", 
+        "income": 5.194007191443978, 
+        "duration": 2.0
+    }, 
+    {
+        "distance": 1.0, 
+        "dest": "6", 
+        "time": 8, 
+        "start": "10", 
+        "income": 4.457636418686713, 
+        "duration": 1.0
+    }, 
+    {
+        "distance": 3.1622776601683795, 
+        "dest": "15", 
+        "time": 8, 
+        "start": "2", 
+        "income": 3.280327621367735, 
+        "duration": 3.0
+    }, 
+    {
+        "distance": 1.0, 
+        "dest": "6", 
+        "time": 8, 
+        "start": "2", 
+        "income": 5.8111602704819925, 
+        "duration": 1.0
+    }, 
+    {
+        "distance": 2.0, 
+        "dest": "5", 
+        "time": 8, 
+        "start": "7", 
+        "income": 5.287794613106358, 
+        "duration": 2.0
+    }, 
+    {
+        "distance": 2.23606797749979, 
+        "dest": "6", 
+        "time": 8, 
+        "start": "0", 
+        "income": 3.9292473784894577, 
+        "duration": 2.0
+    }, 
+    {
+        "distance": 3.0, 
+        "dest": "7", 
+        "time": 8, 
+        "start": "4", 
+        "income": 6.054451726931137, 
+        "duration": 3.0
+    }, 
+    {
+        "distance": 4.242640687119285, 
+        "dest": "12", 
+        "time": 8, 
+        "start": "3", 
+        "income": 5.973598712281148, 
+        "duration": 4.0
+    }, 
+    {
+        "distance": 2.0, 
+        "dest": "12", 
+        "time": 8, 
+        "start": "14", 
+        "income": 5.207282772434764, 
+        "duration": 2.0
+    }, 
+    {
+        "distance": 1.0, 
+        "dest": "15", 
+        "time": 8, 
+        "start": "14", 
+        "income": 4.009839857489672, 
+        "duration": 1.0
+    }, 
+    {
+        "distance": 1.4142135623730951, 
+        "dest": "10", 
+        "time": 8, 
+        "start": "15", 
+        "income": 6.872394078525924, 
+        "duration": 1.0
+    }, 
+    {
+        "distance": 3.605551275463989, 
+        "dest": "7", 
+        "time": 8, 
+        "start": "12", 
+        "income": 4.179136170734827, 
+        "duration": 4.0
+    }, 
+    {
+        "distance": 3.0, 
+        "dest": "14", 
+        "time": 9, 
+        "start": "2", 
+        "income": 3.5066600417829337, 
+        "duration": 3.0
+    }, 
+    {
+        "distance": 2.23606797749979, 
+        "dest": "11", 
+        "time": 9, 
+        "start": "2", 
+        "income": 5.604572276830083, 
+        "duration": 2.0
+    }, 
+    {
+        "distance": 2.23606797749979, 
+        "dest": "5", 
+        "time": 9, 
+        "start": "14", 
+        "income": 3.256941769077018, 
+        "duration": 2.0
+    }, 
+    {
+        "distance": 2.23606797749979, 
+        "dest": "4", 
+        "time": 9, 
+        "start": "13", 
+        "income": 4.511038216821791, 
+        "duration": 2.0
+    }, 
+    {
+        "distance": 2.23606797749979, 
+        "dest": "10", 
+        "time": 9, 
+        "start": "4", 
+        "income": 4.620077554608242, 
+        "duration": 2.0
+    }, 
+    {
+        "distance": 1.0, 
+        "dest": "9", 
+        "time": 9, 
+        "start": "10", 
+        "income": 4.414184817580305, 
+        "duration": 1.0
+    }, 
+    {
+        "distance": 3.605551275463989, 
+        "dest": "3", 
+        "time": 9, 
+        "start": "13", 
+        "income": 5.298772038361919, 
+        "duration": 4.0
+    }, 
+    {
+        "distance": 3.605551275463989, 
+        "dest": "11", 
+        "time": 9, 
+        "start": "0", 
+        "income": 5.010037767130251, 
+        "duration": 4.0
+    }, 
+    {
+        "distance": 1.0, 
+        "dest": "3", 
+        "time": 10, 
+        "start": "7", 
+        "income": 4.441777413128769, 
+        "duration": 1.0
+    }, 
+    {
+        "distance": 2.23606797749979, 
+        "dest": "10", 
+        "time": 10, 
+        "start": "1", 
+        "income": 4.747532403128711, 
+        "duration": 2.0
+    }, 
+    {
+        "distance": 1.0, 
+        "dest": "7", 
+        "time": 10, 
+        "start": "3", 
+        "income": 6.039846787434714, 
+        "duration": 1.0
+    }, 
+    {
+        "distance": 2.23606797749979, 
+        "dest": "10", 
+        "time": 10, 
+        "start": "3", 
+        "income": 4.405672629247506, 
+        "duration": 2.0
+    }, 
+    {
+        "distance": 1.4142135623730951, 
+        "dest": "15", 
+        "time": 10, 
+        "start": "10", 
+        "income": 4.894303206208166, 
+        "duration": 1.0
+    }, 
+    {
+        "distance": 3.1622776601683795, 
+        "dest": "8", 
+        "time": 10, 
+        "start": "7", 
+        "income": 5.742795712887563, 
+        "duration": 3.0
+    }, 
+    {
+        "distance": 3.0, 
+        "dest": "1", 
+        "time": 10, 
+        "start": "13", 
+        "income": 4.245018473403388, 
+        "duration": 3.0
+    }, 
+    {
+        "distance": 2.8284271247461903, 
+        "dest": "12", 
+        "time": 10, 
+        "start": "6", 
+        "income": 4.861717285194425, 
+        "duration": 3.0
+    }, 
+    {
+        "distance": 1.4142135623730951, 
+        "dest": "4", 
+        "time": 10, 
+        "start": "1", 
+        "income": 2.8750797308838645, 
+        "duration": 1.0
+    }, 
+    {
+        "distance": 4.242640687119285, 
+        "dest": "0", 
+        "time": 11, 
+        "start": "15", 
+        "income": 4.8581999882305755, 
+        "duration": 4.0
+    }, 
+    {
+        "distance": 3.1622776601683795, 
+        "dest": "1", 
+        "time": 11, 
+        "start": "14", 
+        "income": 3.723519786840395, 
+        "duration": 3.0
+    }, 
+    {
+        "distance": 2.23606797749979, 
+        "dest": "5", 
+        "time": 11, 
+        "start": "14", 
+        "income": 6.481513275381152, 
+        "duration": 2.0
+    }, 
+    {
+        "distance": 1.0, 
+        "dest": "5", 
+        "time": 11, 
+        "start": "6", 
+        "income": 6.659276640679575, 
+        "duration": 1.0
+    }, 
+    {
+        "distance": 2.23606797749979, 
+        "dest": "4", 
+        "time": 11, 
+        "start": "10", 
+        "income": 5.104520923343367, 
+        "duration": 2.0
+    }, 
+    {
+        "distance": 2.0, 
+        "dest": "7", 
+        "time": 11, 
+        "start": "5", 
+        "income": 4.763956849422221, 
+        "duration": 2.0
+    }, 
+    {
+        "distance": 2.23606797749979, 
+        "dest": "3", 
+        "time": 12, 
+        "start": "10", 
+        "income": 5.81943503386948, 
+        "duration": 2.0
+    }, 
+    {
+        "distance": 2.23606797749979, 
+        "dest": "6", 
+        "time": 12, 
+        "start": "13", 
+        "income": 5.402856438692526, 
+        "duration": 2.0
+    }, 
+    {
+        "distance": 1.4142135623730951, 
+        "dest": "9", 
+        "time": 12, 
+        "start": "6", 
+        "income": 3.5617581175992665, 
+        "duration": 1.0
+    }, 
+    {
+        "distance": 2.0, 
+        "dest": "1", 
+        "time": 12, 
+        "start": "9", 
+        "income": 5.271248834412084, 
+        "duration": 2.0
+    }, 
+    {
+        "distance": 3.1622776601683795, 
+        "dest": "12", 
+        "time": 12, 
+        "start": "1", 
+        "income": 3.4877693536472503, 
+        "duration": 3.0
+    }, 
+    {
+        "distance": 1.0, 
+        "dest": "11", 
+        "time": 13, 
+        "start": "15", 
+        "income": 7.1968910259468375, 
+        "duration": 1.0
+    }, 
+    {
+        "distance": 2.0, 
+        "dest": "3", 
+        "time": 13, 
+        "start": "1", 
+        "income": 6.041175017216142, 
+        "duration": 2.0
+    }, 
+    {
+        "distance": 3.1622776601683795, 
+        "dest": "11", 
+        "time": 13, 
+        "start": "12", 
+        "income": 4.966763971800578, 
+        "duration": 3.0
+    }, 
+    {
+        "distance": 1.0, 
+        "dest": "6", 
+        "time": 13, 
+        "start": "10", 
+        "income": 6.15184214891163, 
+        "duration": 1.0
+    }, 
+    {
+        "distance": 1.0, 
+        "dest": "5", 
+        "time": 13, 
+        "start": "9", 
+        "income": 5.138042881186886, 
+        "duration": 1.0
+    }, 
+    {
+        "distance": 1.0, 
+        "dest": "7", 
+        "time": 13, 
+        "start": "11", 
+        "income": 6.533835655123268, 
+        "duration": 1.0
+    }, 
+    {
+        "distance": 1.4142135623730951, 
+        "dest": "5", 
+        "time": 14, 
+        "start": "8", 
+        "income": 5.764750230360735, 
+        "duration": 1.0
+    }, 
+    {
+        "distance": 3.1622776601683795, 
+        "dest": "15", 
+        "time": 14, 
+        "start": "2", 
+        "income": 5.420153073621759, 
+        "duration": 3.0
+    }, 
+    {
+        "distance": 2.23606797749979, 
+        "dest": "4", 
+        "time": 14, 
+        "start": "10", 
+        "income": 4.701850925329117, 
+        "duration": 2.0
+    }, 
+    {
+        "distance": 3.1622776601683795, 
+        "dest": "11", 
+        "time": 14, 
+        "start": "4", 
+        "income": 5.2280704170812715, 
+        "duration": 3.0
+    }, 
+    {
+        "distance": 1.4142135623730951, 
+        "dest": "10", 
+        "time": 14, 
+        "start": "5", 
+        "income": 2.971476087372228, 
+        "duration": 1.0
+    }, 
+    {
+        "distance": 3.1622776601683795, 
+        "dest": "3", 
+        "time": 15, 
+        "start": "4", 
+        "income": 5.9661904030944015, 
+        "duration": 3.0
+    }, 
+    {
+        "distance": 1.0, 
+        "dest": "0", 
+        "time": 15, 
+        "start": "4", 
+        "income": 4.8130782008978, 
+        "duration": 1.0
+    }, 
+    {
+        "distance": 2.23606797749979, 
+        "dest": "5", 
+        "time": 15, 
+        "start": "3", 
+        "income": 6.477340421407176, 
+        "duration": 2.0
+    }, 
+    {
+        "distance": 1.4142135623730951, 
+        "dest": "8", 
+        "time": 15, 
+        "start": "5", 
+        "income": 4.915109891450459, 
+        "duration": 1.0
+    }, 
+    {
+        "distance": 3.0, 
+        "dest": "2", 
+        "time": 15, 
+        "start": "14", 
+        "income": 5.204624570743602, 
+        "duration": 3.0
+    }, 
+    {
+        "distance": 2.0, 
+        "dest": "10", 
+        "time": 16, 
+        "start": "2", 
+        "income": 4.9166618364842805, 
+        "duration": 2.0
+    }, 
+    {
+        "distance": 2.0, 
+        "dest": "10", 
+        "time": 16, 
+        "start": "8", 
+        "income": 5.475260833707962, 
+        "duration": 2.0
+    }, 
+    {
+        "distance": 1.0, 
+        "dest": "5", 
+        "time": 17, 
+        "start": "1", 
+        "income": 4.285783810186742, 
+        "duration": 1.0
+    }, 
+    {
+        "distance": 3.605551275463989, 
+        "dest": "15", 
+        "time": 17, 
+        "start": "4", 
+        "income": 5.504222791387729, 
+        "duration": 4.0
+    }, 
+    {
+        "distance": 2.23606797749979, 
+        "dest": "4", 
+        "time": 18, 
+        "start": "10", 
+        "income": 4.486004377418802, 
+        "duration": 2.0
+    }, 
+    {
+        "distance": 3.605551275463989, 
+        "dest": "12", 
+        "time": 18, 
+        "start": "2", 
+        "income": 5.546952022689578, 
+        "duration": 4.0
+    }, 
+    {
+        "distance": 1.0, 
+        "dest": "2", 
+        "time": 18, 
+        "start": "6", 
+        "income": 4.130407660348778, 
+        "duration": 1.0
+    }, 
+    {
+        "distance": 2.0, 
+        "dest": "12", 
+        "time": 18, 
+        "start": "14", 
+        "income": 4.495103791700876, 
+        "duration": 2.0
+    }, 
+    {
+        "distance": 3.605551275463989, 
+        "dest": "13", 
+        "time": 18, 
+        "start": "3", 
+        "income": 4.555242197388078, 
+        "duration": 4.0
+    }, 
+    {
+        "distance": 2.8284271247461903, 
+        "dest": "4", 
+        "time": 18, 
+        "start": "14", 
+        "income": 5.3923080556558745, 
+        "duration": 3.0
+    }, 
+    {
+        "distance": 3.0, 
+        "dest": "15", 
+        "time": 19, 
+        "start": "12", 
+        "income": 5.241634806554941, 
+        "duration": 3.0
+    }, 
+    {
+        "distance": 3.0, 
+        "dest": "15", 
+        "time": 19, 
+        "start": "12", 
+        "income": 4.630818162057556, 
+        "duration": 3.0
+    }, 
+    {
+        "distance": 2.23606797749979, 
+        "dest": "1", 
+        "time": 19, 
+        "start": "10", 
+        "income": 4.760620822424074, 
+        "duration": 2.0
+    }, 
+    {
+        "distance": 2.0, 
+        "dest": "2", 
+        "time": 19, 
+        "start": "10", 
+        "income": 4.108105187847235, 
+        "duration": 2.0
+    }, 
+    {
+        "distance": 2.8284271247461903, 
+        "dest": "10", 
+        "time": 19, 
+        "start": "0", 
+        "income": 5.570080807385633, 
+        "duration": 3.0
+    }, 
+    {
+        "distance": 2.0, 
+        "dest": "8", 
+        "time": 19, 
+        "start": "10", 
+        "income": 4.647751694077311, 
+        "duration": 2.0
+    }, 
+    {
+        "distance": 2.0, 
+        "dest": "14", 
+        "time": 19, 
+        "start": "12", 
+        "income": 5.819466608372903, 
+        "duration": 2.0
+    }, 
+    {
+        "distance": 2.8284271247461903, 
+        "dest": "4", 
+        "time": 20, 
+        "start": "14", 
+        "income": 6.832637857367003, 
+        "duration": 3.0
+    }, 
+    {
+        "distance": 1.0, 
+        "dest": "8", 
+        "time": 20, 
+        "start": "4", 
+        "income": 4.934266852670999, 
+        "duration": 1.0
+    }, 
+    {
+        "distance": 1.4142135623730951, 
+        "dest": "0", 
+        "time": 20, 
+        "start": "5", 
+        "income": 4.05555374408175, 
+        "duration": 1.0
+    }, 
+    {
+        "distance": 2.0, 
+        "dest": "13", 
+        "time": 20, 
+        "start": "15", 
+        "income": 4.589950306797451, 
+        "duration": 2.0
+    }, 
+    {
+        "distance": 2.0, 
+        "dest": "2", 
+        "time": 20, 
+        "start": "10", 
+        "income": 3.481971300449867, 
+        "duration": 2.0
+    }, 
+    {
+        "distance": 2.23606797749979, 
+        "dest": "10", 
+        "time": 20, 
+        "start": "12", 
+        "income": 3.1069551744758757, 
+        "duration": 2.0
+    }, 
+    {
+        "distance": 1.0, 
+        "dest": "6", 
+        "time": 20, 
+        "start": "2", 
+        "income": 5.156506537965376, 
+        "duration": 1.0
+    }, 
+    {
+        "distance": 2.0, 
+        "dest": "2", 
+        "time": 20, 
+        "start": "10", 
+        "income": 5.232181036200275, 
+        "duration": 2.0
+    }, 
+    {
+        "distance": 1.0, 
+        "dest": "10", 
+        "time": 20, 
+        "start": "11", 
+        "income": 5.321280904793401, 
+        "duration": 1.0
+    }, 
+    {
+        "distance": 2.23606797749979, 
+        "dest": "9", 
+        "time": 20, 
+        "start": "2", 
+        "income": 4.876069556633468, 
+        "duration": 2.0
+    }, 
+    {
+        "distance": 2.23606797749979, 
+        "dest": "3", 
+        "time": 20, 
+        "start": "5", 
+        "income": 5.692618051703968, 
+        "duration": 2.0
+    }, 
+    {
+        "distance": 1.4142135623730951, 
+        "dest": "8", 
+        "time": 21, 
+        "start": "5", 
+        "income": 4.646476482597387, 
+        "duration": 1.0
+    }, 
+    {
+        "distance": 1.0, 
+        "dest": "1", 
+        "time": 21, 
+        "start": "5", 
+        "income": 4.7124512138125745, 
+        "duration": 1.0
+    }, 
+    {
+        "distance": 2.0, 
+        "dest": "1", 
+        "time": 21, 
+        "start": "9", 
+        "income": 6.315541713188924, 
+        "duration": 2.0
+    }, 
+    {
+        "distance": 1.4142135623730951, 
+        "dest": "9", 
+        "time": 21, 
+        "start": "6", 
+        "income": 4.206612602666838, 
+        "duration": 1.0
+    }, 
+    {
+        "distance": 2.23606797749979, 
+        "dest": "15", 
+        "time": 21, 
+        "start": "9", 
+        "income": 4.762119251701015, 
+        "duration": 2.0
+    }, 
+    {
+        "distance": 2.23606797749979, 
+        "dest": "14", 
+        "time": 21, 
+        "start": "5", 
+        "income": 3.9372050792194706, 
+        "duration": 2.0
+    }, 
+    {
+        "distance": 1.4142135623730951, 
+        "dest": "6", 
+        "time": 21, 
+        "start": "9", 
+        "income": 4.113593732032849, 
+        "duration": 1.0
+    }, 
+    {
+        "distance": 2.0, 
+        "dest": "2", 
+        "time": 21, 
+        "start": "10", 
+        "income": 4.186635740795797, 
+        "duration": 2.0
+    }, 
+    {
+        "distance": 2.23606797749979, 
+        "dest": "10", 
+        "time": 21, 
+        "start": "4", 
+        "income": 3.533575672197486, 
+        "duration": 2.0
+    }, 
+    {
+        "distance": 2.23606797749979, 
+        "dest": "12", 
+        "time": 21, 
+        "start": "10", 
+        "income": 6.009244530914557, 
+        "duration": 2.0
+    }, 
+    {
+        "distance": 2.23606797749979, 
+        "dest": "15", 
+        "time": 21, 
+        "start": "9", 
+        "income": 5.713389570519538, 
+        "duration": 2.0
+    }, 
+    {
+        "distance": 1.0, 
+        "dest": "2", 
+        "time": 21, 
+        "start": "3", 
+        "income": 4.9217545356015595, 
+        "duration": 1.0
+    }, 
+    {
+        "distance": 2.23606797749979, 
+        "dest": "11", 
+        "time": 21, 
+        "start": "5", 
+        "income": 6.833792744809086, 
+        "duration": 2.0
+    }, 
+    {
+        "distance": 1.4142135623730951, 
+        "dest": "5", 
+        "time": 21, 
+        "start": "8", 
+        "income": 5.115855697893075, 
+        "duration": 1.0
+    }, 
+    {
+        "distance": 1.0, 
+        "dest": "7", 
+        "time": 22, 
+        "start": "11", 
+        "income": 5.365651445709363, 
+        "duration": 1.0
+    }, 
+    {
+        "distance": 1.0, 
+        "dest": "13", 
+        "time": 22, 
+        "start": "9", 
+        "income": 8.10153058409665, 
+        "duration": 1.0
+    }, 
+    {
+        "distance": 1.4142135623730951, 
+        "dest": "6", 
+        "time": 22, 
+        "start": "11", 
+        "income": 5.858754152991918, 
+        "duration": 1.0
+    }, 
+    {
+        "distance": 1.0, 
+        "dest": "9", 
+        "time": 22, 
+        "start": "10", 
+        "income": 4.717864858396081, 
+        "duration": 1.0
+    }, 
+    {
+        "distance": 3.0, 
+        "dest": "0", 
+        "time": 22, 
+        "start": "3", 
+        "income": 4.024345334327628, 
+        "duration": 3.0
+    }, 
+    {
+        "distance": 2.23606797749979, 
+        "dest": "14", 
+        "time": 22, 
+        "start": "7", 
+        "income": 5.09818669083525, 
+        "duration": 2.0
+    }, 
+    {
+        "distance": 1.0, 
+        "dest": "13", 
+        "time": 22, 
+        "start": "14", 
+        "income": 5.905489953189511, 
+        "duration": 1.0
+    }, 
+    {
+        "distance": 2.8284271247461903, 
+        "dest": "9", 
+        "time": 22, 
+        "start": "3", 
+        "income": 6.7430387200693245, 
+        "duration": 3.0
+    }, 
+    {
+        "distance": 2.8284271247461903, 
+        "dest": "2", 
+        "time": 23, 
+        "start": "8", 
+        "income": 4.678120809116344, 
+        "duration": 3.0
+    }
+]
