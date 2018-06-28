@@ -1,6 +1,5 @@
-## test of the CAVE algorithm; compare with the result of .cpp and .m codes
-# Luo Ji
-# 4/25/2017
+## the CAVE algorithm
+# Aaron Ji
 
 import numpy as np
 import sys
@@ -33,9 +32,9 @@ def CAVE(A, newBreakPoint, alpha):
 
     small = 1.0e-6
 
-    #Get the updated A for the range [w - 1, w + 1]: update the derivative to be the weighted
-    #average between the old derivative and new derivative; otherwise keep the original derivative
-    #Note that A may contain repetitive  breakpoints, and may have nonconcavity
+    # Get the updated A for the range [w - 1, w + 1]: update the derivative to be the weighted
+    # average between the old derivative and new derivative; otherwise keep the original derivative
+    # Note that A may contain repetitive  breakpoints, and may have nonconcavity
     if A[0, 0] > small or v_minus > small:  # to save time, we do not update zero derivatives by zero derivatives, even when w is nonzero
         for i in range(1, numInterval):
 

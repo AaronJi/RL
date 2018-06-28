@@ -18,6 +18,7 @@ sys.path.append(project_dir)
 from data.Time_Space.time_space_data_dealer import TimeSpaceDataDealer
 from environment.ADP_scheduling_environment import ADPschedulingEnvironment
 from agent.ADP_scheduling_agent import ADP_scheduling_agent
+from algorithm.ADP_scheduling_algorithm import ADP_scheduling_algorithm
 
 def main():
     """ Main function to be run. """
@@ -41,13 +42,12 @@ def main():
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
-
     hyperparams = imp.load_source('hyperparams', hyperparams_file)
     if args.silent:
         hyperparams.config['verbose'] = False
         hyperparams.ALGconfig['verbose'] = False
 
-
+    # build data
     datadealer = TimeSpaceDataDealer(hyperparams.DATAconfig)
     random_seed = hyperparams.DATAconfig['random_seed']
     datadealer.generate_data(random_seed)
@@ -63,12 +63,19 @@ def main():
     print(T, n, nR)
     print("total %d time steps, %d locations, %d resources" % (T, n, nR))
 
+    # build envrionment
     env = ADPschedulingEnvironment(hyperparams.ENVconfig, datadealer)
-    env.setTrainData((time_space_info, init_resource, task))
-    env.setTestData((time_space_info, init_resource, task))
+    #env.setTrainData((time_space_info, init_resource, task))
+    #env.setTestData((time_space_info, init_resource, task))
 
-    age = ADP_scheduling_agent(hyperparams.AGEconfig, T, n, nR)
+    # build agent
+    agent = ADP_scheduling_agent(hyperparams.AGEconfig, T, n, nR)
 
+    alg = ADP_scheduling_algorithm(hyperparams.ALGconfig)
+    alg.initEnv(env)
+    alg.initAgent(agent)
+
+    alg.offline_train((time_space_info, init_resource, task))
 
 
 

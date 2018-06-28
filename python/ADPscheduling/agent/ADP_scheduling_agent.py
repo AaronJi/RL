@@ -24,14 +24,14 @@ class ADP_scheduling_agent(Agent):
                      'NT': defaultdict(list)}  # number of v elements for all iterations, simulation steps, and all locations
         # at the first step, initialize all v by 0
         for t in range(T):
-            v = np.zeros((1, n * self._hyperparams['tau_max']))
-            vLen = np.zeros((1, n * self._hyperparams['tau_max']))
-            for tau in range(self._hyperparams['tau_max']):
+            v = np.zeros((1, n * self._hyperparams['max_period']))
+            vLen = np.zeros((1, n * self._hyperparams['max_period']))
+            for tau in range(self._hyperparams['max_period']):
                 for i in range(n):
                     vLen[0, tau*n+i] = nR+1
             self.Qfun['vT'][t] = v
             self.Qfun['vLenT'][t] = vLen
-            for tau in range(self._hyperparams['tau_max']):
+            for tau in range(self._hyperparams['max_period']):
                 for i in range(n):
                     self.Qfun['NT'][(t, tau, i)] = 1
 

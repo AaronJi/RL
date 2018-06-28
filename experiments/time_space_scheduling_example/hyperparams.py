@@ -33,15 +33,11 @@ DATAconfig = {
 }
 
 ALGconfig = {
-    'max_period': 4,  # must be a positive int; if equaling to 1, the algorithm will decay to the single period mode
     'nIter': 1000,  # max number of iterations
-
     'eta': 0.0001,  # learning rate
     'discount': 1.0,
-
-
-    'alpha': 0.9,  # the step size of CAVE algorithm
-    'adjustType': 'DUALMAX',  # DUALMAX or DUALNEXT; the slope update method of eq(15-16), Godfrey, Powell, 2002
+    'cave_step': 0.9,  # the step size of CAVE algorithm
+    'cave_type': 'DUALMAX',  # DUALMAX or DUALNEXT; the slope update method of eq(15-16), Godfrey, Powell, 2002
 
 
 
@@ -59,7 +55,7 @@ ALGconfig = {
 }
 
 AGEconfig = {
-    'tau_max': 7,  # tau_max = 1 corresponding to the single-period mode
+    'max_period': 7,  # must be a positive int; if equaling to 1, the algorithm will decay to the single period mode
     "policyType": "deterministic",
     "softmax_power": 1
 }
@@ -69,7 +65,7 @@ ENVconfig = {
 }
 
 config = {
-    'type': "rank",
+    'type': "relocation",
     'verbose': True,
     'algorithm': ALGconfig,
     'agent': AGEconfig,
