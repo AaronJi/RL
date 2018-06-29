@@ -1,9 +1,10 @@
 #!/usr/bin/python
-# -*- coding: <encoding name> -*-
+# -*- coding: utf-8 -*-
 
 import os
 import sys
 import json
+import yaml
 import numpy as np
 
 data_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -21,11 +22,14 @@ class TimeSpaceDataDealer(DataDealer):
     def generate_data(self, random_seed=0):
         self.rng = np.random.RandomState(random_seed)
         # time information
-        self.time_info = {}
+        self.time_info = {}  # a dict about time information with key as each time key and value as corresponding time indice
+        self.time_seq = []  # a list with time keys as elements, indexed as the time indice
         self.T = (self._hyperparams['ts_end'] - self._hyperparams['ts_start']) / self._hyperparams['delta_ts'] + 1
         for t in range(self.T):
-            time = self._hyperparams['ts_start'] + t
+            time = str(self._hyperparams['ts_start'] + t)
             self.time_info[t] = time
+            self.time_seq.append(time)
+
 
         # location infomation
         self.location_info = {}
@@ -72,6 +76,8 @@ class TimeSpaceDataDealer(DataDealer):
             n0T[i] = max(int(n), 0)
 
         for t in range(self.T):
+            task_t = []
+
             # order assign weights: tuple, with the first element for start and the second element for destination
             w = 2
             if t in range(6, 10):
@@ -105,13 +111,13 @@ class TimeSpaceDataDealer(DataDealer):
                         task_income = max(self._hyperparams['task_income_mean'] + self._hyperparams['task_income_std']*self.rng.randn(), self._hyperparams['rep_cost']*1.1)
                         task_distance = self.cal_location_distance(start, dest)
                         task_duration = self.cal_duration(task_distance, self._hyperparams['task_speed'])
-                        self.tasks_info.append({'time': self.time_info[t], 'income': task_income, 'start': start, 'dest': dest, 'distance': task_distance, 'duration': task_duration})
-
+                        task_t.append({'time': self.time_info[t], 'income': task_income, 'start': start, 'dest': dest, 'distance': task_distance, 'duration': task_duration})
                         break
                     '''
                     else:
                         print("start and dest are the same, retry sampling")
                     '''
+            self.tasks_info.append({self.time_info[t]: task_t})
 
 
         return
@@ -124,32 +130,35 @@ class TimeSpaceDataDealer(DataDealer):
             init_resource_info[location] = self.location_info[location]["nR_t0"]
 
         # time & location dictionary
-        time_space_info = {"time": self.time_info, "location": location_info}
+        time_space_info = {"time": self.time_info, "location": location_info}  # , "time seq": self.time_seq
         with open(ex_data_dir + 'time_space_info.json', 'w') as f:
-            json.dump(time_space_info, f, indent=4)
+            json.dump(time_space_info, f, indent=4, ensure_ascii=False, encoding="utf-8")
         f.close()
 
         # init resources
         with open(ex_data_dir + 'init_resource.json', 'w') as f:
-            json.dump(init_resource_info, f, indent=4)
+            json.dump(init_resource_info, f, indent=4, ensure_ascii=False, encoding="utf-8")
         f.close()
 
         # task information
         with open(ex_data_dir + 'task.json', 'w') as f:
-            json.dump(self.tasks_info, f, indent=4)
+            json.dump(self.tasks_info, f, indent=4, ensure_ascii=False, encoding="utf-8")
         f.close()
 
         return
 
     def load_data(self, ex_data_dir):
         with open(ex_data_dir + 'time_space_info.json', 'r') as f:
-            time_space_info = json.load(f)
+            #time_space_info = json.load(f, encoding="utf-8")
+            time_space_info = yaml.load(f)
 
         with open(ex_data_dir + 'init_resource.json', 'r') as f:
-            init_resource = json.load(f)
+            #init_resource = json.load(f, encoding="utf-8")
+            init_resource=yaml.load(f)
 
         with open(ex_data_dir + 'task.json', 'r') as f:
-            task = json.load(f)
+            #task = json.load(f, encoding="utf-8")
+            task = yaml.load(f)
 
         return time_space_info, init_resource, task
 

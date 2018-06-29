@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# -*- coding: <encoding name> -*-
+# -*- coding: utf-8 -*-
 
 import os
 import sys
@@ -11,7 +11,7 @@ src_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file
 sys.path.append(src_dir)
 
 from RLutils.agent.Agent import Agent
-
+from RLutils.algorithm.scheduling_mp import scheduling_mp
 
 class ADP_scheduling_agent(Agent):
 
@@ -46,7 +46,8 @@ class ADP_scheduling_agent(Agent):
     # perform an action according to the policy, given the current state
     # can be provided with a pre-calculated policy pi to improve the speed
     def act(self, state, extra_factor):
-
+        Vopt, Xopt, Yopt, end_resource, lambda_right, lambda_left, status_right, status_left = \
+            scheduling_mp(n, self._hyperparams['max_period'], Rt, Ru, param_job, param_rep, v, vLen)
 
         # if the policy is stochastic, this is a MonteCarlo sampling
         logging.debug("* acting: at t = %d, %d candidates" % (state[0], len(state[1])))

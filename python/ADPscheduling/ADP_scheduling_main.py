@@ -54,6 +54,7 @@ def main():
     ex_data_dir = project_dir + "/data/Time_Space/"
     datadealer.dump_data(ex_data_dir)
     time_space_info, init_resource, task = datadealer.load_data(ex_data_dir)
+
     T = len(time_space_info["time"])  # number of time steps
     n = len(time_space_info["location"])  # number of total resources
     nR = 0
@@ -77,7 +78,9 @@ def main():
 
     alg.offline_train((time_space_info, init_resource, task))
 
-
+    print(task)
+    print(time_space_info)
+    print(init_resource)
 
 if __name__ == "__main__":
     main()
