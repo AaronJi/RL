@@ -2,16 +2,16 @@
 # Aaron Ji
 
 import numpy as np
-#import scipy as sp
 import sys
 import cvxpy as cvx
-from scipy.sparse import coo_matrix
+import scipy as sp
+#from scipy.sparse import coo_matrix
 
 ## This function computes the optimal flow and the left/right value of each resource
 ## Inputs
 # n: number of location
 # tau_max: the largest travel time between any pair of locations
-# R: an n-by-1 matrix characterizing the initial resource vector (at the left node
+# R: an n-by-1 matrix characterizing the initial resource vector (at the left node)
 # Ru: an n-by-tau_max matrix characterizing the upcoming resource vector which are
 # initially unavailable, but will arrive within tau_max time intervals as planned
 # M: an n-by-n matrix with M(i,j) characterizing the demand from i to j
@@ -210,7 +210,7 @@ def scheduling_mp_sparse(n, tau_max, R, Ru, param_job, param_rep, P, PLen):
     num_nonzero_rep = len(C_coeff)
 
     # construct the coefficient matrix for Y (need to find the entries those correspond to each row/column
-    row_sum_matrix_Y = coo_matrix((np.ones(num_nonzero_rep), (rep_row_num, range(num_nonzero_rep))), shape=(n, num_nonzero_rep))
+    row_sum_matrix_Y = sp.sparse.coo_matrix((np.ones(num_nonzero_rep), (rep_row_num, range(num_nonzero_rep))), shape=(n, num_nonzero_rep))
 
     col_sum_matrix_Y = np.zeros((tau_max * n, num_nonzero_rep))
     for i in range(num_nonzero_rep):
@@ -299,6 +299,170 @@ def scheduling_mp_sparse(n, tau_max, R, Ru, param_job, param_rep, P, PLen):
     Z_left = cvx.Variable(P.shape[0], tau_max*n)
 
     obj_left =  - C_coeff*Y_left + cvx.sum_entries(cvx.mul_elemwise(P, Z_left))
+    if not M_is_empty:
+        obj_left += W_coeff*X_left
+
+    if M_is_empty:
+        cons_left = [R_left == row_sum_matrix_Y*Y_left,
+                      cvx.sum_entries(Z_left, axis=0).T == col_sum_matrix_Y * Y_left + Ru_left,
+                      0 <= Y_left, 0 <= Z_left, Z_left <= PLen]
+    else:
+        cons_left = [R_left == row_sum_matrix_X*X_left + row_sum_matrix_Y*Y_left,
+                      cvx.sum_entries(Z_left, axis=0).T == col_sum_matrix_X * X_left + col_sum_matrix_Y * Y_left + Ru_left,
+                      0 <= X_left, X_left <= M_coeff, 0 <= Y_left, 0 <= Z_left, Z_left <= PLen]
+
+    prob_left = cvx.Problem(cvx.Maximize(obj_left), cons_left)
+
+    # Solve with ECOS.
+    # prob_left.solve(solver=cvx.ECOS_BB) #, mi_max_iters=100
+    prob_left.solve(solver=cvx.ECOS)
+
+    dual_left = np.array(cons_left[0].dual_value)
+    for i in range(n):
+        lambda_left[i][0] = dual_left[i][0]
+    dual_left = np.array(cons_left[1].dual_value)
+    for tau in range(tau_max):
+        for i in range(n):
+            lambda_left[i][1+tau] = dual_left[tau*n+i][0]
+    print("***opt***")
+    print(np.sum(end_resource))
+
+    return Vopt, Xopt, Yopt, end_resource, lambda_right, lambda_left, prob_right.status, prob_left.status
+
+
+
+
+## solve the scheduling with sparse input
+# param_job: a matrix with rows consisting by [M_row_num, M_col_num, M_coeff, W_coeff, tauX_coeff]; if there is no job demand, param_job = None
+# param_rep: a matrix with rows consisting by [rep_row_num, rep_col_num, C_coeff, tauY_coeff]
+def scheduling_mp_sparse1(n, tau_max, R, Ru, param_job, param_rep, P, PLen):
+
+    if param_job is None or param_job.shape[1] == 0:
+        M_is_empty = True
+    else:
+        M_is_empty = False
+
+    if not M_is_empty:
+        M_row_num = param_job[0, :].flatten().astype(int)  # row indices of positive M elements
+        M_col_num = param_job[1, :].flatten().astype(int)  # col indices of positive M elements
+        M_coeff = param_job[2, :].flatten()  # positive M elements
+        W_coeff = param_job[3, :].flatten()  # W elements corresponding to positive M elements
+        tauX_coeff = param_job[4, :].flatten().astype(int)  # tau corresponding to positive M elements
+
+        num_nonzero_M = len(M_coeff)
+
+        # construct the coefficient matrix for X (need to find the entries that correpsond to each row/column)
+        row_sum_matrix_X = sp.sparse.coo_matrix((np.ones(num_nonzero_M), (M_row_num, range(num_nonzero_M))), shape=(n, num_nonzero_M))
+
+        col_sum_matrix_X = np.zeros((tau_max*n, num_nonzero_M))
+        for i in range(num_nonzero_M):
+            tau = tauX_coeff[i]
+            if tau < 0 or tau > tau_max:
+                print >> sys.stderr, 'Contradiction in definitions of M and tauX!'
+                return -1
+            else:
+                if tau == 0:
+                    tau = 1
+                # for the column - summing vector, write it vertically separated by values of corresponding tau
+                col_sum_matrix_X[(tau - 1)*n+M_col_num[i]][i] = 1
+
+    rep_row_num = param_rep[0, :].flatten().astype(int)  # row indices of positive rep_matrix elements
+    rep_col_num = param_rep[1, :].flatten().astype(int)  # col indices of positive rep_matrix elements
+    C_coeff = param_rep[2, :].flatten()  # C elements corresponding to positive rep_matrix elements
+    tauY_coeff = param_rep[3, :].flatten().astype(int)  # tau corresponding to positive rep_matrix elements
+
+    num_nonzero_rep = len(C_coeff)
+
+    # construct the coefficient matrix for Y (need to find the entries those correspond to each row/column
+    row_sum_matrix_Y = sp.sparse.coo_matrix((np.ones(num_nonzero_rep), (rep_row_num, range(num_nonzero_rep))), shape=(n, num_nonzero_rep))
+
+    col_sum_matrix_Y = np.zeros((tau_max * n, num_nonzero_rep))
+    for i in range(num_nonzero_rep):
+        tau = tauY_coeff[i]
+        if tau < 0 or tau > tau_max:
+            print >> sys.stderr, 'Contradiction in definitions of rep_matrix and tauY!'
+            return -1
+        else:
+            # for reposition, we have tau = 0 cases; just treat them as tau = 1 cases
+            if tau == 0:
+                tau = 1
+            # for the column - summing vector, write it vertically separated by values of corresponding tau
+            col_sum_matrix_Y[(tau - 1)*n+rep_col_num[i]][i] = 1
+
+    # initialize results
+    Xopt = np.zeros((n, n))
+    Yopt = np.zeros((n, n))
+    end_resource = np.zeros((n, tau_max))
+    lambda_right = np.zeros((n, tau_max + 1))
+    lambda_left = np.zeros((n, tau_max + 1))
+
+    ## Generating optimal flow and right derivative
+    R_right = R + 0.0001*np.ones((n,1))
+    Ru_right = np.reshape(Ru, (tau_max*n, 1), order='F') + 0.0001 * np.ones((tau_max * n, 1))
+
+    # Construct the problem.
+    if not M_is_empty:
+        X_right = cvx.Variable(num_nonzero_M, 1)
+    Y_right = cvx.Variable(num_nonzero_rep, 1)
+    Z_right = cvx.Variable(P.shape[0], tau_max*n)
+
+    obj_right = - C_coeff*Y_right + cvx.sum(cvx.multiply(P, Z_right))
+    if not M_is_empty:
+        obj_right += W_coeff * X_right
+
+    if M_is_empty:
+        cons_right = [R_right == row_sum_matrix_Y*Y_right,
+                      cvx.sum_entries(Z_right, axis=0).T == col_sum_matrix_Y * Y_right + Ru_right,
+                      0 <= Y_right, 0 <= Z_right, Z_right <= PLen]
+    else:
+        cons_right = [R_right == row_sum_matrix_X*X_right + row_sum_matrix_Y*Y_right,
+                      cvx.sum_entries(Z_right, axis=0).T == col_sum_matrix_X * X_right + col_sum_matrix_Y * Y_right + Ru_right,
+                      0 <= X_right, X_right <= M_coeff, 0 <= Y_right, 0 <= Z_right, Z_right <= PLen]
+
+    prob_right = cvx.Problem(cvx.Maximize(obj_right), cons_right)
+
+    # Solve with ECOS.
+    #prob_right.solve(solver=cvx.ECOS_BB) #, mi_max_iters=100
+    prob_right.solve(solver=cvx.ECOS)
+
+    Vopt = prob_right.value
+    if not M_is_empty:
+        Xval = np.array(X_right.value)
+    Yval = np.array(Y_right.value)
+    Zval = np.array(Z_right.value)
+
+    if not M_is_empty:
+        if num_nonzero_M == 1:
+            Xopt[M_row_num[0]][M_col_num[0]] = np.round(Xval)
+        else:
+            for i in range(num_nonzero_M):
+                Xopt[M_row_num[i]][M_col_num[i]] = np.round(Xval[i][0])
+    if num_nonzero_rep == 1:
+        Yopt[rep_row_num[0]][rep_col_num[0]] = np.round(Yval)
+    else:
+        for i in range(num_nonzero_rep):
+            Yopt[rep_row_num[i]][rep_col_num[i]] = np.round(Yval[i][0])
+    dual_right = np.array(cons_right[0].dual_value)
+    for i in range(n):
+        lambda_right[i][0] = dual_right[i][0]
+    dual_right = np.array(cons_right[1].dual_value)
+    for tau in range(tau_max):
+        for i in range(n):
+            end_resource[i][tau] = np.sum(Zval[:, tau*n+i])
+            lambda_right[i][1+tau] = dual_right[tau*n+i][0]
+
+    ## Generating left derivative
+    small = 1.0e-6
+    R_left = np.maximum(R - 0.0001 * np.ones((n, 1)), small*np.ones((n, 1))) # R_left should be positive
+    Ru_left = np.maximum(np.reshape(Ru, (tau_max*n, 1), order='F') - 0.0001 * np.ones((tau_max*n, 1)), small*np.ones((tau_max*n, 1)))
+
+    # Construct the problem.
+    if not M_is_empty:
+        X_left = cvx.Variable(num_nonzero_M, 1)
+    Y_left = cvx.Variable(num_nonzero_rep, 1)
+    Z_left = cvx.Variable(P.shape[0], tau_max*n)
+
+    obj_left =  - C_coeff*Y_left + cvx.sum(cvx.multiply(P, Z_left))
     if not M_is_empty:
         obj_left += W_coeff*X_left
 

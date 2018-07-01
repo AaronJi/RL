@@ -35,7 +35,7 @@ class MDPrankEnvironment(RankEnvironment):
         self.testData = data
         return
 
-    # action: the index of candidate to rank next
+    # yield reward given the current state and action
     def reward(self, state, action):
         r = 0
         t = state[0]  # step t, i.e. the t-th position in the rank case

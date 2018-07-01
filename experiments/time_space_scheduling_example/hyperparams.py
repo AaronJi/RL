@@ -22,12 +22,12 @@ DATAconfig = {
     # tasks
     'task_number_mean': [1, 0, 1, 1, 1, 2, 5, 10, 15, 9, 7, 6, 5, 5, 4, 5, 3, 3, 6, 8, 12, 15, 9, 2],  # mean of tasks as function of time
     'task_number_std': 1,  # std of tasks as function of time
-    'task_income_mean': 5,  # mean of task incomes
-    'task_income_std': 1,  # mean of task variances
+    'task_income_mean': 5,  # mean of task incomes (per unit distance)
+    'task_income_std': 1,  # std of task incomes (per unit distance)
     'task_speed': 1.0,  # speed of executing task
 
     # reposition
-    'rep_cost': 0.5,  # reposition cost
+    'rep_cost': 0.5,  # reposition cost (per unit distance)
     'rep_speed': 1.0  # reposition speed
 
 }
@@ -38,26 +38,11 @@ ALGconfig = {
     'discount': 1.0,
     'cave_step': 0.9,  # the step size of CAVE algorithm
     'cave_type': 'DUALMAX',  # DUALMAX or DUALNEXT; the slope update method of eq(15-16), Godfrey, Powell, 2002
-
-
-
-    'nIter_batch': 10,
-    'absErr': 1.0e-4,
-    'nAbsErr': 3,
-    'param_with_scale': 'minMax',  # minMax, sigmoid, None
-    'update_by': 'batch',  # batch, episode, step
-    'verbose': True,
-    'eval_valid_in_iters': False,
-    'eval_test_in_iters': False,
-    'fast_cal': True,
-    "softmax_power": 1,
-    'predict_syntax': 'listwise'  # listwise, pointwise
+    'max_period': 7,  # must be a positive int; if equaling to 1, the algorithm will decay to the single period mode
 }
 
 AGEconfig = {
-    'max_period': 7,  # must be a positive int; if equaling to 1, the algorithm will decay to the single period mode
     "policyType": "deterministic",
-    "softmax_power": 1
 }
 
 ENVconfig = {
@@ -69,7 +54,7 @@ config = {
     'verbose': True,
     'algorithm': ALGconfig,
     'agent': AGEconfig,
-    'environment': ENVconfig
+    'environment': ENVconfig,
 }
 
 

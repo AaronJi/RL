@@ -20,6 +20,10 @@ class ADPschedulingEnvironment(Environment):
         self.datadealer = datadealer
         return
 
+    def set_environment_knowledge(self, time_space_info):
+        self.time_space_info = time_space_info
+        return
+
     # set the current data set, i.e., training, validation, test data sets
     def setTrainData(self, data):
         self.data = data
@@ -33,34 +37,45 @@ class ADPschedulingEnvironment(Environment):
         self.testData = data
         return
 
-    # action: the index of candidate to rank next
+    # yield reward given the current state and action
     def reward(self, state, action):
-        r = 0
-        t = state[0]  # step t, i.e. the t-th position in the rank case
-        candidates = state[1]  # the list of candidates which are not ranked yet
-        label = candidates[action][1]
-        if self._hyperparams['reward_metric'] == 'NDCG':
-            r = DCG_singlePos(label, t)
-
-        logging.debug("* rewarding: %dth step, %d candidates in state; action is %d; label = %f, reward = %f" % (t, len(candidates), action, label, r))
-        return r
+        return None
 
     # evolve to the next state
     def transit(self, state, action):
-        t = state[0]
-        candidates = state[1]
+        return None
 
-        #assert 0 <= action < len(candidates)
+    # yield reward and evolve to the next state simultaneously
+    def reward_and_transit(self, state, action, act_extra_factor):
+        Rout, Vopt, pi_plus, pi_minus = act_extra_factor
 
-        candidates_new = copy.deepcopy(candidates)
-        del candidates_new[action]
-        logging.debug("* transiting: %d to %d, %d candidates to %d candidates" % (t, t+1, len(candidates), len(candidates_new)))
-        state_new = [t+1, candidates_new]
+        r = (Vopt, pi_plus, pi_minus)
 
-        return state_new
+        next_resource, next_incoming_resource = self.build_state_from_data(Rout)
 
+        state_next = [state[0] + 1, next_resource, next_incoming_resource]
 
+        return state_next, r
 
+    # translate the data into the state format
+    def build_state_from_data(self, Rout):
+        # resource distrubution in the next step
+        next_resource = {}
+        next_incoming_resource = []
+
+        n, max_period = Rout.shape
+        for tau in range(max_period):
+            next_incoming_resource.append([])
+
+        for i in range(n):
+            location_key = self.time_space_info['location_seq'][i]
+            next_resource[location_key] = Rout[i, 0]
+
+            for tau in range(max_period-1):
+                if Rout[i, tau+1] > 0:
+                    next_incoming_resource[tau].append({'destination': location_key, 'nR': Rout[i, tau+1]})
+
+        return next_resource, next_incoming_resource
 
 
 if __name__ == "__main__":

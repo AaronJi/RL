@@ -23,6 +23,7 @@ from algorithm.ADP_scheduling_algorithm import ADP_scheduling_algorithm
 def main():
     """ Main function to be run. """
 
+    # arguments
     parser = argparse.ArgumentParser(description='Run the MDP rank algorithm.')
 
     parser.add_argument('experiment', type=str, help='experiment name')
@@ -34,7 +35,15 @@ def main():
 
     exp_name = args.experiment
     exp_dir = os.path.join(project_dir, 'experiments', exp_name)
+
     hyperparams_file = os.path.join(exp_dir, 'hyperparams.py')
+    hyperparams = imp.load_source('hyperparams', hyperparams_file)
+    if args.silent:
+        hyperparams.config['verbose'] = False
+
+    hyperparams.ALGconfig['verbose'] = hyperparams.config['verbose']
+    hyperparams.AGEconfig['verbose'] = hyperparams.config['verbose']
+    hyperparams.ENVconfig['verbose'] = hyperparams.config['verbose']
 
     output_dir = os.path.join(project_dir, "experiments", args.experiment, "data_files")
     if len(args.folder) > 0:
@@ -42,10 +51,19 @@ def main():
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
-    hyperparams = imp.load_source('hyperparams', hyperparams_file)
+    # set log
     if args.silent:
-        hyperparams.config['verbose'] = False
-        hyperparams.ALGconfig['verbose'] = False
+        logging.basicConfig(level=logging.INFO,
+                            format='%(asctime)s %(name)-8s %(levelname)-8s %(message)s',
+                            datefmt='%m-%d %H:%M',
+                            filename=os.path.join(exp_dir, "exp.log"),
+                            filemode='w')
+    else:
+        logging.basicConfig(level=logging.DEBUG,
+                            format='%(asctime)s %(name)-8s %(levelname)-8s %(message)s',
+                            datefmt='%m-%d %H:%M',
+                            filename=os.path.join(exp_dir, "exp.log"),
+                            filemode='w')
 
     # build data
     datadealer = TimeSpaceDataDealer(hyperparams.DATAconfig)
@@ -53,34 +71,35 @@ def main():
     datadealer.generate_data(random_seed)
     ex_data_dir = project_dir + "/data/Time_Space/"
     datadealer.dump_data(ex_data_dir)
-    time_space_info, init_resource, task = datadealer.load_data(ex_data_dir)
+    time_space_info, init_resource, tasks, repositions = datadealer.load_data(ex_data_dir)
 
-    T = len(time_space_info["time"])  # number of time steps
-    n = len(time_space_info["location"])  # number of total resources
+    T = len(time_space_info["time_detail"])  # number of time steps
+    n = len(time_space_info["location_detail"])  # number of total resources
     nR = 0
     for location in init_resource:
         nR += init_resource[location]
-
-    print(T, n, nR)
     print("total %d time steps, %d locations, %d resources" % (T, n, nR))
 
     # build envrionment
     env = ADPschedulingEnvironment(hyperparams.ENVconfig, datadealer)
-    #env.setTrainData((time_space_info, init_resource, task))
-    #env.setTestData((time_space_info, init_resource, task))
+    env.set_environment_knowledge(time_space_info)
 
     # build agent
-    agent = ADP_scheduling_agent(hyperparams.AGEconfig, T, n, nR)
+    agent = ADP_scheduling_agent(hyperparams.AGEconfig, T, n, nR, hyperparams.ALGconfig['max_period'])
+    agent.set_environment_knowledge(time_space_info, repositions)
 
     alg = ADP_scheduling_algorithm(hyperparams.ALGconfig)
     alg.initEnv(env)
     alg.initAgent(agent)
 
-    alg.offline_train((time_space_info, init_resource, task))
+    #print(time_space_info)
+    #print(init_resource)
+    #print(tasks)
+    #print(repositions)
 
-    print(task)
-    print(time_space_info)
-    print(init_resource)
+
+    alg.offline_train((time_space_info, init_resource, tasks, repositions))
+
 
 if __name__ == "__main__":
     main()

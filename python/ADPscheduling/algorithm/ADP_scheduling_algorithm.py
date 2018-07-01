@@ -11,8 +11,6 @@ import logging
 from collections import defaultdict
 from multiprocessing import Pool
 
-from cvxpy import SolverError
-
 src_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.append(src_dir)
 
@@ -33,7 +31,7 @@ class ADP_scheduling_algorithm(object):
                   % (self._hyperparams['nIter'], self._hyperparams['eta'], self._hyperparams['discount'], self._hyperparams['cave_step'], self._hyperparams['cave_type']))
 
         self.agent = None
-        self.env = None
+        self.environment = None
 
         return
 
@@ -43,14 +41,27 @@ class ADP_scheduling_algorithm(object):
         return
 
     def initEnv(self, env):
-        self.env = env
+        self.environment = env
         logging.info("init environment")
         return
 
+    def max_period_check(self, tasks, max_period):
+        for t in range(len(tasks)):
+            time = tasks[t].values([1])
+            tasks_t = tasks[t].values([0])
+            for task in tasks_t:
+                if task['duration'] > max_period:
+                    tasks[t][task]['duration'] = max_period
+        return tasks
+
     def offline_train(self, data):
-        time_space_info, init_resource, task = data
-        T = len(time_space_info["time"])
-        n = len(time_space_info["location"])
+        time_space_info, init_resource, tasks, relocations = data
+        T = len(time_space_info["time_detail"])
+        n = len(time_space_info["location_detail"])
+
+        # maximum period check
+        #tasks = self.max_period_check(tasks, self._hyperparams['max_period'])
+
 
         Vopt_results = np.zeros((self._hyperparams['nIter'], T))  # results of optimal values
         Vopt_results_noP = np.zeros((self._hyperparams['nIter'], T))  # results of optimal values
@@ -61,38 +72,51 @@ class ADP_scheduling_algorithm(object):
         pi_plus = defaultdict(list)  # the update right-side slope at all simulation times
         pi_minus = defaultdict(list)  # the update left-side slope at all simulation times
 
-        # the multistage stochastic value approximation algorithm
+        ## at the first step initialize the state
+
+        # list of max_period elements; the tau-th element contains all incoming resources which will arrive after tau steps
+        incoming_resource = []
+        for tau in range(self._hyperparams['max_period']):
+            incoming_resource.append([])
+
+        state0 = [0, init_resource, incoming_resource]
+        state = state0
+
+        ## the multistage stochastic value approximation algorithm
         print('Simulation begins')
-        state = init_resource
 
         for k in range(self._hyperparams['nIter']):
-            print 'Iteration k = %i:' % k
+            #print 'Iteration k = %i:' % k
 
             # Forward simulation
             for t in range(T):
-
-                try:
-                    startTime = datetime.datetime.now()
-
-                except SolverError:
-                    print 't = %i, Solver failed, use results in the last iteration!' % t
-                else:
-                    pass
+                # get current data
+                time_t = tasks[t].keys()[0]
+                tasks_t = tasks[t].values()[0]
 
 
+                if t == 0:
+                    state = state0
+
+                startTime = datetime.datetime.now()
+                action, act_extra_factor = self.agent.act(state, tasks_t)
+                #self.environment.reward(state, action)
+                #self.environment.transit(state, action)
+                state_next, reward = self.environment.reward_and_transit(state, action, act_extra_factor)
+
+                endTime = datetime.datetime.now()
+
+                CPUtime = (endTime - startTime).total_seconds()
+                print(CPUtime)
+
+                sys.exit(0)
+                state = state_next
+
+            # determination of breakpoints
+            for t in range(T - 1):
+                pass
 
         return
 
-    def update_policy(self, delta_theta):
-        logging.debug("Before update: theta = [" + ','.join([str(dt) for dt in self.agent.theta]) + ']')
-        self.agent.theta = self.opt.Gradient_Descent(self.agent.theta, delta_theta, self._hyperparams["eta"])
-        logging.debug("After update: theta = [" + ','.join([str(dt) for dt in self.agent.theta]) + ']')
-
-        # if process new theta with sigmoid function, as indicated in the diversification paper
-        if 'param_with_scale' in self._hyperparams:
-            self.agent.theta = scaler(self.agent.theta, self._hyperparams['param_with_scale'])
-            logging.debug("After scaling: theta = [" + ','.join([str(dt) for dt in self.agent.theta]) + ']')
-
-        return
 
 

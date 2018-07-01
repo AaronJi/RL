@@ -33,38 +33,44 @@ class TimeSpaceDataDealer(DataDealer):
 
         # location infomation
         self.location_info = {}
+        self.location_seq = []
+
         rectangular_size = self._hyperparams['rectangular_size']
         locations_inner = []
         locations_outer = []
         i_grid = 0
         for grid_x in range(rectangular_size[0]):
             for grid_y in range(rectangular_size[1]):
-                grid = {'id': str(i_grid), 'location': (grid_x, grid_y)}
+                grid = {'id': str(i_grid), 'coordinate': (grid_x, grid_y)}
                 if rectangular_size[0]/4 <= grid_x < 3*rectangular_size[0]/4 and rectangular_size[1]/4 <= grid_y < 3*rectangular_size[1]/4:
                     grid['region'] = 'inner'
                     locations_inner.append(grid)
                 else:
                     grid['region'] = 'outer'
                     locations_outer.append(grid)
-                self.location_info[str(i_grid)] = grid
+                #self.location_info[str(i_grid)] = grid
+
+                self.location_info[str(i_grid)] = (grid_x, grid_y)
+                self.location_seq.append(str(i_grid))
                 i_grid += 1
         self.nLocation = i_grid
 
         ## data
 
         # initial resources
+        self.init_resource_info = {}
         nR0 = self.rng.randint(self._hyperparams['resource_max'], size=self.nLocation)
         for i_grid in range(self.nLocation):
-            self.location_info[str(i_grid)]['nR_t0'] = nR0[i_grid]
+            #self.location_info[str(i_grid)]['nR_t0'] = nR0[i_grid]
+            self.init_resource_info[str(i_grid)] = nR0[i_grid]
 
+        # generate a pool of locations, with number of each location proportional to its weight
         def generate_locations_pool(locations_inner, locations_outer, weight_inner, weight_outer):
             locations_pool = []
-
             for location in locations_inner:
                 locations_pool.extend([location]*weight_inner)
             for location in locations_outer:
                 locations_pool.extend([location]*weight_outer)
-
             return locations_pool
 
         # tasks
@@ -76,7 +82,7 @@ class TimeSpaceDataDealer(DataDealer):
             n0T[i] = max(int(n), 0)
 
         for t in range(self.T):
-            task_t = []
+            tasks_t = []
 
             # order assign weights: tuple, with the first element for start and the second element for destination
             w = 2
@@ -105,44 +111,55 @@ class TimeSpaceDataDealer(DataDealer):
                     i_dest = self.rng.choice(len(dest_locations_pool), 1)[0]
 
                     start = start_locations_pool[i_start]['id']
-                    dest = dest_locations_pool[i_dest]['id']
+                    destination = dest_locations_pool[i_dest]['id']
 
-                    if (start != dest):
-                        task_income = max(self._hyperparams['task_income_mean'] + self._hyperparams['task_income_std']*self.rng.randn(), self._hyperparams['rep_cost']*1.1)
-                        task_distance = self.cal_location_distance(start, dest)
-                        task_duration = self.cal_duration(task_distance, self._hyperparams['task_speed'])
-                        task_t.append({'time': self.time_info[t], 'income': task_income, 'start': start, 'dest': dest, 'distance': task_distance, 'duration': task_duration})
+                    if (start != destination):
+
+                        distance = self.cal_location_distance(start, destination)
+                        duration = self.cal_duration(distance, self._hyperparams['task_speed'])
+                        income = distance*(max(self._hyperparams['task_income_mean'] + self._hyperparams['task_income_std'] * self.rng.randn(), self._hyperparams['rep_cost'] * 1.1))
+                        tasks_t.append({'time': self.time_info[t], 'start': start, 'destination': destination, 'distance': distance, 'duration': duration, 'income': income})
                         break
                     '''
                     else:
                         print("start and dest are the same, retry sampling")
                     '''
-            self.tasks_info.append({self.time_info[t]: task_t})
+            self.tasks_info.append({self.time_info[t]: tasks_t})
 
+        # possible repositions
+        self.repositions = []
+        for i_start in range(self.nLocation):
+            for i_destination in range(self.nLocation):
+                start = self.location_seq[i_start]
+                destination = self.location_seq[i_destination]
+                distance = self.cal_location_distance(start, destination)
+                duration = self.cal_duration(distance, self._hyperparams['rep_speed'])
+                cost = distance*self._hyperparams['rep_cost']
+
+                self.repositions.append({'start': start, 'destination': destination, 'distance': distance, 'duration': duration, 'cost': cost})
 
         return
 
     def dump_data(self, ex_data_dir):
-        location_info = {}
-        init_resource_info = {}
-        for location in self.location_info:
-            location_info[location] = self.location_info[location]["location"]
-            init_resource_info[location] = self.location_info[location]["nR_t0"]
-
         # time & location dictionary
-        time_space_info = {"time": self.time_info, "location": location_info}  # , "time seq": self.time_seq
+        time_space_info = {"time_detail": self.time_info, "time_seq": self.time_seq, "location_detail": self.location_info, "location_seq": self.location_seq}
         with open(ex_data_dir + 'time_space_info.json', 'w') as f:
             json.dump(time_space_info, f, indent=4, ensure_ascii=False, encoding="utf-8")
         f.close()
 
         # init resources
         with open(ex_data_dir + 'init_resource.json', 'w') as f:
-            json.dump(init_resource_info, f, indent=4, ensure_ascii=False, encoding="utf-8")
+            json.dump(self.init_resource_info, f, indent=4, ensure_ascii=False, encoding="utf-8")
         f.close()
 
-        # task information
-        with open(ex_data_dir + 'task.json', 'w') as f:
+        # task orders
+        with open(ex_data_dir + 'tasks.json', 'w') as f:
             json.dump(self.tasks_info, f, indent=4, ensure_ascii=False, encoding="utf-8")
+        f.close()
+
+        # possible relocations
+        with open(ex_data_dir + 'repositions.json', 'w') as f:
+            json.dump(self.repositions, f, indent=4, ensure_ascii=False, encoding="utf-8")
         f.close()
 
         return
@@ -156,19 +173,23 @@ class TimeSpaceDataDealer(DataDealer):
             #init_resource = json.load(f, encoding="utf-8")
             init_resource=yaml.load(f)
 
-        with open(ex_data_dir + 'task.json', 'r') as f:
-            #task = json.load(f, encoding="utf-8")
-            task = yaml.load(f)
+        with open(ex_data_dir + 'tasks.json', 'r') as f:
+            #tasks = json.load(f, encoding="utf-8")
+            tasks = yaml.load(f)
 
-        return time_space_info, init_resource, task
+        with open(ex_data_dir + 'repositions.json', 'r') as f:
+            #relocations = json.load(f, encoding="utf-8")
+            repositions = yaml.load(f)
+
+        return time_space_info, init_resource, tasks, repositions
 
     def next_batch(self, batch_size):
         return
 
 
     def cal_location_distance(self, location_id1, location_id2):
-        location1 = self.location_info[location_id1]['location']
-        location2 = self.location_info[location_id2]['location']
+        location1 = self.location_info[location_id1]
+        location2 = self.location_info[location_id2]
 
         route_vec = np.array(location2) - np.array(location1)
 
