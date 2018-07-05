@@ -13,6 +13,7 @@ sys.path.append(src_dir)
 
 from RLutils.agent.Agent import Agent
 from RLutils.algorithm.scheduling_mp import scheduling_mp_sparse
+from RLutils.algorithm.cave import CAVE, v2A, A2v
 
 class ADP_scheduling_agent(Agent):
 
@@ -151,3 +152,112 @@ class ADP_scheduling_agent(Agent):
 
             self.decision_record[t].append({'Vopt': Vopt, 'Xopt': Xopt, 'Yopt': Yopt, 'end resource': Rout, 'right lambda': lambda_right, 'left lambda': lambda_left, 'right status': status_right, 'left status': status_left})
         return action, act_extra_output
+
+    def policy_update(self):
+        logging.warning("* update policy - value function")
+        if self._hyperparams['verbose']:
+            print("* update policy - value function")
+
+        # determination of breakpoints
+        for t in range(self.T - 1):
+            logging.warning("* determine new breakpoints, at step = %i:" % t)
+            if self._hyperparams['verbose']:
+                print("* determine new breakpoints, at step = %i" % t)
+            t_pi_o_minus, t_pi_o_plus = self.__pi_update(self._hyperparams['cave_type'], pi_minus, pi_plus, k, t)
+
+            logging.warning("* produce new slopes, at step = %i:" % t)
+            if self._hyperparams['verbose']:
+                print("* produce new slopes, at step = %i" % t)
+            self.__cave_update(self._hyperparams['cave_step'], self.decision_record[t][-1]['Rout'], t_pi_o_minus, t_pi_o_plus, t)
+
+
+        return
+
+    def __pi_update(self, adjustType, pi_minus, pi_plus, num_iter, t):
+        import sys
+
+        # determination of the updating right-derivative and left-derivative
+        t_pi_o_plus = np.zeros((self.n, self.tau_max))  # each column means tau = 1, 2, ..., tau_max
+        t_pi_o_minus = np.zeros((self.n, self.tau_max))  # each column means tau = 1, 2, ..., tau_max
+
+        if adjustType == 'DUALNEXT':
+            # DUALNEXT: the slope update method of eq(17-18), Godfrey, Powell, 2002
+            next_pi_plus = pi_plus[num_iter, t + 1]
+            next_pi_minus = pi_minus[num_iter, t + 1]
+
+            for tau in range(self.tau_max):
+                for i in range(self.n):
+                    t_pi_o_plus[i][tau] = next_pi_plus[i][tau]
+                    t_pi_o_minus[i][tau] = next_pi_minus[i][tau]
+        elif adjustType == 'DUALMAX':
+            # DUALMAX: the slope update method of eq(15-16), Godfrey, Powell, 2002
+            future_pi_plus = pi_plus[num_iter, t + 1]
+            future_pi_minus = pi_minus[num_iter, t + 1]
+            for tau in range(self.tau_max):
+                candi_pi_plus = future_pi_plus[:, tau].reshape((self.n, 1))
+                candi_pi_minus = future_pi_minus[:, tau].reshape((self.n, 1))
+                if tau > 0:
+                    # then candi_pi has more than one column
+                    for s in range(1, tau + 1):
+                        if t + 1 + s >= self.T:
+                            break
+                        future_pi_plus = pi_plus[num_iter, t + 1 + s]
+                        candi_pi_plus = np.hstack((candi_pi_plus, future_pi_plus[:, tau - s].reshape((self.n, 1))))
+                        future_pi_minus = pi_minus[num_iter, t + 1 + s]
+                        candi_pi_minus = np.hstack((candi_pi_minus, future_pi_minus[:, tau - s].reshape((self.n, 1))))
+                for i in range(self.n):
+                    t_pi_o_plus[i][tau] = np.max(candi_pi_plus[i, :])
+                    t_pi_o_minus[i][tau] = np.min(candi_pi_minus[i, :])
+        else:
+            print >> sys.stderr, 'Wrong definition of adjustment method!'
+        return t_pi_o_minus, t_pi_o_plus
+
+    ## Value function update with CAVE
+    def __cave_update(self, alpha, t_Rout, t_pi_o_minus, t_pi_o_plus, t):
+
+        # update v and vLen at each t using CAVE algorithm
+        v = self.vT[t]
+        vLen = self.vLenT[t]
+
+        for tau in range(self.tau_max):
+            for i in range(self.n):
+                icol = tau * self.n + i
+
+                newBreakPoint = [t_Rout[i][tau], t_pi_o_minus[i][tau], t_pi_o_plus[i][tau]]
+
+                A = v2A(v[:, icol], vLen[:, icol], self.NT[t, tau, i])  # convert to A from v and vLen
+                A = CAVE(A, newBreakPoint, alpha)  # update A by CAVE
+                v_vec, vLen_vec, N_vec = A2v(A)  # convert to v and vLen at each i and tau from A
+
+                # update v and vLen; need to consider the consistence of matrix size
+                N = v.shape[0]
+                if N_vec <= N:
+                    for k in range(N_vec, N):
+                        v[k][icol] = 0
+                        vLen[k][icol] = 0
+                else:
+                    v = np.vstack((v, np.zeros((N_vec - N, v.shape[1]))))
+                    vLen = np.vstack((vLen, np.zeros((N_vec - N, v.shape[1]))))
+
+                for k in range(N_vec):
+                    v[k][icol] = v_vec[k]
+                    vLen[k][icol] = vLen_vec[k]
+
+                # store the new N
+                self.NT[(t, tau, i)] = N_vec
+
+        assert v.shape == vLen.shape
+
+        # store updated v and vLen
+        Ndiff = v.shape[0] - self.vT[t].shape[0]
+        if Ndiff > 0:
+            self.vT[t] = np.vstack((self.vT[t], np.zeros((Ndiff, self.tau_max * self.n))))
+            self.vLenT[t] = np.vstack((self.vLenT[t], np.zeros((Ndiff, self.tau_max * self.n))))
+        for tau in range(self.tau_max):
+            for i in range(self.n):
+                icol = tau * self.n + i
+                for N in range(v.shape[0]):
+                    self.vT[t][N, icol] = v[N, icol]
+                    self.vLenT[t][N, icol] = vLen[N, icol]
+
+        return

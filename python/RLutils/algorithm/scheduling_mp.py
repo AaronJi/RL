@@ -172,7 +172,13 @@ def scheduling_mp(n, tau_max, R, Ru, M, W, C, tauX, tauY, P, PLen, rep_matrix):
 # param_job: a matrix with rows consisting by [M_row_num, M_col_num, M_coeff, W_coeff, tauX_coeff]; if there is no job demand, param_job = None
 # param_rep: a matrix with rows consisting by [rep_row_num, rep_col_num, C_coeff, tauY_coeff]
 def scheduling_mp_sparse(n, tau_max, R, Ru, param_job, param_rep, P, PLen):
+    if cvx.__version__[0] == '0':
+        return scheduling_mp_sparse_v0(n, tau_max, R, Ru, param_job, param_rep, P, PLen)
+    else:
+        return scheduling_mp_sparse_v1(n, tau_max, R, Ru, param_job, param_rep, P, PLen)
 
+
+def scheduling_mp_sparse_v0(n, tau_max, R, Ru, param_job, param_rep, P, PLen):
     if param_job is None or param_job.shape[1] == 0:
         M_is_empty = True
     else:
@@ -242,6 +248,7 @@ def scheduling_mp_sparse(n, tau_max, R, Ru, param_job, param_rep, P, PLen):
     Y_right = cvx.Variable(num_nonzero_rep, 1)
     Z_right = cvx.Variable(P.shape[0], tau_max*n)
 
+    # functions are different depending on cvx version
     obj_right = - C_coeff*Y_right + cvx.sum_entries(cvx.mul_elemwise(P, Z_right))
     if not M_is_empty:
         obj_right += W_coeff * X_right
@@ -254,6 +261,7 @@ def scheduling_mp_sparse(n, tau_max, R, Ru, param_job, param_rep, P, PLen):
         cons_right = [R_right == row_sum_matrix_X*X_right + row_sum_matrix_Y*Y_right,
                       cvx.sum_entries(Z_right, axis=0).T == col_sum_matrix_X * X_right + col_sum_matrix_Y * Y_right + Ru_right,
                       0 <= X_right, X_right <= M_coeff, 0 <= Y_right, 0 <= Z_right, Z_right <= PLen]
+
 
     prob_right = cvx.Problem(cvx.Maximize(obj_right), cons_right)
 
@@ -324,18 +332,14 @@ def scheduling_mp_sparse(n, tau_max, R, Ru, param_job, param_rep, P, PLen):
     for tau in range(tau_max):
         for i in range(n):
             lambda_left[i][1+tau] = dual_left[tau*n+i][0]
-    print("***opt***")
-    print(np.sum(end_resource))
 
     return Vopt, Xopt, Yopt, end_resource, lambda_right, lambda_left, prob_right.status, prob_left.status
-
-
 
 
 ## solve the scheduling with sparse input
 # param_job: a matrix with rows consisting by [M_row_num, M_col_num, M_coeff, W_coeff, tauX_coeff]; if there is no job demand, param_job = None
 # param_rep: a matrix with rows consisting by [rep_row_num, rep_col_num, C_coeff, tauY_coeff]
-def scheduling_mp_sparse1(n, tau_max, R, Ru, param_job, param_rep, P, PLen):
+def scheduling_mp_sparse_v1(n, tau_max, R, Ru, param_job, param_rep, P, PLen):
 
     if param_job is None or param_job.shape[1] == 0:
         M_is_empty = True
@@ -402,9 +406,9 @@ def scheduling_mp_sparse1(n, tau_max, R, Ru, param_job, param_rep, P, PLen):
 
     # Construct the problem.
     if not M_is_empty:
-        X_right = cvx.Variable(num_nonzero_M, 1)
-    Y_right = cvx.Variable(num_nonzero_rep, 1)
-    Z_right = cvx.Variable(P.shape[0], tau_max*n)
+        X_right = cvx.Variable((num_nonzero_M, 1))
+    Y_right = cvx.Variable((num_nonzero_rep, 1))
+    Z_right = cvx.Variable((P.shape[0], tau_max*n))
 
     obj_right = - C_coeff*Y_right + cvx.sum(cvx.multiply(P, Z_right))
     if not M_is_empty:
@@ -412,11 +416,11 @@ def scheduling_mp_sparse1(n, tau_max, R, Ru, param_job, param_rep, P, PLen):
 
     if M_is_empty:
         cons_right = [R_right == row_sum_matrix_Y*Y_right,
-                      cvx.sum_entries(Z_right, axis=0).T == col_sum_matrix_Y * Y_right + Ru_right,
+                      cvx.sum(Z_right, axis=0, keepdims=True).T == col_sum_matrix_Y * Y_right + Ru_right,
                       0 <= Y_right, 0 <= Z_right, Z_right <= PLen]
     else:
         cons_right = [R_right == row_sum_matrix_X*X_right + row_sum_matrix_Y*Y_right,
-                      cvx.sum_entries(Z_right, axis=0).T == col_sum_matrix_X * X_right + col_sum_matrix_Y * Y_right + Ru_right,
+                      cvx.sum(Z_right, axis=0, keepdims=True).T == col_sum_matrix_X * X_right + col_sum_matrix_Y * Y_right + Ru_right,
                       0 <= X_right, X_right <= M_coeff, 0 <= Y_right, 0 <= Z_right, Z_right <= PLen]
 
     prob_right = cvx.Problem(cvx.Maximize(obj_right), cons_right)
@@ -458,9 +462,9 @@ def scheduling_mp_sparse1(n, tau_max, R, Ru, param_job, param_rep, P, PLen):
 
     # Construct the problem.
     if not M_is_empty:
-        X_left = cvx.Variable(num_nonzero_M, 1)
-    Y_left = cvx.Variable(num_nonzero_rep, 1)
-    Z_left = cvx.Variable(P.shape[0], tau_max*n)
+        X_left = cvx.Variable((num_nonzero_M, 1))
+    Y_left = cvx.Variable((num_nonzero_rep, 1))
+    Z_left = cvx.Variable((P.shape[0], tau_max*n))
 
     obj_left =  - C_coeff*Y_left + cvx.sum(cvx.multiply(P, Z_left))
     if not M_is_empty:
@@ -468,11 +472,11 @@ def scheduling_mp_sparse1(n, tau_max, R, Ru, param_job, param_rep, P, PLen):
 
     if M_is_empty:
         cons_left = [R_left == row_sum_matrix_Y*Y_left,
-                      cvx.sum_entries(Z_left, axis=0).T == col_sum_matrix_Y * Y_left + Ru_left,
+                      cvx.sum(Z_left, axis=0, keepdims=True).T == col_sum_matrix_Y * Y_left + Ru_left,
                       0 <= Y_left, 0 <= Z_left, Z_left <= PLen]
     else:
         cons_left = [R_left == row_sum_matrix_X*X_left + row_sum_matrix_Y*Y_left,
-                      cvx.sum_entries(Z_left, axis=0).T == col_sum_matrix_X * X_left + col_sum_matrix_Y * Y_left + Ru_left,
+                      cvx.sum(Z_left, axis=0, keepdims=True).T == col_sum_matrix_X * X_left + col_sum_matrix_Y * Y_left + Ru_left,
                       0 <= X_left, X_left <= M_coeff, 0 <= Y_left, 0 <= Z_left, Z_left <= PLen]
 
     prob_left = cvx.Problem(cvx.Maximize(obj_left), cons_left)

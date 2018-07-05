@@ -36,13 +36,13 @@ ALGconfig = {
     'nIter': 1000,  # max number of iterations
     'eta': 0.0001,  # learning rate
     'discount': 1.0,
-    'cave_step': 0.9,  # the step size of CAVE algorithm
-    'cave_type': 'DUALMAX',  # DUALMAX or DUALNEXT; the slope update method of eq(15-16), Godfrey, Powell, 2002
     'max_period': 7,  # must be a positive int; if equaling to 1, the algorithm will decay to the single period mode
 }
 
 AGEconfig = {
     "policyType": "deterministic",
+    'cave_step': 0.9,  # the step size of CAVE algorithm
+    'cave_type': 'DUALMAX',  # DUALMAX or DUALNEXT; the slope update method of eq(15-16), Godfrey, Powell, 2002
 }
 
 ENVconfig = {
