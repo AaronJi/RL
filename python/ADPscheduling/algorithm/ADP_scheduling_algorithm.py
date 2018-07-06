@@ -24,11 +24,9 @@ class ADP_scheduling_algorithm(object):
         config.update(hyperparams)
         self._hyperparams = config
 
-        logging.info("%i iterations, learning rate = %f, discount rate = %f, CAVE step length = %f, slope adjust type = %s"
-                     % (self._hyperparams['nIter'], self._hyperparams['eta'], self._hyperparams['discount'], self._hyperparams['cave_step'], self._hyperparams['cave_type']))
+        logging.info("%i iterations, learning rate = %f, discount rate = %f" % (self._hyperparams['nIter'], self._hyperparams['eta'], self._hyperparams['discount']))
         if self._hyperparams['verbose']:
-            print("%i iterations, learning rate = %f, discount rate = %f, CAVE step length = %f, slope adjust type = %s"
-                  % (self._hyperparams['nIter'], self._hyperparams['eta'], self._hyperparams['discount'], self._hyperparams['cave_step'], self._hyperparams['cave_type']))
+            print("%i iterations, learning rate = %f, discount rate = %f" % (self._hyperparams['nIter'], self._hyperparams['eta'], self._hyperparams['discount']))
 
         self.agent = None
         self.environment = None
@@ -86,7 +84,8 @@ class ADP_scheduling_algorithm(object):
         print('Simulation begins')
 
         for k in range(self._hyperparams['nIter']):
-            #print 'Iteration k = %i:' % k
+            if self._hyperparams['verbose']:
+                print('Iteration k = %i:' % k)
 
             # Forward simulation
             for t in range(T):
@@ -99,7 +98,9 @@ class ADP_scheduling_algorithm(object):
                     state = state0
 
                 startTime = datetime.datetime.now()
+
                 action, act_extra_factor = self.agent.act(state, tasks_t)
+
                 #self.environment.reward(state, action)
                 #self.environment.transit(state, action)
                 state_next, reward = self.environment.reward_and_transit(state, action, act_extra_factor)
@@ -107,14 +108,18 @@ class ADP_scheduling_algorithm(object):
                 endTime = datetime.datetime.now()
 
                 CPUtime = (endTime - startTime).total_seconds()
-                print(CPUtime)
+                if self._hyperparams['verbose']:
+                    print('step %i solved, cost %f seconds' % (t, CPUtime))
 
-                sys.exit(0)
+
                 state = state_next
 
             # determination of breakpoints
             for t in range(T - 1):
-                pass
+                self.agent.policy_update()
+
+            if k > 2:
+                sys.exit(0)
 
         return
 

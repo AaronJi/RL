@@ -25,25 +25,30 @@ class ADP_scheduling_agent(Agent):
         self.max_period = max_period
 
         # initialize the value function
-        self.Qfun = {'PT': defaultdict(list),  # the slopes of value approximation functions at all simulation times; v[t](k) is v_t^k at time t, the kth interval
-                     'PLenT': defaultdict(list),  # the interval length of value approximation functions at all simulation times; vLen[t](k) is u_t^k+1 - u_t^k, with slope of v[t](k)
+        self.Qfun = {'vT': defaultdict(list),  # the slopes of value approximation functions at all simulation times; v[t](k) is v_t^k at time t, the kth interval
+                     'vLenT': defaultdict(list),  # the interval length of value approximation functions at all simulation times; vLen[t](k) is u_t^k+1 - u_t^k, with slope of v[t](k)
                      'NT': defaultdict(list)}  # number of v elements for all iterations, simulation steps, and all locations
         # at the first step, initialize all v by 0
         for t in range(T):
-            P = np.zeros((1, n * max_period))
-            PLen = np.zeros((1, n * max_period))
+            v = np.zeros((1, n * max_period))
+            vLen = np.zeros((1, n * max_period))
             for tau in range(max_period):
                 for i in range(n):
-                    PLen[0, tau*n+i] = nR+1
-            self.Qfun['PT'][t] = P
-            self.Qfun['PLenT'][t] = PLen
+                    vLen[0, tau*n+i] = nR+1
+            self.Qfun['vT'][t] = v
+            self.Qfun['vLenT'][t] = vLen
             for tau in range(max_period):
                 for i in range(n):
                     self.Qfun['NT'][(t, tau, i)] = 1
 
+        # record of past planning decisions
         self.decision_record = []
         for t in range(T):
             self.decision_record.append([])
+
+        logging.info(" CAVE step length = %f, slope adjust type = %s" % (self._hyperparams['cave_step'], self._hyperparams['cave_type']))
+        if self._hyperparams['verbose']:
+            print("CAVE step length = %f, slope adjust type = %s" % (self._hyperparams['cave_step'], self._hyperparams['cave_type']))
 
         return
 
@@ -116,7 +121,7 @@ class ADP_scheduling_agent(Agent):
 
         try:
             Vopt, Xopt, Yopt, end_resource, lambda_right, lambda_left, status_right, status_left = \
-                scheduling_mp_sparse(self.n, self.max_period, Rt, Ru, param_job, param_rep, self.Qfun['PT'][t], self.Qfun['PLenT'][t])
+                scheduling_mp_sparse(self.n, self.max_period, Rt, Ru, param_job, param_rep, self.Qfun['vT'][t], self.Qfun['vLenT'][t])
 
             logging.debug("* acting: at t = %d, status of solving the right problem: %s, status of solving the left problem: %s" % (t, status_right, status_left))
             if self._hyperparams['verbose']:
@@ -163,37 +168,35 @@ class ADP_scheduling_agent(Agent):
             logging.warning("* determine new breakpoints, at step = %i:" % t)
             if self._hyperparams['verbose']:
                 print("* determine new breakpoints, at step = %i" % t)
-            t_pi_o_minus, t_pi_o_plus = self.__pi_update(self._hyperparams['cave_type'], pi_minus, pi_plus, k, t)
+            t_pi_o_minus, t_pi_o_plus = self.__pi_update(t)
 
             logging.warning("* produce new slopes, at step = %i:" % t)
             if self._hyperparams['verbose']:
                 print("* produce new slopes, at step = %i" % t)
-            self.__cave_update(self._hyperparams['cave_step'], self.decision_record[t][-1]['Rout'], t_pi_o_minus, t_pi_o_plus, t)
-
+            self.__cave_update(t_pi_o_minus, t_pi_o_plus, t)
 
         return
 
-    def __pi_update(self, adjustType, pi_minus, pi_plus, num_iter, t):
-        import sys
+    def __pi_update(self, t):
 
         # determination of the updating right-derivative and left-derivative
         t_pi_o_plus = np.zeros((self.n, self.tau_max))  # each column means tau = 1, 2, ..., tau_max
         t_pi_o_minus = np.zeros((self.n, self.tau_max))  # each column means tau = 1, 2, ..., tau_max
 
-        if adjustType == 'DUALNEXT':
+        if self._hyperparams['cave_type'] == 'DUALNEXT':
             # DUALNEXT: the slope update method of eq(17-18), Godfrey, Powell, 2002
-            next_pi_plus = pi_plus[num_iter, t + 1]
-            next_pi_minus = pi_minus[num_iter, t + 1]
+            next_pi_plus = self.decision_record[t+1][-1]['right_lambda']
+            next_pi_minus = self.decision_record[t+1][-1]['left_lambda']
 
-            for tau in range(self.tau_max):
+            for tau in range(self.max_period):
                 for i in range(self.n):
                     t_pi_o_plus[i][tau] = next_pi_plus[i][tau]
                     t_pi_o_minus[i][tau] = next_pi_minus[i][tau]
-        elif adjustType == 'DUALMAX':
+        elif self._hyperparams['cave_type'] == 'DUALMAX':
             # DUALMAX: the slope update method of eq(15-16), Godfrey, Powell, 2002
-            future_pi_plus = pi_plus[num_iter, t + 1]
-            future_pi_minus = pi_minus[num_iter, t + 1]
-            for tau in range(self.tau_max):
+            future_pi_plus = self.decision_record[t+1][-1]['right_lambda']
+            future_pi_minus = self.decision_record[t+1][-1]['left_lambda']
+            for tau in range(self.max_period):
                 candi_pi_plus = future_pi_plus[:, tau].reshape((self.n, 1))
                 candi_pi_minus = future_pi_minus[:, tau].reshape((self.n, 1))
                 if tau > 0:
@@ -201,9 +204,9 @@ class ADP_scheduling_agent(Agent):
                     for s in range(1, tau + 1):
                         if t + 1 + s >= self.T:
                             break
-                        future_pi_plus = pi_plus[num_iter, t + 1 + s]
+                        future_pi_plus = self.decision_record[t+1+s][-1]['right_lambda']
                         candi_pi_plus = np.hstack((candi_pi_plus, future_pi_plus[:, tau - s].reshape((self.n, 1))))
-                        future_pi_minus = pi_minus[num_iter, t + 1 + s]
+                        future_pi_minus = self.decision_record[t+1+s][-1]['left_lambda']
                         candi_pi_minus = np.hstack((candi_pi_minus, future_pi_minus[:, tau - s].reshape((self.n, 1))))
                 for i in range(self.n):
                     t_pi_o_plus[i][tau] = np.max(candi_pi_plus[i, :])
@@ -213,20 +216,20 @@ class ADP_scheduling_agent(Agent):
         return t_pi_o_minus, t_pi_o_plus
 
     ## Value function update with CAVE
-    def __cave_update(self, alpha, t_Rout, t_pi_o_minus, t_pi_o_plus, t):
+    def __cave_update(self, t_pi_o_minus, t_pi_o_plus, t):
 
         # update v and vLen at each t using CAVE algorithm
-        v = self.vT[t]
-        vLen = self.vLenT[t]
+        v = self.Qfun['vT'][t]  # self.vT[t]
+        vLen = self.Qfun['vLenT'][t]  # self.vLenT[t]
 
         for tau in range(self.tau_max):
             for i in range(self.n):
                 icol = tau * self.n + i
 
-                newBreakPoint = [t_Rout[i][tau], t_pi_o_minus[i][tau], t_pi_o_plus[i][tau]]
+                newBreakPoint = [self.decision_record[t][-1]['Rout'][i][tau], t_pi_o_minus[i][tau], t_pi_o_plus[i][tau]]
 
-                A = v2A(v[:, icol], vLen[:, icol], self.NT[t, tau, i])  # convert to A from v and vLen
-                A = CAVE(A, newBreakPoint, alpha)  # update A by CAVE
+                A = v2A(v[:, icol], vLen[:, icol], self.Qfun['NT'][t, tau, i])  # convert to A from v and vLen
+                A = CAVE(A, newBreakPoint, self._hyperparams['cave_step'])  # update A by CAVE
                 v_vec, vLen_vec, N_vec = A2v(A)  # convert to v and vLen at each i and tau from A
 
                 # update v and vLen; need to consider the consistence of matrix size
@@ -244,20 +247,20 @@ class ADP_scheduling_agent(Agent):
                     vLen[k][icol] = vLen_vec[k]
 
                 # store the new N
-                self.NT[(t, tau, i)] = N_vec
+                self.Qfun['NT'][(t, tau, i)] = N_vec
 
         assert v.shape == vLen.shape
 
         # store updated v and vLen
-        Ndiff = v.shape[0] - self.vT[t].shape[0]
+        Ndiff = v.shape[0] - self.Qfun['vT'][t].shape[0]
         if Ndiff > 0:
-            self.vT[t] = np.vstack((self.vT[t], np.zeros((Ndiff, self.tau_max * self.n))))
-            self.vLenT[t] = np.vstack((self.vLenT[t], np.zeros((Ndiff, self.tau_max * self.n))))
+            self.Qfun['vT'][t] = np.vstack((self.Qfun['vT'][t], np.zeros((Ndiff, self.tau_max * self.n))))
+            self.Qfun['vLenT'][t] = np.vstack((self.Qfun['vLenT'][t], np.zeros((Ndiff, self.tau_max * self.n))))
         for tau in range(self.tau_max):
             for i in range(self.n):
                 icol = tau * self.n + i
                 for N in range(v.shape[0]):
-                    self.vT[t][N, icol] = v[N, icol]
-                    self.vLenT[t][N, icol] = vLen[N, icol]
+                    self.Qfun['vT'][t][N, icol] = v[N, icol]
+                    self.Qfun['vLenT'][t][N, icol] = vLen[N, icol]
 
         return

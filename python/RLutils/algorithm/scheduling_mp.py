@@ -45,7 +45,7 @@ def scheduling_mp(n, tau_max, R, Ru, M, W, C, tauX, tauY, P, PLen, rep_matrix):
         W_coeff[i] = W[M_row_num[i]][M_col_num[i]]
 
     # construct the coefficient matrix for X (need to find the entries that correspond to each row/column)
-    row_sum_matrix_X = coo_matrix((np.ones(num_nonzero_M), (M_row_num, range(num_nonzero_M))), shape=(n, num_nonzero_M))
+    row_sum_matrix_X = sp.sparse.coo_matrix((np.ones(num_nonzero_M), (M_row_num, range(num_nonzero_M))), shape=(n, num_nonzero_M))
 
     col_sum_matrix_X = np.zeros((tau_max*n, num_nonzero_M))
     for i in range(num_nonzero_M):
@@ -66,7 +66,7 @@ def scheduling_mp(n, tau_max, R, Ru, M, W, C, tauX, tauY, P, PLen, rep_matrix):
         C_coeff[i] = C[rep_row_num[i]][rep_col_num[i]]
 
     # construct the coefficient matrix for Y (need to find the entries those correspond to each row/column
-    row_sum_matrix_Y = coo_matrix((np.ones(num_nonzero_rep), (rep_row_num, range(num_nonzero_rep))), shape=(n, num_nonzero_rep))
+    row_sum_matrix_Y = sp.sparse.coo_matrix((np.ones(num_nonzero_rep), (rep_row_num, range(num_nonzero_rep))), shape=(n, num_nonzero_rep))
 
     col_sum_matrix_Y = np.zeros((tau_max * n, num_nonzero_rep))
     for i in range(num_nonzero_rep):
@@ -176,7 +176,6 @@ def scheduling_mp_sparse(n, tau_max, R, Ru, param_job, param_rep, P, PLen):
         return scheduling_mp_sparse_v0(n, tau_max, R, Ru, param_job, param_rep, P, PLen)
     else:
         return scheduling_mp_sparse_v1(n, tau_max, R, Ru, param_job, param_rep, P, PLen)
-
 
 def scheduling_mp_sparse_v0(n, tau_max, R, Ru, param_job, param_rep, P, PLen):
     if param_job is None or param_job.shape[1] == 0:
