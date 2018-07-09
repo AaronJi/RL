@@ -111,7 +111,6 @@ class ADP_scheduling_algorithm(object):
                 if self._hyperparams['verbose']:
                     print('step %i solved, cost %f seconds' % (t, CPUtime))
 
-
                 state = state_next
 
             # determination of breakpoints

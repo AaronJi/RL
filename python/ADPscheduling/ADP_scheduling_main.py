@@ -92,12 +92,6 @@ def main():
     alg.initEnv(env)
     alg.initAgent(agent)
 
-    #print(time_space_info)
-    #print(init_resource)
-    #print(tasks)
-    #print(repositions)
-
-
     alg.offline_train((time_space_info, init_resource, tasks, repositions))
 
 

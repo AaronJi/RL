@@ -41,6 +41,7 @@ ALGconfig = {
 
 AGEconfig = {
     "policyType": "deterministic",
+    'solver': 'ECOS',  # 'ECOS', 'ECOS_BB'
     'cave_step': 0.9,  # the step size of CAVE algorithm
     'cave_type': 'DUALMAX',  # DUALMAX or DUALNEXT; the slope update method of eq(15-16), Godfrey, Powell, 2002
 }

@@ -113,15 +113,9 @@ class ADP_scheduling_agent(Agent):
         tasks_t = extra_factor
 
         Rt, Ru, param_job, param_rep = self.build_matrix_data(state, tasks_t)
-        #print('***')
-        #print('param_job')
-        #print(param_job)
-        #print('param_rep')
-        #print(param_rep)
-
         try:
             Vopt, Xopt, Yopt, end_resource, lambda_right, lambda_left, status_right, status_left = \
-                scheduling_mp_sparse(self.n, self.max_period, Rt, Ru, param_job, param_rep, self.Qfun['vT'][t], self.Qfun['vLenT'][t])
+                scheduling_mp_sparse(self.n, self.max_period, Rt, Ru, param_job, param_rep, self.Qfun['vT'][t], self.Qfun['vLenT'][t], self._hyperparams['solver'])
 
             logging.debug("* acting: at t = %d, status of solving the right problem: %s, status of solving the left problem: %s" % (t, status_right, status_left))
             if self._hyperparams['verbose']:
@@ -148,14 +142,14 @@ class ADP_scheduling_agent(Agent):
 
                 action = (Xopt, Yopt)
                 act_extra_output = (Rout, Vopt, lambda_right, lambda_left)
-                self.decision_record[t].append({'Vopt': Vopt, 'Xopt': Xopt, 'Yopt': Yopt, 'end resource': Rout, 'right lambda': lambda_right, 'left lambda': lambda_left, 'right status': 'fail', 'left status': 'fail'})
+                self.decision_record[t].append({'Vopt': Vopt, 'Xopt': Xopt, 'Yopt': Yopt, 'Rout': Rout, 'right lambda': lambda_right, 'left lambda': lambda_left, 'right status': 'fail', 'left status': 'fail'})
         else:
             Rout = np.round(end_resource)
 
             action = (Xopt, Yopt)
             act_extra_output = (Rout, Vopt, lambda_right, lambda_left)
 
-            self.decision_record[t].append({'Vopt': Vopt, 'Xopt': Xopt, 'Yopt': Yopt, 'end resource': Rout, 'right lambda': lambda_right, 'left lambda': lambda_left, 'right status': status_right, 'left status': status_left})
+            self.decision_record[t].append({'Vopt': Vopt, 'Xopt': Xopt, 'Yopt': Yopt, 'Rout': Rout, 'right lambda': lambda_right, 'left lambda': lambda_left, 'right status': status_right, 'left status': status_left})
         return action, act_extra_output
 
     def policy_update(self):
@@ -180,13 +174,13 @@ class ADP_scheduling_agent(Agent):
     def __pi_update(self, t):
 
         # determination of the updating right-derivative and left-derivative
-        t_pi_o_plus = np.zeros((self.n, self.tau_max))  # each column means tau = 1, 2, ..., tau_max
-        t_pi_o_minus = np.zeros((self.n, self.tau_max))  # each column means tau = 1, 2, ..., tau_max
+        t_pi_o_plus = np.zeros((self.n, self.max_period))  # each column means tau = 1, 2, ..., tau_max
+        t_pi_o_minus = np.zeros((self.n, self.max_period))  # each column means tau = 1, 2, ..., tau_max
 
         if self._hyperparams['cave_type'] == 'DUALNEXT':
             # DUALNEXT: the slope update method of eq(17-18), Godfrey, Powell, 2002
-            next_pi_plus = self.decision_record[t+1][-1]['right_lambda']
-            next_pi_minus = self.decision_record[t+1][-1]['left_lambda']
+            next_pi_plus = self.decision_record[t+1][-1]['right lambda']
+            next_pi_minus = self.decision_record[t+1][-1]['left lambda']
 
             for tau in range(self.max_period):
                 for i in range(self.n):
@@ -194,8 +188,8 @@ class ADP_scheduling_agent(Agent):
                     t_pi_o_minus[i][tau] = next_pi_minus[i][tau]
         elif self._hyperparams['cave_type'] == 'DUALMAX':
             # DUALMAX: the slope update method of eq(15-16), Godfrey, Powell, 2002
-            future_pi_plus = self.decision_record[t+1][-1]['right_lambda']
-            future_pi_minus = self.decision_record[t+1][-1]['left_lambda']
+            future_pi_plus = self.decision_record[t+1][-1]['right lambda']
+            future_pi_minus = self.decision_record[t+1][-1]['left lambda']
             for tau in range(self.max_period):
                 candi_pi_plus = future_pi_plus[:, tau].reshape((self.n, 1))
                 candi_pi_minus = future_pi_minus[:, tau].reshape((self.n, 1))
@@ -204,9 +198,9 @@ class ADP_scheduling_agent(Agent):
                     for s in range(1, tau + 1):
                         if t + 1 + s >= self.T:
                             break
-                        future_pi_plus = self.decision_record[t+1+s][-1]['right_lambda']
+                        future_pi_plus = self.decision_record[t+1+s][-1]['right lambda']
                         candi_pi_plus = np.hstack((candi_pi_plus, future_pi_plus[:, tau - s].reshape((self.n, 1))))
-                        future_pi_minus = self.decision_record[t+1+s][-1]['left_lambda']
+                        future_pi_minus = self.decision_record[t+1+s][-1]['left lambda']
                         candi_pi_minus = np.hstack((candi_pi_minus, future_pi_minus[:, tau - s].reshape((self.n, 1))))
                 for i in range(self.n):
                     t_pi_o_plus[i][tau] = np.max(candi_pi_plus[i, :])
@@ -222,7 +216,7 @@ class ADP_scheduling_agent(Agent):
         v = self.Qfun['vT'][t]  # self.vT[t]
         vLen = self.Qfun['vLenT'][t]  # self.vLenT[t]
 
-        for tau in range(self.tau_max):
+        for tau in range(self.max_period):
             for i in range(self.n):
                 icol = tau * self.n + i
 
@@ -254,9 +248,9 @@ class ADP_scheduling_agent(Agent):
         # store updated v and vLen
         Ndiff = v.shape[0] - self.Qfun['vT'][t].shape[0]
         if Ndiff > 0:
-            self.Qfun['vT'][t] = np.vstack((self.Qfun['vT'][t], np.zeros((Ndiff, self.tau_max * self.n))))
-            self.Qfun['vLenT'][t] = np.vstack((self.Qfun['vLenT'][t], np.zeros((Ndiff, self.tau_max * self.n))))
-        for tau in range(self.tau_max):
+            self.Qfun['vT'][t] = np.vstack((self.Qfun['vT'][t], np.zeros((Ndiff, self.max_period * self.n))))
+            self.Qfun['vLenT'][t] = np.vstack((self.Qfun['vLenT'][t], np.zeros((Ndiff, self.max_period * self.n))))
+        for tau in range(self.max_period):
             for i in range(self.n):
                 icol = tau * self.n + i
                 for N in range(v.shape[0]):

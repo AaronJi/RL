@@ -25,6 +25,7 @@ import scipy as sp
 # linear function at the future end node, with P(k, (tau-1)*n+i) = V_tau(k) - V_tau(k - 1) at node i, time t+tau
 # PLen: an N-by-tau_max*n matrix characterizing the interval corresponding to each element of P,
 #  with PLen(k, (tau-1)*n+i) = u_tau(k) - u_tau(k - 1) at node i, time t+tau
+# solver: name of cvx solver
 
 ## Outputs
 # Vopt: the optimal value of the current stage problem
@@ -35,7 +36,7 @@ import scipy as sp
 # increasing one unit) at time t+tau, tau = 0,1,...,tau_max
 # lambda_left: an n-by-tau_max+1 matrix, the left derivative of each resource (the value of
 # decreasing one unit) at time t+tau, tau = 0,1,...,tau_max
-def scheduling_mp(n, tau_max, R, Ru, M, W, C, tauX, tauY, P, PLen, rep_matrix):
+def scheduling_mp(n, tau_max, R, Ru, M, W, C, tauX, tauY, P, PLen, rep_matrix, solver):
 
     # This part exploits the sparsity of demand (thus sparsity of X)
     M_row_num, M_col_num, M_coeff = sp.sparse.find(M)
@@ -106,9 +107,11 @@ def scheduling_mp(n, tau_max, R, Ru, M, W, C, tauX, tauY, P, PLen, rep_matrix):
 
     prob_right = cvx.Problem(cvx.Maximize(obj_right), cons_right)
 
-    # Solve with ECOS.
-    # prob_right.solve(solver=cvx.ECOS_BB) #, mi_max_iters=100
-    prob_right.solve(solver=cvx.ECOS)
+    # Solve
+    if solver == 'ECOS_BB':
+        prob_right.solve(solver=cvx.ECOS_BB) #, mi_max_iters=100
+    else:
+        prob_right.solve(solver=cvx.ECOS)
 
     Vopt = prob_right.value
     Xval = np.array(X_right.value)
@@ -153,9 +156,11 @@ def scheduling_mp(n, tau_max, R, Ru, M, W, C, tauX, tauY, P, PLen, rep_matrix):
 
     prob_left = cvx.Problem(cvx.Maximize(obj_left), cons_left)
 
-    # Solve with ECOS.
-    # prob_left.solve(solver=cvx.ECOS_BB) #, mi_max_iters=100
-    prob_left.solve(solver=cvx.ECOS)
+    # Solve
+    if solver == 'ECOS_BB':
+        prob_left.solve(solver=cvx.ECOS_BB) #, mi_max_iters=100
+    else:
+        prob_left.solve(solver=cvx.ECOS)
 
     dual_left = np.array(cons_left[0].dual_value)
     for i in range(n):
@@ -171,13 +176,13 @@ def scheduling_mp(n, tau_max, R, Ru, M, W, C, tauX, tauY, P, PLen, rep_matrix):
 ## solve the scheduling with sparse input
 # param_job: a matrix with rows consisting by [M_row_num, M_col_num, M_coeff, W_coeff, tauX_coeff]; if there is no job demand, param_job = None
 # param_rep: a matrix with rows consisting by [rep_row_num, rep_col_num, C_coeff, tauY_coeff]
-def scheduling_mp_sparse(n, tau_max, R, Ru, param_job, param_rep, P, PLen):
+def scheduling_mp_sparse(n, tau_max, R, Ru, param_job, param_rep, P, PLen, solver):
     if cvx.__version__[0] == '0':
-        return scheduling_mp_sparse_v0(n, tau_max, R, Ru, param_job, param_rep, P, PLen)
+        return scheduling_mp_sparse_v0(n, tau_max, R, Ru, param_job, param_rep, P, PLen, solver)
     else:
-        return scheduling_mp_sparse_v1(n, tau_max, R, Ru, param_job, param_rep, P, PLen)
+        return scheduling_mp_sparse_v1(n, tau_max, R, Ru, param_job, param_rep, P, PLen, solver)
 
-def scheduling_mp_sparse_v0(n, tau_max, R, Ru, param_job, param_rep, P, PLen):
+def scheduling_mp_sparse_v0(n, tau_max, R, Ru, param_job, param_rep, P, PLen, solver):
     if param_job is None or param_job.shape[1] == 0:
         M_is_empty = True
     else:
@@ -264,9 +269,11 @@ def scheduling_mp_sparse_v0(n, tau_max, R, Ru, param_job, param_rep, P, PLen):
 
     prob_right = cvx.Problem(cvx.Maximize(obj_right), cons_right)
 
-    # Solve with ECOS.
-    #prob_right.solve(solver=cvx.ECOS_BB) #, mi_max_iters=100
-    prob_right.solve(solver=cvx.ECOS)
+    # Solve
+    if solver == 'ECOS_BB':
+        prob_right.solve(solver=cvx.ECOS_BB) #, mi_max_iters=100
+    else:
+        prob_right.solve(solver=cvx.ECOS)
 
     Vopt = prob_right.value
     if not M_is_empty:
@@ -320,9 +327,11 @@ def scheduling_mp_sparse_v0(n, tau_max, R, Ru, param_job, param_rep, P, PLen):
 
     prob_left = cvx.Problem(cvx.Maximize(obj_left), cons_left)
 
-    # Solve with ECOS.
-    # prob_left.solve(solver=cvx.ECOS_BB) #, mi_max_iters=100
-    prob_left.solve(solver=cvx.ECOS)
+    # Solve
+    if solver == 'ECOS_BB':
+        prob_left.solve(solver=cvx.ECOS_BB) #, mi_max_iters=100
+    else:
+        prob_left.solve(solver=cvx.ECOS)
 
     dual_left = np.array(cons_left[0].dual_value)
     for i in range(n):
@@ -338,7 +347,7 @@ def scheduling_mp_sparse_v0(n, tau_max, R, Ru, param_job, param_rep, P, PLen):
 ## solve the scheduling with sparse input
 # param_job: a matrix with rows consisting by [M_row_num, M_col_num, M_coeff, W_coeff, tauX_coeff]; if there is no job demand, param_job = None
 # param_rep: a matrix with rows consisting by [rep_row_num, rep_col_num, C_coeff, tauY_coeff]
-def scheduling_mp_sparse_v1(n, tau_max, R, Ru, param_job, param_rep, P, PLen):
+def scheduling_mp_sparse_v1(n, tau_max, R, Ru, param_job, param_rep, P, PLen, solver):
 
     if param_job is None or param_job.shape[1] == 0:
         M_is_empty = True
@@ -348,7 +357,7 @@ def scheduling_mp_sparse_v1(n, tau_max, R, Ru, param_job, param_rep, P, PLen):
     if not M_is_empty:
         M_row_num = param_job[0, :].flatten().astype(int)  # row indices of positive M elements
         M_col_num = param_job[1, :].flatten().astype(int)  # col indices of positive M elements
-        M_coeff = param_job[2, :].flatten()  # positive M elements
+        M_coeff = param_job[2, :].reshape((-1, 1))  # positive M elements
         W_coeff = param_job[3, :].flatten()  # W elements corresponding to positive M elements
         tauX_coeff = param_job[4, :].flatten().astype(int)  # tau corresponding to positive M elements
 
@@ -424,9 +433,11 @@ def scheduling_mp_sparse_v1(n, tau_max, R, Ru, param_job, param_rep, P, PLen):
 
     prob_right = cvx.Problem(cvx.Maximize(obj_right), cons_right)
 
-    # Solve with ECOS.
-    #prob_right.solve(solver=cvx.ECOS_BB) #, mi_max_iters=100
-    prob_right.solve(solver=cvx.ECOS)
+    # Solve
+    if solver == 'ECOS_BB':
+        prob_right.solve(solver=cvx.ECOS_BB) #, mi_max_iters=100
+    else:
+        prob_right.solve(solver=cvx.ECOS)
 
     Vopt = prob_right.value
     if not M_is_empty:
@@ -456,7 +467,7 @@ def scheduling_mp_sparse_v1(n, tau_max, R, Ru, param_job, param_rep, P, PLen):
 
     ## Generating left derivative
     small = 1.0e-6
-    R_left = np.maximum(R - 0.0001 * np.ones((n, 1)), small*np.ones((n, 1))) # R_left should be positive
+    R_left = np.maximum(R - 0.0001 * np.ones((n, 1)), small*np.ones((n, 1)))  # R_left should be positive
     Ru_left = np.maximum(np.reshape(Ru, (tau_max*n, 1), order='F') - 0.0001 * np.ones((tau_max*n, 1)), small*np.ones((tau_max*n, 1)))
 
     # Construct the problem.
@@ -465,7 +476,7 @@ def scheduling_mp_sparse_v1(n, tau_max, R, Ru, param_job, param_rep, P, PLen):
     Y_left = cvx.Variable((num_nonzero_rep, 1))
     Z_left = cvx.Variable((P.shape[0], tau_max*n))
 
-    obj_left =  - C_coeff*Y_left + cvx.sum(cvx.multiply(P, Z_left))
+    obj_left = - C_coeff*Y_left + cvx.sum(cvx.multiply(P, Z_left))
     if not M_is_empty:
         obj_left += W_coeff*X_left
 
@@ -480,9 +491,11 @@ def scheduling_mp_sparse_v1(n, tau_max, R, Ru, param_job, param_rep, P, PLen):
 
     prob_left = cvx.Problem(cvx.Maximize(obj_left), cons_left)
 
-    # Solve with ECOS.
-    # prob_left.solve(solver=cvx.ECOS_BB) #, mi_max_iters=100
-    prob_left.solve(solver=cvx.ECOS)
+    # Solve
+    if solver == 'ECOS_BB':
+        prob_left.solve(solver=cvx.ECOS_BB) #, mi_max_iters=100
+    else:
+        prob_left.solve(solver=cvx.ECOS)
 
     dual_left = np.array(cons_left[0].dual_value)
     for i in range(n):
