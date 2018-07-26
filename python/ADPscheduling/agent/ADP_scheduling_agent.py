@@ -47,8 +47,8 @@ class ADP_scheduling_agent(Agent):
             self.decision_record.append([])
 
         logging.info(" CAVE step length = %f, slope adjust type = %s" % (self._hyperparams['cave_step'], self._hyperparams['cave_type']))
-        if self._hyperparams['verbose']:
-            print("CAVE step length = %f, slope adjust type = %s" % (self._hyperparams['cave_step'], self._hyperparams['cave_type']))
+        #if self._hyperparams['verbose']:
+        #    print("CAVE step length = %f, slope adjust type = %s" % (self._hyperparams['cave_step'], self._hyperparams['cave_type']))
 
         return
 
@@ -57,7 +57,7 @@ class ADP_scheduling_agent(Agent):
         self.possible_repositions = repositions
         return
 
-    # TODO load the policy from a saved file
+    # TODO: load the policy from a saved file
     def load_policy(self, policy_path):
 
         return
@@ -118,8 +118,8 @@ class ADP_scheduling_agent(Agent):
                 scheduling_mp_sparse(self.n, self.max_period, Rt, Ru, param_job, param_rep, self.Qfun['vT'][t], self.Qfun['vLenT'][t], self._hyperparams['solver'])
 
             logging.debug("* acting: at t = %d, status of solving the right problem: %s, status of solving the left problem: %s" % (t, status_right, status_left))
-            if self._hyperparams['verbose']:
-                print("* acting: at t = %d, status of solving the right problem: %s, status of solving the left problem: %s" % (t, status_right, status_left))
+            #if self._hyperparams['verbose']:
+                #print("* acting: at t = %d, status of solving the right problem: %s, status of solving the left problem: %s" % (t, status_right, status_left))
 
         except SolverError:
             logging.warning("* acting: at t = %d, solve error happens" % t)
@@ -153,20 +153,17 @@ class ADP_scheduling_agent(Agent):
         return action, act_extra_output
 
     def policy_update(self):
-        logging.warning("* update policy - value function")
-        if self._hyperparams['verbose']:
-            print("* update policy - value function")
 
         # determination of breakpoints
         for t in range(self.T - 1):
-            logging.warning("* determine new breakpoints, at step = %i:" % t)
-            if self._hyperparams['verbose']:
-                print("* determine new breakpoints, at step = %i" % t)
+            logging.warning("* updating value function: determine new breakpoints at step = %i" % t)
+            #if self._hyperparams['verbose']:
+                #print("* updating value function: determine new breakpoints, at step = %i" % t)
             t_pi_o_minus, t_pi_o_plus = self.__pi_update(t)
 
-            logging.warning("* produce new slopes, at step = %i:" % t)
-            if self._hyperparams['verbose']:
-                print("* produce new slopes, at step = %i" % t)
+            logging.warning("* updating value function: produce new slopes at step = %i" % t)
+            #if self._hyperparams['verbose']:
+                #print("* updating value function: produce new slopes, at step = %i" % t)
             self.__cave_update(t_pi_o_minus, t_pi_o_plus, t)
 
         return

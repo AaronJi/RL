@@ -88,12 +88,16 @@ def main():
     agent = ADP_scheduling_agent(hyperparams.AGEconfig, T, n, nR, hyperparams.ALGconfig['max_period'])
     agent.set_environment_knowledge(time_space_info, repositions)
 
+    # initialize
     alg = ADP_scheduling_algorithm(hyperparams.ALGconfig)
     alg.initEnv(env)
     alg.initAgent(agent)
 
+    # offline train using data
     alg.offline_train((time_space_info, init_resource, tasks, repositions))
 
+    # show results
+    alg.show_results()
 
 if __name__ == "__main__":
     main()

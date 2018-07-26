@@ -17,7 +17,7 @@ DATAconfig = {
     'rectangular_size': (4, 4),
 
     # resources
-    'resource_max': 10,  # max of initial number of resources
+    'resource_max': 5,  # max of initial number of resources
 
     # tasks
     'task_number_mean': [1, 0, 1, 1, 1, 2, 5, 10, 15, 9, 7, 6, 5, 5, 4, 5, 3, 3, 6, 8, 12, 15, 9, 2],  # mean of tasks as function of time
@@ -33,8 +33,8 @@ DATAconfig = {
 }
 
 ALGconfig = {
-    'nIter': 1000,  # max number of iterations
-    'eta': 0.0001,  # learning rate
+    'nIter': 50,  # max number of iterations
+    'eta': 0.001,  # learning rate
     'discount': 1.0,
     'max_period': 7,  # must be a positive int; if equaling to 1, the algorithm will decay to the single period mode
 }

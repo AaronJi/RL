@@ -1,119 +1,103 @@
 [
     {
-        "0": []
-    }, 
-    {
-        "1": [
-            {
-                "distance": 1.0, 
-                "destination": "0", 
-                "start": "4", 
-                "time": "1", 
-                "income": 5.813101271838252, 
-                "duration": 1.0
-            }
-        ]
-    }, 
-    {
-        "2": [
-            {
-                "distance": 3.605551275463989, 
-                "destination": "4", 
-                "start": "15", 
-                "time": "2", 
-                "income": 17.201181478948996, 
-                "duration": 4.0
-            }, 
-            {
-                "distance": 1.0, 
-                "destination": "7", 
-                "start": "3", 
-                "time": "2", 
-                "income": 5.067310832194881, 
-                "duration": 1.0
-            }
-        ]
-    }, 
-    {
-        "3": []
-    }, 
-    {
-        "4": [
-            {
-                "distance": 1.4142135623730951, 
-                "destination": "14", 
-                "start": "11", 
-                "time": "4", 
-                "income": 7.3631012680636365, 
-                "duration": 1.0
-            }, 
+        "0": [
             {
                 "distance": 2.0, 
-                "destination": "11", 
-                "start": "9", 
-                "time": "4", 
-                "income": 11.229914631387114, 
+                "destination": "2", 
+                "start": "10", 
+                "time": "0", 
+                "income": 7.828398809048744, 
                 "duration": 2.0
             }
         ]
     }, 
     {
-        "5": []
+        "1": []
+    }, 
+    {
+        "2": []
+    }, 
+    {
+        "3": [
+            {
+                "distance": 2.23606797749979, 
+                "destination": "5", 
+                "start": "11", 
+                "time": "3", 
+                "income": 12.61083305982813, 
+                "duration": 2.0
+            }, 
+            {
+                "distance": 1.0, 
+                "destination": "10", 
+                "start": "14", 
+                "time": "3", 
+                "income": 5.995711348647057, 
+                "duration": 1.0
+            }
+        ]
+    }, 
+    {
+        "4": []
+    }, 
+    {
+        "5": [
+            {
+                "distance": 3.605551275463989, 
+                "destination": "11", 
+                "start": "0", 
+                "time": "5", 
+                "income": 11.05748741919554, 
+                "duration": 4.0
+            }, 
+            {
+                "distance": 2.0, 
+                "destination": "2", 
+                "start": "0", 
+                "time": "5", 
+                "income": 9.721052075020655, 
+                "duration": 2.0
+            }
+        ]
     }, 
     {
         "6": [
             {
                 "distance": 2.23606797749979, 
-                "destination": "2", 
-                "start": "4", 
+                "destination": "4", 
+                "start": "10", 
                 "time": "6", 
-                "income": 14.377158546101715, 
+                "income": 10.754020157662696, 
                 "duration": 2.0
-            }, 
-            {
-                "distance": 4.242640687119285, 
-                "destination": "3", 
-                "start": "12", 
-                "time": "6", 
-                "income": 19.050932353017746, 
-                "duration": 4.0
             }, 
             {
                 "distance": 1.0, 
                 "destination": "11", 
                 "start": "7", 
                 "time": "6", 
-                "income": 4.561925698388814, 
+                "income": 7.29977152360934, 
                 "duration": 1.0
-            }, 
-            {
-                "distance": 2.8284271247461903, 
-                "destination": "6", 
-                "start": "12", 
-                "time": "6", 
-                "income": 9.879424351167433, 
-                "duration": 3.0
             }, 
             {
                 "distance": 1.0, 
                 "destination": "9", 
                 "start": "8", 
                 "time": "6", 
-                "income": 6.149076125381565, 
+                "income": 4.5288647391586965, 
+                "duration": 1.0
+            }, 
+            {
+                "distance": 1.0, 
+                "destination": "6", 
+                "start": "2", 
+                "time": "6", 
+                "income": 6.11971196218896, 
                 "duration": 1.0
             }
         ]
     }, 
     {
         "7": [
-            {
-                "distance": 1.0, 
-                "destination": "6", 
-                "start": "2", 
-                "time": "7", 
-                "income": 6.11971196218896, 
-                "duration": 1.0
-            }, 
             {
                 "distance": 2.0, 
                 "destination": "13", 
@@ -177,16 +161,12 @@
                 "time": "7", 
                 "income": 16.319435213900025, 
                 "duration": 3.0
-            }
-        ]
-    }, 
-    {
-        "8": [
+            }, 
             {
                 "distance": 1.0, 
                 "destination": "3", 
                 "start": "2", 
-                "time": "8", 
+                "time": "7", 
                 "income": 4.141014679369958, 
                 "duration": 1.0
             }, 
@@ -194,10 +174,14 @@
                 "distance": 2.23606797749979, 
                 "destination": "15", 
                 "start": "9", 
-                "time": "8", 
+                "time": "7", 
                 "income": 13.416027047529132, 
                 "duration": 2.0
-            }, 
+            }
+        ]
+    }, 
+    {
+        "8": [
             {
                 "distance": 3.605551275463989, 
                 "destination": "15", 
@@ -309,19 +293,19 @@
                 "time": "8", 
                 "income": 15.068089750730646, 
                 "duration": 4.0
+            }, 
+            {
+                "distance": 3.0, 
+                "destination": "14", 
+                "start": "2", 
+                "time": "8", 
+                "income": 10.519980125348802, 
+                "duration": 3.0
             }
         ]
     }, 
     {
         "9": [
-            {
-                "distance": 3.0, 
-                "destination": "14", 
-                "start": "2", 
-                "time": "9", 
-                "income": 10.519980125348802, 
-                "duration": 3.0
-            }, 
             {
                 "distance": 2.23606797749979, 
                 "destination": "11", 
@@ -377,6 +361,22 @@
                 "time": "9", 
                 "income": 18.063948061399234, 
                 "duration": 4.0
+            }, 
+            {
+                "distance": 1.0, 
+                "destination": "15", 
+                "start": "14", 
+                "time": "9", 
+                "income": 4.441777413128769, 
+                "duration": 1.0
+            }, 
+            {
+                "distance": 1.0, 
+                "destination": "6", 
+                "start": "7", 
+                "time": "9", 
+                "income": 4.305432140268635, 
+                "duration": 1.0
             }
         ]
     }, 
@@ -387,71 +387,39 @@
                 "destination": "3", 
                 "start": "7", 
                 "time": "10", 
-                "income": 4.441777413128769, 
+                "income": 4.85036545967233, 
                 "duration": 1.0
-            }, 
-            {
-                "distance": 2.23606797749979, 
-                "destination": "10", 
-                "start": "1", 
-                "time": "10", 
-                "income": 10.615805178778734, 
-                "duration": 2.0
             }, 
             {
                 "distance": 1.0, 
-                "destination": "7", 
-                "start": "3", 
+                "destination": "14", 
+                "start": "10", 
                 "time": "10", 
-                "income": 6.039846787434714, 
+                "income": 5.672294757012436, 
                 "duration": 1.0
             }, 
             {
-                "distance": 2.23606797749979, 
-                "destination": "10", 
-                "start": "3", 
+                "distance": 2.0, 
+                "destination": "7", 
+                "start": "15", 
                 "time": "10", 
-                "income": 9.851383485607652, 
+                "income": 10.814923672482221, 
                 "duration": 2.0
             }, 
             {
-                "distance": 1.4142135623730951, 
-                "destination": "15", 
-                "start": "10", 
-                "time": "10", 
-                "income": 6.9215899725857115, 
-                "duration": 1.0
-            }, 
-            {
-                "distance": 3.1622776601683795, 
-                "destination": "8", 
-                "start": "7", 
-                "time": "10", 
-                "income": 18.160314589775084, 
-                "duration": 3.0
-            }, 
-            {
                 "distance": 3.0, 
-                "destination": "1", 
-                "start": "13", 
+                "destination": "11", 
+                "start": "8", 
                 "time": "10", 
-                "income": 12.735055420210163, 
-                "duration": 3.0
-            }, 
-            {
-                "distance": 2.8284271247461903, 
-                "destination": "12", 
-                "start": "6", 
-                "time": "10", 
-                "income": 13.751013042291321, 
+                "income": 12.690251776664052, 
                 "duration": 3.0
             }, 
             {
                 "distance": 1.4142135623730951, 
                 "destination": "4", 
-                "start": "1", 
+                "start": "9", 
                 "time": "10", 
-                "income": 4.06597674831995, 
+                "income": 7.833681331689087, 
                 "duration": 1.0
             }
         ]
@@ -459,338 +427,286 @@
     {
         "11": [
             {
-                "distance": 4.242640687119285, 
-                "destination": "0", 
-                "start": "15", 
+                "distance": 1.4142135623730951, 
+                "destination": "1", 
+                "start": "6", 
                 "time": "11", 
-                "income": 20.61159693622947, 
-                "duration": 4.0
+                "income": 6.171845664240316, 
+                "duration": 1.0
             }, 
             {
                 "distance": 3.1622776601683795, 
-                "destination": "1", 
-                "start": "14", 
+                "destination": "14", 
+                "start": "1", 
                 "time": "11", 
-                "income": 11.774803439120308, 
+                "income": 17.9504581980453, 
                 "duration": 3.0
             }, 
             {
                 "distance": 2.23606797749979, 
-                "destination": "5", 
-                "start": "14", 
+                "destination": "14", 
+                "start": "5", 
                 "time": "11", 
-                "income": 14.493104280819571, 
+                "income": 12.065837816556614, 
                 "duration": 2.0
             }, 
             {
                 "distance": 1.0, 
-                "destination": "5", 
-                "start": "6", 
+                "destination": "0", 
+                "start": "4", 
                 "time": "11", 
-                "income": 6.659276640679575, 
+                "income": 3.906938491269494, 
                 "duration": 1.0
             }, 
             {
-                "distance": 2.23606797749979, 
-                "destination": "4", 
-                "start": "10", 
+                "distance": 1.4142135623730951, 
+                "destination": "5", 
+                "start": "0", 
                 "time": "11", 
-                "income": 11.414055777165762, 
-                "duration": 2.0
-            }, 
-            {
-                "distance": 2.0, 
-                "destination": "7", 
-                "start": "5", 
-                "time": "11", 
-                "income": 9.527913698844442, 
-                "duration": 2.0
+                "income": 7.306779729509436, 
+                "duration": 1.0
             }
         ]
     }, 
     {
         "12": [
             {
-                "distance": 2.23606797749979, 
-                "destination": "3", 
+                "distance": 1.0, 
+                "destination": "9", 
                 "start": "10", 
                 "time": "12", 
-                "income": 13.01265232637595, 
-                "duration": 2.0
-            }, 
-            {
-                "distance": 2.23606797749979, 
-                "destination": "6", 
-                "start": "13", 
-                "time": "12", 
-                "income": 12.081154269588913, 
-                "duration": 2.0
-            }, 
-            {
-                "distance": 1.4142135623730951, 
-                "destination": "9", 
-                "start": "6", 
-                "time": "12", 
-                "income": 5.037086635801348, 
+                "income": 5.635031436892106, 
                 "duration": 1.0
             }, 
             {
-                "distance": 2.0, 
-                "destination": "1", 
-                "start": "9", 
+                "distance": 1.0, 
+                "destination": "13", 
+                "start": "14", 
                 "time": "12", 
-                "income": 10.542497668824168, 
-                "duration": 2.0
+                "income": 4.087177774555841, 
+                "duration": 1.0
             }, 
             {
                 "distance": 3.1622776601683795, 
-                "destination": "12", 
-                "start": "1", 
+                "destination": "0", 
+                "start": "13", 
                 "time": "12", 
-                "income": 11.029295110858609, 
+                "income": 19.34370395473162, 
                 "duration": 3.0
+            }, 
+            {
+                "distance": 1.0, 
+                "destination": "9", 
+                "start": "13", 
+                "time": "12", 
+                "income": 4.931758394675369, 
+                "duration": 1.0
             }
         ]
     }, 
     {
         "13": [
             {
-                "distance": 1.0, 
-                "destination": "11", 
-                "start": "15", 
+                "distance": 2.8284271247461903, 
+                "destination": "1", 
+                "start": "11", 
                 "time": "13", 
-                "income": 7.1968910259468375, 
-                "duration": 1.0
-            }, 
-            {
-                "distance": 2.0, 
-                "destination": "3", 
-                "start": "1", 
-                "time": "13", 
-                "income": 12.082350034432285, 
-                "duration": 2.0
-            }, 
-            {
-                "distance": 3.1622776601683795, 
-                "destination": "11", 
-                "start": "12", 
-                "time": "13", 
-                "income": 15.706286751354138, 
+                "income": 18.988200651630482, 
                 "duration": 3.0
             }, 
             {
-                "distance": 1.0, 
-                "destination": "6", 
-                "start": "10", 
-                "time": "13", 
-                "income": 6.15184214891163, 
-                "duration": 1.0
-            }, 
-            {
-                "distance": 1.0, 
-                "destination": "5", 
-                "start": "9", 
-                "time": "13", 
-                "income": 5.138042881186886, 
-                "duration": 1.0
-            }, 
-            {
-                "distance": 1.0, 
-                "destination": "7", 
+                "distance": 2.23606797749979, 
+                "destination": "2", 
                 "start": "11", 
                 "time": "13", 
-                "income": 6.533835655123268, 
+                "income": 7.130197384802568, 
+                "duration": 2.0
+            }, 
+            {
+                "distance": 1.4142135623730951, 
+                "destination": "12", 
+                "start": "9", 
+                "time": "13", 
+                "income": 6.1784512586926885, 
                 "duration": 1.0
+            }, 
+            {
+                "distance": 1.0, 
+                "destination": "10", 
+                "start": "11", 
+                "time": "13", 
+                "income": 5.195499335275327, 
+                "duration": 1.0
+            }, 
+            {
+                "distance": 2.23606797749979, 
+                "destination": "11", 
+                "start": "5", 
+                "time": "13", 
+                "income": 10.125800539202526, 
+                "duration": 2.0
+            }, 
+            {
+                "distance": 3.605551275463989, 
+                "destination": "12", 
+                "start": "7", 
+                "time": "13", 
+                "income": 20.375725064815914, 
+                "duration": 4.0
             }
         ]
     }, 
     {
         "14": [
             {
-                "distance": 1.4142135623730951, 
-                "destination": "5", 
+                "distance": 2.0, 
+                "destination": "0", 
                 "start": "8", 
                 "time": "14", 
-                "income": 8.152587959469576, 
-                "duration": 1.0
+                "income": 7.739007100995543, 
+                "duration": 2.0
             }, 
             {
-                "distance": 3.1622776601683795, 
-                "destination": "15", 
-                "start": "2", 
+                "distance": 2.8284271247461903, 
+                "destination": "4", 
+                "start": "14", 
                 "time": "14", 
-                "income": 17.140028979407067, 
+                "income": 11.943467257242638, 
                 "duration": 3.0
             }, 
             {
                 "distance": 2.23606797749979, 
-                "destination": "4", 
-                "start": "10", 
+                "destination": "13", 
+                "start": "11", 
                 "time": "14", 
-                "income": 10.513658289106193, 
+                "income": 13.675654129624183, 
                 "duration": 2.0
-            }, 
-            {
-                "distance": 3.1622776601683795, 
-                "destination": "11", 
-                "start": "4", 
-                "time": "14", 
-                "income": 16.532610285723287, 
-                "duration": 3.0
-            }, 
-            {
-                "distance": 1.4142135623730951, 
-                "destination": "10", 
-                "start": "5", 
-                "time": "14", 
-                "income": 4.202301783029145, 
-                "duration": 1.0
             }
         ]
     }, 
     {
         "15": [
             {
-                "distance": 3.1622776601683795, 
-                "destination": "3", 
-                "start": "4", 
+                "distance": 1.4142135623730951, 
+                "destination": "14", 
+                "start": "11", 
                 "time": "15", 
-                "income": 18.866750628016405, 
-                "duration": 3.0
-            }, 
-            {
-                "distance": 1.0, 
-                "destination": "0", 
-                "start": "4", 
-                "time": "15", 
-                "income": 4.8130782008978, 
+                "income": 8.373358849487245, 
                 "duration": 1.0
-            }, 
-            {
-                "distance": 2.23606797749979, 
-                "destination": "5", 
-                "start": "3", 
-                "time": "15", 
-                "income": 14.48377349567358, 
-                "duration": 2.0
             }, 
             {
                 "distance": 1.4142135623730951, 
                 "destination": "8", 
-                "start": "5", 
+                "start": "13", 
                 "time": "15", 
-                "income": 6.951015069043391, 
+                "income": 7.521816781360841, 
                 "duration": 1.0
             }, 
             {
-                "distance": 3.0, 
-                "destination": "2", 
-                "start": "14", 
+                "distance": 2.0, 
+                "destination": "4", 
+                "start": "6", 
                 "time": "15", 
-                "income": 15.613873712230806, 
+                "income": 10.216699097526359, 
+                "duration": 2.0
+            }, 
+            {
+                "distance": 3.0, 
+                "destination": "0", 
+                "start": "12", 
+                "time": "15", 
+                "income": 15.785005430662181, 
                 "duration": 3.0
+            }, 
+            {
+                "distance": 2.0, 
+                "destination": "5", 
+                "start": "7", 
+                "time": "15", 
+                "income": 8.17048933980228, 
+                "duration": 2.0
             }
         ]
     }, 
     {
         "16": [
             {
-                "distance": 2.0, 
-                "destination": "10", 
-                "start": "2", 
+                "distance": 2.23606797749979, 
+                "destination": "9", 
+                "start": "0", 
                 "time": "16", 
-                "income": 9.833323672968561, 
+                "income": 13.099417916411058, 
                 "duration": 2.0
             }, 
             {
                 "distance": 2.0, 
-                "destination": "10", 
-                "start": "8", 
+                "destination": "2", 
+                "start": "0", 
                 "time": "16", 
-                "income": 10.950521667415924, 
+                "income": 6.198831477513398, 
                 "duration": 2.0
+            }, 
+            {
+                "distance": 1.0, 
+                "destination": "4", 
+                "start": "5", 
+                "time": "16", 
+                "income": 3.8624208029688623, 
+                "duration": 1.0
+            }, 
+            {
+                "distance": 2.8284271247461903, 
+                "destination": "11", 
+                "start": "1", 
+                "time": "16", 
+                "income": 11.018467830373742, 
+                "duration": 3.0
             }
         ]
     }, 
     {
         "17": [
             {
-                "distance": 1.0, 
-                "destination": "5", 
-                "start": "1", 
+                "distance": 1.4142135623730951, 
+                "destination": "11", 
+                "start": "6", 
                 "time": "17", 
-                "income": 4.285783810186742, 
+                "income": 7.144840374438613, 
                 "duration": 1.0
             }, 
             {
-                "distance": 3.605551275463989, 
-                "destination": "15", 
-                "start": "4", 
+                "distance": 2.23606797749979, 
+                "destination": "9", 
+                "start": "7", 
                 "time": "17", 
-                "income": 19.845757505925985, 
-                "duration": 4.0
+                "income": 10.437897350405429, 
+                "duration": 2.0
+            }, 
+            {
+                "distance": 2.23606797749979, 
+                "destination": "8", 
+                "start": "1", 
+                "time": "17", 
+                "income": 10.518239258441549, 
+                "duration": 2.0
+            }, 
+            {
+                "distance": 2.0, 
+                "destination": "3", 
+                "start": "11", 
+                "time": "17", 
+                "income": 10.784616111311749, 
+                "duration": 2.0
             }
         ]
     }, 
     {
         "18": [
             {
-                "distance": 2.23606797749979, 
-                "destination": "4", 
-                "start": "10", 
-                "time": "18", 
-                "income": 10.031010735270065, 
-                "duration": 2.0
-            }, 
-            {
-                "distance": 3.605551275463989, 
-                "destination": "12", 
-                "start": "2", 
-                "time": "18", 
-                "income": 19.999819940345965, 
-                "duration": 4.0
-            }, 
-            {
-                "distance": 1.0, 
-                "destination": "2", 
-                "start": "6", 
-                "time": "18", 
-                "income": 4.130407660348778, 
-                "duration": 1.0
-            }, 
-            {
-                "distance": 2.0, 
-                "destination": "12", 
-                "start": "14", 
-                "time": "18", 
-                "income": 8.990207583401752, 
-                "duration": 2.0
-            }, 
-            {
-                "distance": 3.605551275463989, 
-                "destination": "13", 
-                "start": "3", 
-                "time": "18", 
-                "income": 16.42415931483997, 
-                "duration": 4.0
-            }, 
-            {
-                "distance": 2.8284271247461903, 
-                "destination": "4", 
-                "start": "14", 
-                "time": "18", 
-                "income": 15.251750369604466, 
-                "duration": 3.0
-            }
-        ]
-    }, 
-    {
-        "19": [
-            {
                 "distance": 3.0, 
                 "destination": "15", 
                 "start": "12", 
-                "time": "19", 
+                "time": "18", 
                 "income": 15.724904419664824, 
                 "duration": 3.0
             }, 
@@ -798,7 +714,7 @@
                 "distance": 3.0, 
                 "destination": "15", 
                 "start": "12", 
-                "time": "19", 
+                "time": "18", 
                 "income": 13.892454486172669, 
                 "duration": 3.0
             }, 
@@ -806,7 +722,7 @@
                 "distance": 2.23606797749979, 
                 "destination": "1", 
                 "start": "10", 
-                "time": "19", 
+                "time": "18", 
                 "income": 10.645071774041185, 
                 "duration": 2.0
             }, 
@@ -814,7 +730,7 @@
                 "distance": 2.0, 
                 "destination": "2", 
                 "start": "10", 
-                "time": "19", 
+                "time": "18", 
                 "income": 8.21621037569447, 
                 "duration": 2.0
             }, 
@@ -822,7 +738,7 @@
                 "distance": 2.8284271247461903, 
                 "destination": "10", 
                 "start": "0", 
-                "time": "19", 
+                "time": "18", 
                 "income": 15.754567642637683, 
                 "duration": 3.0
             }, 
@@ -830,10 +746,14 @@
                 "distance": 2.0, 
                 "destination": "8", 
                 "start": "10", 
-                "time": "19", 
+                "time": "18", 
                 "income": 9.295503388154621, 
                 "duration": 2.0
-            }, 
+            }
+        ]
+    }, 
+    {
+        "19": [
             {
                 "distance": 2.0, 
                 "destination": "14", 
@@ -841,16 +761,12 @@
                 "time": "19", 
                 "income": 11.638933216745807, 
                 "duration": 2.0
-            }
-        ]
-    }, 
-    {
-        "20": [
+            }, 
             {
                 "distance": 2.8284271247461903, 
                 "destination": "4", 
                 "start": "14", 
-                "time": "20", 
+                "time": "19", 
                 "income": 19.325618249344522, 
                 "duration": 3.0
             }, 
@@ -858,7 +774,7 @@
                 "distance": 1.0, 
                 "destination": "8", 
                 "start": "4", 
-                "time": "20", 
+                "time": "19", 
                 "income": 4.934266852670999, 
                 "duration": 1.0
             }, 
@@ -866,7 +782,7 @@
                 "distance": 1.4142135623730951, 
                 "destination": "0", 
                 "start": "5", 
-                "time": "20", 
+                "time": "19", 
                 "income": 5.735419107813395, 
                 "duration": 1.0
             }, 
@@ -874,7 +790,7 @@
                 "distance": 2.0, 
                 "destination": "13", 
                 "start": "15", 
-                "time": "20", 
+                "time": "19", 
                 "income": 9.179900613594903, 
                 "duration": 2.0
             }, 
@@ -882,7 +798,7 @@
                 "distance": 2.0, 
                 "destination": "2", 
                 "start": "10", 
-                "time": "20", 
+                "time": "19", 
                 "income": 6.963942600899734, 
                 "duration": 2.0
             }, 
@@ -890,7 +806,7 @@
                 "distance": 2.23606797749979, 
                 "destination": "10", 
                 "start": "12", 
-                "time": "20", 
+                "time": "19", 
                 "income": 6.947362973172778, 
                 "duration": 2.0
             }, 
@@ -898,10 +814,14 @@
                 "distance": 1.0, 
                 "destination": "6", 
                 "start": "2", 
-                "time": "20", 
+                "time": "19", 
                 "income": 5.156506537965376, 
                 "duration": 1.0
-            }, 
+            }
+        ]
+    }, 
+    {
+        "20": [
             {
                 "distance": 2.0, 
                 "destination": "2", 
@@ -933,16 +853,12 @@
                 "time": "20", 
                 "income": 12.729080933552485, 
                 "duration": 2.0
-            }
-        ]
-    }, 
-    {
-        "21": [
+            }, 
             {
                 "distance": 1.4142135623730951, 
                 "destination": "8", 
                 "start": "5", 
-                "time": "21", 
+                "time": "20", 
                 "income": 6.571110058936859, 
                 "duration": 1.0
             }, 
@@ -950,7 +866,7 @@
                 "distance": 1.0, 
                 "destination": "1", 
                 "start": "5", 
-                "time": "21", 
+                "time": "20", 
                 "income": 4.7124512138125745, 
                 "duration": 1.0
             }, 
@@ -958,7 +874,7 @@
                 "distance": 2.0, 
                 "destination": "1", 
                 "start": "9", 
-                "time": "21", 
+                "time": "20", 
                 "income": 12.631083426377849, 
                 "duration": 2.0
             }, 
@@ -966,7 +882,7 @@
                 "distance": 1.4142135623730951, 
                 "destination": "9", 
                 "start": "6", 
-                "time": "21", 
+                "time": "20", 
                 "income": 5.9490485943410265, 
                 "duration": 1.0
             }, 
@@ -974,7 +890,7 @@
                 "distance": 2.23606797749979, 
                 "destination": "15", 
                 "start": "9", 
-                "time": "21", 
+                "time": "20", 
                 "income": 10.6484223637639, 
                 "duration": 2.0
             }, 
@@ -982,10 +898,14 @@
                 "distance": 2.23606797749979, 
                 "destination": "14", 
                 "start": "5", 
-                "time": "21", 
+                "time": "20", 
                 "income": 8.80385819849218, 
                 "duration": 2.0
-            }, 
+            }
+        ]
+    }, 
+    {
+        "21": [
             {
                 "distance": 1.4142135623730951, 
                 "destination": "6", 
@@ -1049,86 +969,166 @@
                 "time": "21", 
                 "income": 7.234912511104062, 
                 "duration": 1.0
+            }, 
+            {
+                "distance": 2.8284271247461903, 
+                "destination": "4", 
+                "start": "14", 
+                "time": "21", 
+                "income": 15.176354090977973, 
+                "duration": 3.0
+            }, 
+            {
+                "distance": 1.0, 
+                "destination": "0", 
+                "start": "1", 
+                "time": "21", 
+                "income": 6.955912308250694, 
+                "duration": 1.0
+            }, 
+            {
+                "distance": 1.4142135623730951, 
+                "destination": "9", 
+                "start": "6", 
+                "time": "21", 
+                "income": 7.622743079401926, 
+                "duration": 1.0
+            }, 
+            {
+                "distance": 2.23606797749979, 
+                "destination": "14", 
+                "start": "7", 
+                "time": "21", 
+                "income": 10.743561323935527, 
+                "duration": 2.0
+            }, 
+            {
+                "distance": 1.0, 
+                "destination": "8", 
+                "start": "9", 
+                "time": "21", 
+                "income": 4.797283513483513, 
+                "duration": 1.0
+            }, 
+            {
+                "distance": 2.8284271247461903, 
+                "destination": "4", 
+                "start": "14", 
+                "time": "21", 
+                "income": 17.023571536962333, 
+                "duration": 3.0
+            }, 
+            {
+                "distance": 1.0, 
+                "destination": "2", 
+                "start": "6", 
+                "time": "21", 
+                "income": 4.885101145972201, 
+                "duration": 1.0
+            }, 
+            {
+                "distance": 3.0, 
+                "destination": "7", 
+                "start": "4", 
+                "time": "21", 
+                "income": 22.58703720381854, 
+                "duration": 3.0
             }
         ]
     }, 
     {
         "22": [
             {
-                "distance": 1.0, 
-                "destination": "7", 
-                "start": "11", 
-                "time": "22", 
-                "income": 5.365651445709363, 
-                "duration": 1.0
-            }, 
-            {
-                "distance": 1.0, 
-                "destination": "13", 
-                "start": "9", 
-                "time": "22", 
-                "income": 8.10153058409665, 
-                "duration": 1.0
-            }, 
-            {
-                "distance": 1.4142135623730951, 
-                "destination": "6", 
-                "start": "11", 
-                "time": "22", 
-                "income": 8.285529581770867, 
-                "duration": 1.0
-            }, 
-            {
-                "distance": 1.0, 
-                "destination": "9", 
-                "start": "10", 
-                "time": "22", 
-                "income": 4.717864858396081, 
-                "duration": 1.0
-            }, 
-            {
-                "distance": 3.0, 
-                "destination": "0", 
-                "start": "3", 
-                "time": "22", 
-                "income": 12.073036002982885, 
-                "duration": 3.0
-            }, 
-            {
                 "distance": 2.23606797749979, 
-                "destination": "14", 
-                "start": "7", 
+                "destination": "5", 
+                "start": "14", 
                 "time": "22", 
-                "income": 11.399892002692322, 
+                "income": 9.292014165711445, 
                 "duration": 2.0
             }, 
             {
                 "distance": 1.0, 
-                "destination": "13", 
+                "destination": "12", 
+                "start": "13", 
+                "time": "22", 
+                "income": 5.890662052636325, 
+                "duration": 1.0
+            }, 
+            {
+                "distance": 3.0, 
+                "destination": "11", 
+                "start": "8", 
+                "time": "22", 
+                "income": 17.316011278066437, 
+                "duration": 3.0
+            }, 
+            {
+                "distance": 3.605551275463989, 
+                "destination": "3", 
+                "start": "13", 
+                "time": "22", 
+                "income": 18.100998262887913, 
+                "duration": 4.0
+            }, 
+            {
+                "distance": 1.0, 
+                "destination": "15", 
                 "start": "14", 
                 "time": "22", 
-                "income": 5.905489953189511, 
+                "income": 3.4167498616350613, 
+                "duration": 1.0
+            }, 
+            {
+                "distance": 1.4142135623730951, 
+                "destination": "2", 
+                "start": "7", 
+                "time": "22", 
+                "income": 7.411586249256744, 
                 "duration": 1.0
             }, 
             {
                 "distance": 2.8284271247461903, 
-                "destination": "9", 
-                "start": "3", 
+                "destination": "6", 
+                "start": "12", 
                 "time": "22", 
-                "income": 19.07219361905791, 
+                "income": 11.88916006059682, 
                 "duration": 3.0
+            }, 
+            {
+                "distance": 2.23606797749979, 
+                "destination": "9", 
+                "start": "7", 
+                "time": "22", 
+                "income": 11.736337746141908, 
+                "duration": 2.0
+            }, 
+            {
+                "distance": 1.0, 
+                "destination": "9", 
+                "start": "13", 
+                "time": "22", 
+                "income": 4.245269427172351, 
+                "duration": 1.0
+            }, 
+            {
+                "distance": 2.0, 
+                "destination": "14", 
+                "start": "12", 
+                "time": "22", 
+                "income": 13.398862693729251, 
+                "duration": 2.0
             }
         ]
     }, 
     {
         "23": [
             {
-                "distance": 2.8284271247461903, 
-                "destination": "2", 
-                "start": "8", 
+                "distance": 2.0, 
+                "destination": "7", 
+                "start": "5", 
                 "time": "23", 
-                "income": 13.231723789344263, 
-                "duration": 3.0
+                "income": 9.214506702741302, 
+                "duration": 2.0
             }
         ]
     }
