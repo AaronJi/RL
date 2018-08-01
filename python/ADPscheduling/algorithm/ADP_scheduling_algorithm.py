@@ -30,6 +30,7 @@ class ADP_scheduling_algorithm(object):
 
         self.agent = None
         self.environment = None
+        self.result_record = {'Qfun': []}
 
         return
 
@@ -60,10 +61,11 @@ class ADP_scheduling_algorithm(object):
         # maximum period check
         #tasks = self.max_period_check(tasks, self._hyperparams['max_period'])
 
+        # initialize results
+        train_results = dict()
+        Vopt = np.zeros((self._hyperparams['nIter'], T))  # results of optimal values
+        Qfun = list()
 
-
-        Vopt_results = np.zeros((self._hyperparams['nIter'], T))  # results of optimal values
-        Vopt_results_noP = np.zeros((self._hyperparams['nIter'], T))  # results of optimal values
         Xopt_results = defaultdict(list)  # results of job decisions
         Yopt_results = defaultdict(list)  # results of relocation decisions
         Rout = defaultdict(list)  # results of resources at the end node
@@ -112,6 +114,8 @@ class ADP_scheduling_algorithm(object):
                 CPUtime = (endTime - startTime).total_seconds()
                 CPUtime_all[k, t] = CPUtime
 
+                Vopt[k, t] = reward[0]
+
                 state = state_next
 
             logging.warning("* action executed, cost %f seconds" % np.sum(CPUtime_all[k, :-1]))
@@ -122,6 +126,10 @@ class ADP_scheduling_algorithm(object):
             startTime = datetime.datetime.now()
 
             self.agent.policy_update()
+
+            Qfun_current = copy.deepcopy(self.agent.Qfun)
+            self.result_record['Qfun'].append(Qfun_current)
+            Qfun.append(Qfun_current)
 
             endTime = datetime.datetime.now()
 
@@ -137,38 +145,105 @@ class ADP_scheduling_algorithm(object):
 
         print('Training ends, total CPU time is %f seconds' % np.sum(CPUtime_all))
 
-        return
+        train_results['Vopt'] = Vopt
+        train_results['Qfun'] = Qfun
+        return train_results
 
 
-    def show_results(self):
+    def show_results(self, train_results):
         import matplotlib.pyplot as plt
 
         n = self.agent.n
         T = self.agent.T
         period = 1
-        v_sum_t = np.zeros(T)
-        for t in range(T):
-            v_sum_t[t] = np.sum(self.agent.Qfun['vT'][t][0, 0:n])
-            #if t == 8:
-                #print(self.agent.Qfun['vT'][t][0, (period-1)*n:period*n])
-            print('t=%i' % t)
-            print(self.agent.Qfun['vT'][t][0, 0:4])
-            print(self.agent.Qfun['vT'][t][0, 4:8])
-            print(self.agent.Qfun['vT'][t][0, 8:12])
-            print(self.agent.Qfun['vT'][t][0, 12:16])
 
-                #print(self.agent.Qfun['vLenT'][t][0, (period-1)*n:period*n])
+        Vopt = train_results['Vopt']
+        Qfun = train_results['Qfun']
+
+        v_sum_t_iters = []
+        for k in range(self._hyperparams['nIter']):
+
+            v_sum_t = np.zeros(T)
+            for t in range(T):
+                v_sum_t[t] = np.sum(Qfun[k]['vT'][t][0, (period - 1) * n:period * n])
+                np.sum(self.agent.Qfun['vT'][0][0, 0:n])
+
+            v_sum_t_iters.append(v_sum_t)
+
+        v_t0_sum_iters = []
+        for t in range(T):
+            v_t0_sum = np.zeros(self._hyperparams['nIter'] + 1)
+            for k in range(self._hyperparams['nIter']):
+                v_t0_sum[k + 1] = np.sum(Qfun[k]['vT'][t][0, (period - 1) * n:period * n])
+            v_t0_sum_iters.append(v_t0_sum)
 
         plt.figure(0)
-        plt.plot(range(self._hyperparams['nIter']), self.v0_t0_sum_iters)
+        i_plot = 1
+        v0_plot = np.zeros((self._hyperparams['nIter'], T))
+        for k in range(self._hyperparams['nIter']):
+            for t in range(T):
+                v0_plot[k, t] = Qfun[k]['vT'][t][0, (period - 1) * n + i_plot]
+        plt.figure(0)
+        plt.subplot(211)
+        plt.plot(range(self._hyperparams['nIter']), v0_plot[:, 0], '-k',
+                 range(self._hyperparams['nIter']), v0_plot[:, 6], '-g',
+                 range(self._hyperparams['nIter']), v0_plot[:, 12], '-r',
+                 range(self._hyperparams['nIter']), v0_plot[:, 18], '-b')
+        plt.legend(['t=0', 't=6', 't=12', 'it=18'])
         plt.xlabel('iterations')
-        plt.ylabel('v0@t0 sum')
-
+        plt.ylabel('v0')
+        plt.subplot(212)
+        plt.plot(range(T), v0_plot[0], '-k',
+                 range(T), v0_plot[9], '-g',
+                 range(T), v0_plot[19], '-r',
+                 range(T), v0_plot[29], '-b')
+        plt.legend(['iter 1', 'iter 10', 'iter 20', 'iter 30'])
+        plt.xlabel('time')
+        plt.ylabel('v0')
 
         plt.figure(1)
-        plt.plot(range(T), v_sum_t)
+        plt.subplot(211)
+        plt.plot(range(self._hyperparams['nIter'] + 1), v_t0_sum_iters[0], '-k',
+                 range(self._hyperparams['nIter'] + 1), v_t0_sum_iters[6], '-g',
+                 range(self._hyperparams['nIter'] + 1), v_t0_sum_iters[12], '-r',
+                 range(self._hyperparams['nIter'] + 1), v_t0_sum_iters[18], '-b')
+        plt.legend(['t=0', 't=6', 't=12', 'it=18'])
+        plt.title('Sum of value function slopes on all locations (coming_period=1) as function of iteration')
+        plt.xlabel('iterations')
+        plt.ylabel('sum of dvd0')
+        plt.subplot(212)
+        plt.plot(range(1, self._hyperparams['nIter'] + 1), Vopt[:, 0], '-k',
+                 range(1, self._hyperparams['nIter'] + 1), Vopt[:, 6], '-g',
+                 range(1, self._hyperparams['nIter'] + 1), Vopt[:, 12], '-r',
+                 range(1, self._hyperparams['nIter'] + 1), Vopt[:, 18], '-b')
+        plt.legend(['t=0', 't=6', 't=12', 'it=18'])
+        plt.title('Optimized object values as function of iteration')
+        plt.xlabel('iterations')
+        plt.ylabel('optimal object value')
+
+        plt.figure(2)
+        plt.subplot(211)
+        plt.plot(range(T), v_sum_t_iters[0], '-k',
+                 range(T), v_sum_t_iters[9], '-g',
+                 range(T), v_sum_t_iters[19], '-r',
+                 range(T), v_sum_t_iters[29], '-b')
+        plt.legend(['iter 1', 'iter 10', 'iter 20', 'iter 30'])
+        plt.title('Sum of value function slopes on all locations (coming_period=1) as function of t')
         plt.xlabel('time')
-        plt.ylabel('v0 sum')
+        plt.ylabel('sum of dvd0')
+        plt.subplot(212)
+        plt.plot(range(T), Vopt[0], '-k',
+                 range(T), Vopt[9], '-g',
+                 range(T), Vopt[19], '-r',
+                 range(T), Vopt[29], '-b')
+        plt.legend(['iter 1', 'iter 10', 'iter 20', 'iter 30'])
+        plt.title('Optimized object values as function of t')
+        plt.xlabel('time')
+        plt.ylabel('optimal object value')
+
+        #plt.figure(2)
+        #plt.subplots(4, 4, 0)
+
 
         plt.show()
 

@@ -493,7 +493,7 @@ def scheduling_mp_sparse_v1(n, tau_max, R, Ru, param_job, param_rep, P, PLen, so
 
     # Solve
     if solver == 'ECOS_BB':
-        prob_left.solve(solver=cvx.ECOS_BB) #, mi_max_iters=100
+        prob_left.solve(solver=cvx.ECOS_BB)  #, mi_max_iters=100
     else:
         prob_left.solve(solver=cvx.ECOS)
 

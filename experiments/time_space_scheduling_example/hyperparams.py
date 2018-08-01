@@ -33,7 +33,7 @@ DATAconfig = {
 }
 
 ALGconfig = {
-    'nIter': 50,  # max number of iterations
+    'nIter': 30,  # max number of iterations
     'eta': 0.001,  # learning rate
     'discount': 1.0,
     'max_period': 7,  # must be a positive int; if equaling to 1, the algorithm will decay to the single period mode
