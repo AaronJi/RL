@@ -177,6 +177,7 @@ class ADP_scheduling_algorithm(object):
                 v_t0_sum[k + 1] = np.sum(Qfun[k]['vT'][t][0, (period - 1) * n:period * n])
             v_t0_sum_iters.append(v_t0_sum)
 
+        # result at a specific location
         plt.figure(0)
         i_plot = 1
         v0_plot = np.zeros((self._hyperparams['nIter'], T))
