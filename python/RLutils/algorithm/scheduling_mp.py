@@ -341,7 +341,14 @@ def scheduling_mp_sparse_v0(n, tau_max, R, Ru, param_job, param_rep, P, PLen, so
         for i in range(n):
             lambda_left[i][1+tau] = dual_left[tau*n+i][0]
 
-    return Vopt, Xopt, Yopt, end_resource, lambda_right, lambda_left, prob_right.status, prob_left.status
+    # the GMV part of the objective excludes the effect of value function
+    GMVopt = - np.dot(C_coeff, Yval.flatten())
+    if not M_is_empty:
+        if num_nonzero_M == 1:
+            GMVopt += W_coeff[0]*np.round(Xval)
+        GMVopt += np.dot(W_coeff, np.round(Xval).flatten())
+
+    return Vopt, GMVopt, Xopt, Yopt, end_resource, lambda_right, lambda_left, prob_right.status, prob_left.status
 
 
 ## solve the scheduling with sparse input
@@ -418,9 +425,9 @@ def scheduling_mp_sparse_v1(n, tau_max, R, Ru, param_job, param_rep, P, PLen, so
     Y_right = cvx.Variable((num_nonzero_rep, 1))
     Z_right = cvx.Variable((P.shape[0], tau_max*n))
 
-    obj_right = - C_coeff*Y_right + cvx.sum(cvx.multiply(P, Z_right))
+    obj_right = - cvx.sum(C_coeff*Y_right) + cvx.sum(cvx.multiply(P, Z_right))
     if not M_is_empty:
-        obj_right += W_coeff * X_right
+        obj_right += cvx.sum(W_coeff * X_right)
 
     if M_is_empty:
         cons_right = [R_right == row_sum_matrix_Y*Y_right,
@@ -435,7 +442,7 @@ def scheduling_mp_sparse_v1(n, tau_max, R, Ru, param_job, param_rep, P, PLen, so
 
     # Solve
     if solver == 'ECOS_BB':
-        prob_right.solve(solver=cvx.ECOS_BB) #, mi_max_iters=100
+        prob_right.solve(solver=cvx.ECOS_BB)  #, mi_max_iters=100
     else:
         prob_right.solve(solver=cvx.ECOS)
 
@@ -505,5 +512,12 @@ def scheduling_mp_sparse_v1(n, tau_max, R, Ru, param_job, param_rep, P, PLen, so
         for i in range(n):
             lambda_left[i][1+tau] = dual_left[tau*n+i][0]
 
-    return Vopt, Xopt, Yopt, end_resource, lambda_right, lambda_left, prob_right.status, prob_left.status
+    # the GMV part of the objective excludes the effect of value function
+    GMVopt = - np.dot(C_coeff, Yval.flatten())
+    if not M_is_empty:
+        if num_nonzero_M == 1:
+            GMVopt += W_coeff[0]*np.round(Xval)
+        GMVopt += np.dot(W_coeff, np.round(Xval).flatten())
+
+    return Vopt, GMVopt, Xopt, Yopt, end_resource, lambda_right, lambda_left, prob_right.status, prob_left.status
 

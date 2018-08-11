@@ -114,7 +114,7 @@ class ADP_scheduling_agent(Agent):
 
         Rt, Ru, param_job, param_rep = self.build_matrix_data(state, tasks_t)
         try:
-            Vopt, Xopt, Yopt, end_resource, lambda_right, lambda_left, status_right, status_left = \
+            Vopt, GMVopt, Xopt, Yopt, end_resource, lambda_right, lambda_left, status_right, status_left = \
                 scheduling_mp_sparse(self.n, self.max_period, Rt, Ru, param_job, param_rep, self.Qfun['vT'][t], self.Qfun['vLenT'][t], self._hyperparams['solver'])
 
             logging.debug("* acting: at t = %d, status of solving the right problem: %s, status of solving the left problem: %s" % (t, status_right, status_left))
@@ -134,6 +134,7 @@ class ADP_scheduling_agent(Agent):
             else:
                 # if the first state, just do nothing; TODO set a trivial solution?
                 Vopt = 0.0
+                GMVopt = 0.0
                 Xopt = np.zeros((self.n, self.n))
                 Yopt = np.zeros((self.n, self.n))
                 Rout = np.hstack((Rt, Ru[:, :-1]))
@@ -142,14 +143,14 @@ class ADP_scheduling_agent(Agent):
 
                 action = (Xopt, Yopt)
                 act_extra_output = (Rout, Vopt, lambda_right, lambda_left)
-                self.decision_record[t].append({'Vopt': Vopt, 'Xopt': Xopt, 'Yopt': Yopt, 'Rout': Rout, 'right lambda': lambda_right, 'left lambda': lambda_left, 'right status': 'fail', 'left status': 'fail'})
+                self.decision_record[t].append({'Vopt': Vopt, 'GMVopt': GMVopt, 'Xopt': Xopt, 'Yopt': Yopt, 'Rout': Rout, 'right lambda': lambda_right, 'left lambda': lambda_left, 'right status': 'fail', 'left status': 'fail'})
         else:
             Rout = np.round(end_resource)
 
             action = (Xopt, Yopt)
             act_extra_output = (Rout, Vopt, lambda_right, lambda_left)
 
-            self.decision_record[t].append({'Vopt': Vopt, 'Xopt': Xopt, 'Yopt': Yopt, 'Rout': Rout, 'right lambda': lambda_right, 'left lambda': lambda_left, 'right status': status_right, 'left status': status_left})
+            self.decision_record[t].append({'Vopt': Vopt, 'GMVopt': GMVopt, 'Xopt': Xopt, 'Yopt': Yopt, 'Rout': Rout, 'right lambda': lambda_right, 'left lambda': lambda_left, 'right status': status_right, 'left status': status_left})
         return action, act_extra_output
 
     def policy_update(self):
