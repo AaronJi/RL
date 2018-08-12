@@ -312,7 +312,7 @@ def scheduling_mp_sparse_v0(n, tau_max, R, Ru, param_job, param_rep, P, PLen, so
     Y_left = cvx.Variable(num_nonzero_rep, 1)
     Z_left = cvx.Variable(P.shape[0], tau_max*n)
 
-    obj_left =  - C_coeff*Y_left + cvx.sum_entries(cvx.mul_elemwise(P, Z_left))
+    obj_left = - C_coeff*Y_left + cvx.sum_entries(cvx.mul_elemwise(P, Z_left))
     if not M_is_empty:
         obj_left += W_coeff*X_left
 
@@ -425,7 +425,7 @@ def scheduling_mp_sparse_v1(n, tau_max, R, Ru, param_job, param_rep, P, PLen, so
     Y_right = cvx.Variable((num_nonzero_rep, 1))
     Z_right = cvx.Variable((P.shape[0], tau_max*n))
 
-    obj_right = - cvx.sum(C_coeff*Y_right) + cvx.sum(cvx.multiply(P, Z_right))
+    obj_right = - C_coeff*Y_right + cvx.sum(cvx.multiply(P, Z_right))
     if not M_is_empty:
         obj_right += cvx.sum(W_coeff * X_right)
 

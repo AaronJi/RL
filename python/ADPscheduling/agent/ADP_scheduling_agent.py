@@ -132,7 +132,7 @@ class ADP_scheduling_agent(Agent):
                 act_extra_output = (self.decision_record[t][-1]['Xopt'], self.decision_record[t][-1]['Vopt'], self.decision_record[t][-1]['right lambda'], self.decision_record[t][-1]['left lambda'])
                 self.decision_record[t].append(self.decision_record[t][-1])
             else:
-                # if the first state, just do nothing; TODO set a trivial solution?
+                # if at the first step, just do nothing; TODO set a trivial solution?
                 Vopt = 0.0
                 GMVopt = 0.0
                 Xopt = np.zeros((self.n, self.n))
@@ -142,34 +142,36 @@ class ADP_scheduling_agent(Agent):
                 lambda_left = np.zeros((self.n, self.max_period+1))
 
                 action = (Xopt, Yopt)
-                act_extra_output = (Rout, Vopt, lambda_right, lambda_left)
+                act_extra_output = (Rout, Vopt, GMVopt, lambda_right, lambda_left)
                 self.decision_record[t].append({'Vopt': Vopt, 'GMVopt': GMVopt, 'Xopt': Xopt, 'Yopt': Yopt, 'Rout': Rout, 'right lambda': lambda_right, 'left lambda': lambda_left, 'right status': 'fail', 'left status': 'fail'})
         else:
             Rout = np.round(end_resource)
 
             action = (Xopt, Yopt)
-            act_extra_output = (Rout, Vopt, lambda_right, lambda_left)
+            act_extra_output = (Rout, Vopt, GMVopt, lambda_right, lambda_left)
 
             self.decision_record[t].append({'Vopt': Vopt, 'GMVopt': GMVopt, 'Xopt': Xopt, 'Yopt': Yopt, 'Rout': Rout, 'right lambda': lambda_right, 'left lambda': lambda_left, 'right status': status_right, 'left status': status_left})
         return action, act_extra_output
 
-    def policy_update(self):
+    # update the policy at time t
+    def policy_update(self, t, rewards_record, Rout_record):
 
         # determination of breakpoints
-        for t in range(self.T - 1):
-            logging.warning("* updating value function: determine new breakpoints at step = %i" % t)
-            #if self._hyperparams['verbose']:
-                #print("* updating value function: determine new breakpoints, at step = %i" % t)
-            t_pi_o_minus, t_pi_o_plus = self.__pi_update(t)
+        logging.warning("* updating value function: determine new breakpoints at step = %i" % t)
+        #if self._hyperparams['verbose']:
+            #print("* updating value function: determine new breakpoints, at step = %i" % t)
+        t_pi_o_minus, t_pi_o_plus = self.__pi_update(t, rewards_record)
 
-            logging.warning("* updating value function: produce new slopes at step = %i" % t)
-            #if self._hyperparams['verbose']:
-                #print("* updating value function: produce new slopes, at step = %i" % t)
-            self.__cave_update(t_pi_o_minus, t_pi_o_plus, t)
+        # update slopes
+        logging.warning("* updating value function: produce new slopes at step = %i" % t)
+        #if self._hyperparams['verbose']:
+            #print("* updating value function: produce new slopes, at step = %i" % t)
+        self.__cave_update(t_pi_o_minus, t_pi_o_plus, t, Rout_record)
 
         return
 
-    def __pi_update(self, t):
+
+    def __pi_update(self, t, rewards_record):
 
         # determination of the updating right-derivative and left-derivative
         t_pi_o_plus = np.zeros((self.n, self.max_period))  # each column means tau = 1, 2, ..., tau_max
@@ -177,8 +179,11 @@ class ADP_scheduling_agent(Agent):
 
         if self._hyperparams['cave_type'] == 'DUALNEXT':
             # DUALNEXT: the slope update method of eq(17-18), Godfrey, Powell, 2002
-            next_pi_plus = self.decision_record[t+1][-1]['right lambda']
-            next_pi_minus = self.decision_record[t+1][-1]['left lambda']
+            #next_pi_plus = self.decision_record[t+1][-1]['right lambda']
+            #next_pi_minus = self.decision_record[t+1][-1]['left lambda']
+            next_pi_plus = rewards_record[t+1][2]
+            next_pi_minus = rewards_record[t+1][3]
+
 
             for tau in range(self.max_period):
                 for i in range(self.n):
@@ -186,8 +191,11 @@ class ADP_scheduling_agent(Agent):
                     t_pi_o_minus[i][tau] = next_pi_minus[i][tau]
         elif self._hyperparams['cave_type'] == 'DUALMAX':
             # DUALMAX: the slope update method of eq(15-16), Godfrey, Powell, 2002
-            future_pi_plus = self.decision_record[t+1][-1]['right lambda']
-            future_pi_minus = self.decision_record[t+1][-1]['left lambda']
+            #future_pi_plus = self.decision_record[t+1][k]['right lambda']
+            #future_pi_minus = self.decision_record[t+1][k]['left lambda']
+            future_pi_plus = rewards_record[t + 1][2]
+            future_pi_minus = rewards_record[t + 1][3]
+
             for tau in range(self.max_period):
                 candi_pi_plus = future_pi_plus[:, tau].reshape((self.n, 1))
                 candi_pi_minus = future_pi_minus[:, tau].reshape((self.n, 1))
@@ -196,9 +204,11 @@ class ADP_scheduling_agent(Agent):
                     for s in range(1, tau + 1):
                         if t + 1 + s >= self.T:
                             break
-                        future_pi_plus = self.decision_record[t+1+s][-1]['right lambda']
+                        #future_pi_plus = self.decision_record[t+1+s][-1]['right lambda']
+                        future_pi_plus = rewards_record[t + 1 + s][2]
                         candi_pi_plus = np.hstack((candi_pi_plus, future_pi_plus[:, tau - s].reshape((self.n, 1))))
-                        future_pi_minus = self.decision_record[t+1+s][-1]['left lambda']
+                        #future_pi_minus = self.decision_record[t+1+s][-1]['left lambda']
+                        future_pi_plus = rewards_record[t + 1 + s][3]
                         candi_pi_minus = np.hstack((candi_pi_minus, future_pi_minus[:, tau - s].reshape((self.n, 1))))
                 for i in range(self.n):
                     t_pi_o_plus[i][tau] = np.max(candi_pi_plus[i, :])
@@ -208,7 +218,7 @@ class ADP_scheduling_agent(Agent):
         return t_pi_o_minus, t_pi_o_plus
 
     ## Value function update with CAVE
-    def __cave_update(self, t_pi_o_minus, t_pi_o_plus, t):
+    def __cave_update(self, t_pi_o_minus, t_pi_o_plus, t, Rout_record):
 
         # update v and vLen at each t using CAVE algorithm
         v = self.Qfun['vT'][t]  # self.vT[t]
@@ -218,7 +228,8 @@ class ADP_scheduling_agent(Agent):
             for i in range(self.n):
                 icol = tau * self.n + i
 
-                newBreakPoint = [self.decision_record[t][-1]['Rout'][i][tau], t_pi_o_minus[i][tau], t_pi_o_plus[i][tau]]
+                #newBreakPoint = [self.decision_record[t][-1]['Rout'][i][tau], t_pi_o_minus[i][tau], t_pi_o_plus[i][tau]]
+                newBreakPoint = [Rout_record[t][i][tau], t_pi_o_minus[i][tau], t_pi_o_plus[i][tau]]
 
                 A = v2A(v[:, icol], vLen[:, icol], self.Qfun['NT'][t, tau, i])  # convert to A from v and vLen
                 A = CAVE(A, newBreakPoint, self._hyperparams['cave_step'])  # update A by CAVE

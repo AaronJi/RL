@@ -30,7 +30,6 @@ class ADP_scheduling_algorithm(object):
 
         self.agent = None
         self.environment = None
-        self.result_record = {'Qfun': []}
 
         return
 
@@ -58,63 +57,73 @@ class ADP_scheduling_algorithm(object):
         T = len(time_space_info["time_detail"])
         n = len(time_space_info["location_detail"])
 
-        # maximum period check
-        #tasks = self.max_period_check(tasks, self._hyperparams['max_period'])
-
         # initialize results
         train_results = dict()
-        Vopt = np.zeros((self._hyperparams['nIter'], T))  # results of optimal values
-        Qfun = list()
-
-        Xopt_results = defaultdict(list)  # results of job decisions
-        Yopt_results = defaultdict(list)  # results of relocation decisions
-        Rout = defaultdict(list)  # results of resources at the end node
-        pi_plus = defaultdict(list)  # the update right-side slope at all simulation times
-        pi_minus = defaultdict(list)  # the update left-side slope at all simulation times
-
+        train_results['states'] = list()
+        train_results['actions'] = list()
+        train_results['rewards'] = list()
+        train_results['out_resource'] = list()
+        train_results['Vopt'] = np.zeros((self._hyperparams['nIter'], T))  # results of optimal values
+        train_results['GMVopt'] = np.zeros((self._hyperparams['nIter'], T))  # results of optimal GMV
+        train_results['Qfun'] = list()
 
         CPUtime_all = np.zeros((self._hyperparams['nIter'], T+1))  # CPU time of each iteration, each simulation time
 
-        ## at the first step, initialize the state
 
         # list of max_period elements; the tau-th element contains all incoming resources which will arrive after tau steps
         incoming_resource = []
         for tau in range(self._hyperparams['max_period']):
             incoming_resource.append([])
 
-        state0 = [0, init_resource, incoming_resource]
-        state = state0
+        # the initial state
+        init_state = [0, init_resource, incoming_resource]
+        state = init_state
 
         ## the multistage stochastic value approximation algorithm
         print('Training begins')
 
-
         self.v0_t0_sum_iters = np.zeros(self._hyperparams['nIter'])
 
+        ## iteration of DP
         for k in range(self._hyperparams['nIter']):
             if self._hyperparams['verbose']:
                 print('Iteration k = %i' % k)
 
-            # Forward simulation
+            states_iter = list()
+            actions_iter = list()
+            rewards_iter = list()
+            out_resource_iter = list()
+
+            ## Forward simulation
             for t in range(T):
                 # get current data
                 # time_t = tasks[t].keys()[0]
                 tasks_t = tasks[t].values()[0]
 
+                # at the first step, initialize the state
                 if t == 0:
-                    state = state0
+                    state = init_state
 
                 startTime = datetime.datetime.now()
 
+                # act
                 action, act_extra_factor = self.agent.act(state, tasks_t)
+
+                # transit & reward
                 state_next, reward = self.environment.reward_and_transit(state, action, act_extra_factor)
+
+                # result update
+                states_iter.append(copy.deepcopy(state))
+                actions_iter.append(copy.deepcopy(action))
+                rewards_iter.append(copy.deepcopy(reward))
+                out_resource_iter.append(copy.deepcopy(act_extra_factor[0]))
+                train_results['Vopt'][k, t] = reward[0]
+                train_results['GMVopt'][k, t] = reward[1]
 
                 endTime = datetime.datetime.now()
 
                 CPUtime = (endTime - startTime).total_seconds()
                 CPUtime_all[k, t] = CPUtime
-
-                Vopt[k, t] = reward[0]
 
                 state = state_next
 
@@ -122,14 +131,20 @@ class ADP_scheduling_algorithm(object):
             if self._hyperparams['verbose']:
                 print("* action executed, cost %f seconds" % np.sum(CPUtime_all[k, :-1]))
 
+            # iteration result update
+            train_results['states'].append(states_iter)
+            train_results['actions'].append(actions_iter)
+            train_results['rewards'].append(rewards_iter)
+            train_results['out_resource'].append(out_resource_iter)
+
             # policy update
             startTime = datetime.datetime.now()
 
-            self.agent.policy_update()
+            for t in range(T - 1):
+                self.agent.policy_update(t, train_results['rewards'][-1], train_results['out_resource'][-1])
 
             Qfun_current = copy.deepcopy(self.agent.Qfun)
-            self.result_record['Qfun'].append(Qfun_current)
-            Qfun.append(Qfun_current)
+            train_results['Qfun'].append(Qfun_current)
 
             endTime = datetime.datetime.now()
 
@@ -145,8 +160,6 @@ class ADP_scheduling_algorithm(object):
 
         print('Training ends, total CPU time is %f seconds' % np.sum(CPUtime_all))
 
-        train_results['Vopt'] = Vopt
-        train_results['Qfun'] = Qfun
         return train_results
 
 
@@ -155,9 +168,11 @@ class ADP_scheduling_algorithm(object):
 
         n = self.agent.n
         T = self.agent.T
-        period = 1
+
+        period = 1  # plot data at the 1st comming period
 
         Vopt = train_results['Vopt']
+        GMVopt = train_results['GMVopt']
         Qfun = train_results['Qfun']
 
         v_sum_t_iters = []
@@ -178,8 +193,7 @@ class ADP_scheduling_algorithm(object):
             v_t0_sum_iters.append(v_t0_sum)
 
         # result at a specific location
-        plt.figure(0)
-        i_plot = 1
+        i_plot = 5
         v0_plot = np.zeros((self._hyperparams['nIter'], T))
         for k in range(self._hyperparams['nIter']):
             for t in range(T):
@@ -190,7 +204,7 @@ class ADP_scheduling_algorithm(object):
                  range(self._hyperparams['nIter']), v0_plot[:, 6], '-g',
                  range(self._hyperparams['nIter']), v0_plot[:, 12], '-r',
                  range(self._hyperparams['nIter']), v0_plot[:, 18], '-b')
-        plt.legend(['t=0', 't=6', 't=12', 'it=18'])
+        plt.legend(['t=0', 't=6', 't=12', 't=18'])
         plt.xlabel('iterations')
         plt.ylabel('v0')
         plt.subplot(212)
@@ -198,52 +212,65 @@ class ADP_scheduling_algorithm(object):
                  range(T), v0_plot[9], '-g',
                  range(T), v0_plot[19], '-r',
                  range(T), v0_plot[29], '-b')
-        plt.legend(['iter 1', 'iter 10', 'iter 20', 'iter 30'])
+        plt.legend(['iter=1', 'iter=10', 'iter=20', 'iter=30'])
         plt.xlabel('time')
         plt.ylabel('v0')
 
+        # aggregated results
         plt.figure(1)
-        plt.subplot(211)
+        plt.subplot(311)
         plt.plot(range(self._hyperparams['nIter'] + 1), v_t0_sum_iters[0], '-k',
                  range(self._hyperparams['nIter'] + 1), v_t0_sum_iters[6], '-g',
                  range(self._hyperparams['nIter'] + 1), v_t0_sum_iters[12], '-r',
                  range(self._hyperparams['nIter'] + 1), v_t0_sum_iters[18], '-b')
-        plt.legend(['t=0', 't=6', 't=12', 'it=18'])
-        plt.title('Sum of value function slopes on all locations (coming_period=1) as function of iteration')
+        plt.legend(['t=0', 't=6', 't=12', 't=18'])
+        plt.title('summed on all locations with coming_period=1')
         plt.xlabel('iterations')
-        plt.ylabel('sum of dvd0')
-        plt.subplot(212)
+        plt.ylabel('sum of value function slopes')
+        plt.subplot(312)
         plt.plot(range(1, self._hyperparams['nIter'] + 1), Vopt[:, 0], '-k',
                  range(1, self._hyperparams['nIter'] + 1), Vopt[:, 6], '-g',
                  range(1, self._hyperparams['nIter'] + 1), Vopt[:, 12], '-r',
                  range(1, self._hyperparams['nIter'] + 1), Vopt[:, 18], '-b')
-        plt.legend(['t=0', 't=6', 't=12', 'it=18'])
-        plt.title('Optimized object values as function of iteration')
+        plt.legend(['t=0', 't=6', 't=12', 't=18'])
         plt.xlabel('iterations')
-        plt.ylabel('optimal object value')
+        plt.ylabel('optimal objective')
+        plt.subplot(313)
+        plt.plot(range(1, self._hyperparams['nIter'] + 1), GMVopt[:, 0], '-k',
+                 range(1, self._hyperparams['nIter'] + 1), GMVopt[:, 6], '-g',
+                 range(1, self._hyperparams['nIter'] + 1), GMVopt[:, 12], '-r',
+                 range(1, self._hyperparams['nIter'] + 1), GMVopt[:, 18], '-b')
+        plt.legend(['t=0', 't=6', 't=12', 't=18'])
+        plt.xlabel('iterations')
+        plt.ylabel('stepwise GMV')
 
         plt.figure(2)
-        plt.subplot(211)
+        plt.subplot(311)
         plt.plot(range(T), v_sum_t_iters[0], '-k',
                  range(T), v_sum_t_iters[9], '-g',
                  range(T), v_sum_t_iters[19], '-r',
                  range(T), v_sum_t_iters[29], '-b')
         plt.legend(['iter 1', 'iter 10', 'iter 20', 'iter 30'])
-        plt.title('Sum of value function slopes on all locations (coming_period=1) as function of t')
+        plt.title('summed on all locations with coming_period=1')
         plt.xlabel('time')
         plt.ylabel('sum of dvd0')
-        plt.subplot(212)
+        plt.subplot(312)
         plt.plot(range(T), Vopt[0], '-k',
                  range(T), Vopt[9], '-g',
                  range(T), Vopt[19], '-r',
                  range(T), Vopt[29], '-b')
-        plt.legend(['iter 1', 'iter 10', 'iter 20', 'iter 30'])
-        plt.title('Optimized object values as function of t')
+        plt.legend(['iter=1', 'iter=10', 'iter=20', 'iter=30'])
         plt.xlabel('time')
-        plt.ylabel('optimal object value')
+        plt.ylabel('optimal objective')
+        plt.subplot(313)
+        plt.plot(range(T), GMVopt[0], '-k',
+                 range(T), GMVopt[9], '-g',
+                 range(T), GMVopt[19], '-r',
+                 range(T), GMVopt[29], '-b')
+        plt.legend(['iter=1', 'iter=10', 'iter=20', 'iter=30'])
+        plt.xlabel('time')
+        plt.ylabel('stepwise GMV')
 
-        #plt.figure(2)
-        #plt.subplots(4, 4, 0)
 
 
         plt.show()

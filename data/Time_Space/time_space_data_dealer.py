@@ -194,7 +194,7 @@ class TimeSpaceDataDealer(DataDealer):
         route_vec = np.array(location2) - np.array(location1)
 
         if self._hyperparams['location_shape'] == "rectangular":
-            if self._hyperparams['distance_cal_type'] == 'euro':
+            if self._hyperparams['distance_cal_type'] == 'euc':
                 return np.linalg.norm(route_vec, 2)
             else:
                 return np.linalg.norm(route_vec, 1)

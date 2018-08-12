@@ -47,15 +47,15 @@ class ADPschedulingEnvironment(Environment):
 
     # yield reward and evolve to the next state simultaneously
     def reward_and_transit(self, state, action, act_extra_factor):
-        Rout, Vopt, pi_plus, pi_minus = act_extra_factor
+        Rout, Vopt, GMVopt, pi_plus, pi_minus = act_extra_factor
 
-        r = (Vopt, pi_plus, pi_minus)
+        reward = (Vopt, GMVopt, pi_plus, pi_minus)
 
         next_resource, next_incoming_resource = self.build_state_from_data(Rout)
 
         state_next = [state[0] + 1, next_resource, next_incoming_resource]
 
-        return state_next, r
+        return state_next, reward
 
     # translate the data into the state format
     def build_state_from_data(self, Rout):

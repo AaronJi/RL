@@ -4,7 +4,7 @@ from __future__ import division
 
 DATAconfig = {
     'random_seed': 0,
-    'distance_cal_type': 'euro',  # way of calculate two locations: european, ordinal
+    'distance_cal_type': 'euc',  # ways of calculate distance between two locations: Euclidean, Manhattan, Chebyshev
 
     # time
     'delta_ts': 1,  # time step interval
