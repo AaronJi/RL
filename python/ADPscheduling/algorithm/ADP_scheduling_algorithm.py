@@ -163,7 +163,7 @@ class ADP_scheduling_algorithm(object):
         return train_results
 
 
-    def show_results(self, train_results):
+    def show_results(self, train_results, time_space_info):
         import matplotlib.pyplot as plt
 
         n = self.agent.n
@@ -192,23 +192,216 @@ class ADP_scheduling_algorithm(object):
                 v_t0_sum[k + 1] = np.sum(Qfun[k]['vT'][t][0, (period - 1) * n:period * n])
             v_t0_sum_iters.append(v_t0_sum)
 
+        #for tt in range(T):
+            #vv = Qfun[-1]['vT'][tt][:, (period - 1) * n: period*n]
+            #print('*** t = ' + str(tt))
+            #print(vv)
+
+            #for i in range(n):
+            #    print('# location %i: ' % i + ','.join([str(vvv) for vvv in vv[:, i]]))
+
+        # plot of value function (the marginal value at resource = 0, the immediate coming period)
+        fontSize = 6
+        markerSize = 3200
+        alpha = 0.7
+        vbounds = [0, 10]
+
+        def plot_v_value(ax, Qfun, t_plot):
+            v_value = np.zeros((n, 3))
+            reg_size = (4, 4)
+            for loc_i in range(reg_size[0]):
+                for loc_j in range(reg_size[1]):
+                    i = loc_i * 4 + loc_j
+                    v_value[i, 0] = loc_i - (reg_size[0] - 1) / 2.0
+                    v_value[i, 1] = loc_j - (reg_size[1] - 1) / 2.0
+                    v_value[i, 2] = Qfun[-1]['vT'][t_plot][0, (period - 1) * n + i]
+
+            scatter = ax.scatter(v_value[:, 0], v_value[:, 1], c=v_value[:, 2], s=markerSize, marker='s',
+                                  cmap=plt.cm.Oranges, vmin=vbounds[0], vmax=vbounds[1], alpha=alpha)
+            plt.colorbar(scatter, orientation='vertical', shrink=1, pad=0.01)
+
+            for i in range(n):
+                ax.annotate(float('%0.1f' % v_value[i, 2]), (v_value[i, 0], v_value[i, 1]), size=fontSize)
+
+            plt.title('V @ t=%i & nR=0 & tau=0' % t_plot)
+
+            plt.xlim(-reg_size[0] / 2, reg_size[0] / 2)
+            plt.ylim(-reg_size[1] / 2, reg_size[1] / 2)
+            plt.xticks(range(-reg_size[0] / 2, reg_size[0] / 2 + 1))
+            plt.yticks(range(-reg_size[1] / 2, reg_size[1] / 2 + 1))
+
+            return
+
+        #fig0 = plt.figure(0, figsize=(4.8, 4))
+        fig0 = plt.figure(0, figsize=(11, 10))
+        ax0 = fig0.add_subplot(221)
+        plot_v_value(ax0, Qfun, t_plot=8)
+        ax1 = fig0.add_subplot(222)
+        plot_v_value(ax1, Qfun, t_plot=12)
+        ax2 = fig0.add_subplot(223)
+        plot_v_value(ax2, Qfun, t_plot=16)
+        ax3 = fig0.add_subplot(224)
+        plot_v_value(ax3, Qfun, t_plot=20)
+
+
+        # scheduling result
+        def find_v(r, v, vlen):
+            cumsum = 0
+            vr = 0
+            for k in range(vlen.shape[0]):
+                cumsum += vlen[k]
+                if np.round(r) < cumsum:
+                    vr = v[k]
+                    break
+                elif np.round(r) == cumsum and k < vlen.shape[0] - 1:
+                    vr = (v[k] + v[k + 1]) / 2.0
+                    break
+            return vr
+
+        def plot_scheduling_result(ax, Qfun, t_plot):
+            state = train_results['states'][-1][t_plot]
+            action = train_results['actions'][-1][t_plot]
+            out_resource = train_results['out_resource'][-1][t_plot]
+
+            # plot of value function
+            v_value = np.zeros((n, 3))
+            reg_size = (4, 4)
+            for loc_i in range(reg_size[0]):
+                for loc_j in range(reg_size[1]):
+                    i = loc_i * 4 + loc_j
+                    v_value[i, 0] = loc_i - (reg_size[0] - 1) / 2.0
+                    v_value[i, 1] = loc_j - (reg_size[1] - 1) / 2.0
+
+
+                    v = Qfun[-1]['vT'][t_plot][:, (period - 1) * n + i]
+                    vLen = Qfun[-1]['vLenT'][t_plot][:, (period - 1) * n + i]
+                    location_key = time_space_info['location_seq'][i]
+                    nR_curr = state[1][location_key]
+                    v_value[i, 2] = find_v(nR_curr, v, vLen)
+
+
+            scatter = ax.scatter(v_value[:, 0], v_value[:, 1], c=v_value[:, 2], s=markerSize, marker='s',
+                                  cmap=plt.cm.Oranges, vmin=vbounds[0], vmax=vbounds[1], alpha=alpha)
+
+            plt.colorbar(scatter, orientation='vertical', shrink=1, pad=0.01)
+
+            # plot of schedulings
+            Yopt = action[1]
+            schedulings = list()
+            for i in range(n):
+                for j in range(n):
+                    if i != j and Yopt[i, j] > 0:
+                        scheduling_start = time_space_info['location_detail'][time_space_info['location_seq'][i]]
+                        scheduling_dest = time_space_info['location_detail'][time_space_info['location_seq'][j]]
+                        scheduling_nR = Yopt[i, j]
+
+                        drfit = - (reg_size[0] - 1) / 2.0
+                        schedulings.append([scheduling_start[0]+drfit, scheduling_start[1]+drfit, scheduling_dest[0]+drfit, scheduling_dest[1]+drfit, scheduling_nR])
+
+            if len(schedulings) > 0:
+                schedulings = np.array(schedulings)
+                schedulings[:, 2:4] = schedulings[:, 2:4] - schedulings[:, 0:2]
+
+                quiver = ax.quiver(schedulings[:, 0], schedulings[:, 1], schedulings[:, 2], schedulings[:, 3] , schedulings[:, 4], angles='xy',
+                                   scale_units='xy', scale=1, width=0.01, cmap=plt.cm.winter)
+
+            for i in range(n):
+                ax.annotate(float('%0.1f' % v_value[i, 2]), (v_value[i, 0], v_value[i, 1]), size=fontSize)
+
+            plt.title('Scheduling with V @ nR & t=%i & tau=0' % t_plot)
+            plt.xlim(-reg_size[0] / 2, reg_size[0] / 2)
+            plt.ylim(-reg_size[1] / 2, reg_size[1] / 2)
+            plt.xticks(range(-reg_size[0] / 2, reg_size[0] / 2 + 1))
+            plt.yticks(range(-reg_size[1] / 2, reg_size[1] / 2 + 1))
+
+            return
+
+        fig0 = plt.figure(1, figsize=(11, 10))
+        ax0 = fig0.add_subplot(221)
+        plot_scheduling_result(ax0, Qfun, t_plot=8)
+        ax1 = fig0.add_subplot(222)
+        plot_scheduling_result(ax1, Qfun, t_plot=12)
+        ax2 = fig0.add_subplot(223)
+        plot_scheduling_result(ax2, Qfun, t_plot=16)
+        ax3 = fig0.add_subplot(224)
+        plot_scheduling_result(ax3, Qfun, t_plot=20)
+
+
+
+        # plot points of v and vLen at location = i_plot and time = t_plot
+
+        def plot_points_v(v_plot, vLen_plot):
+            # find the num of plotted intervals where v is smaller than cutoff
+            zero_cutoff = 0.01
+            l_plot = v_plot.shape[0] - 1
+            for l in range(v_plot.shape[0]):
+                if v_plot[l] < zero_cutoff:
+                    l_plot = l
+                    break
+            l_plot = min(l_plot, v_plot.shape[0] - 1)
+
+            splot = v_plot[:l_plot + 1].copy()
+            wplot = vLen_plot[:l_plot + 1].copy()
+
+            if wplot[wplot.shape[0] - 1] > 20:
+                wplot[wplot.shape[0] - 1] = wplot[wplot.shape[0] - 2] + 2
+
+            awplot = np.zeros(l_plot + 2)
+            mwplot = np.zeros(l_plot + 1)
+            vplot = np.zeros(l_plot + 2)
+            for k in range(1, l_plot + 2):
+                awplot[k] = awplot[k - 1] + wplot[k - 1]
+                vplot[k] = vplot[k - 1] + wplot[k - 1] * splot[k - 1]
+            for k in range(l_plot + 1):
+                mwplot[k] = (awplot[k] + awplot[k + 1]) / 2.0
+
+            return mwplot, splot, awplot, vplot
+
+
         # result at a specific location
-        i_plot = 5
+        i_plot = 13
+        t_plot = 20
+        v_plot = Qfun[-1]['vT'][t_plot][:, (period-1)*n+i_plot]
+        vLen_plot = Qfun[-1]['vLenT'][t_plot][:, (period-1)*n+i_plot]
+
+        mwplot, splot, awplot, vplot = plot_points_v(v_plot, vLen_plot)
+
+
         v0_plot = np.zeros((self._hyperparams['nIter'], T))
         for k in range(self._hyperparams['nIter']):
             for t in range(T):
                 v0_plot[k, t] = Qfun[k]['vT'][t][0, (period - 1) * n + i_plot]
-        plt.figure(0)
-        plt.subplot(211)
-        plt.plot(range(self._hyperparams['nIter']), v0_plot[:, 0], '-k',
+
+        fig = plt.figure(2)
+
+        ax1 = fig.add_subplot(411)
+        ax1.plot(awplot, vplot)
+        plt.xlim(awplot[0], awplot[-1])
+        plt.ylim(0, max(vplot) * 1.2)
+        plt.xticks(awplot)
+        plt.xlabel('num of resource')
+        plt.ylabel('value')
+
+        ax2 = fig.add_subplot(412)
+        ax2.plot(mwplot, splot, 'o')
+        plt.xlim(awplot[0], awplot[-1])
+        plt.ylim(0, max(splot) * 1.2)
+        #plt.xticks(awplot)
+        #plt.yticks(np.arange(0, max(splot) * 1.2 + 50, 50))
+        plt.xlabel('num of resource')
+        plt.ylabel('marginal value')
+
+        ax3 = fig.add_subplot(413)
+        ax3.plot(range(self._hyperparams['nIter']), v0_plot[:, 0], '-k',
                  range(self._hyperparams['nIter']), v0_plot[:, 6], '-g',
                  range(self._hyperparams['nIter']), v0_plot[:, 12], '-r',
                  range(self._hyperparams['nIter']), v0_plot[:, 18], '-b')
         plt.legend(['t=0', 't=6', 't=12', 't=18'])
         plt.xlabel('iterations')
         plt.ylabel('v0')
-        plt.subplot(212)
-        plt.plot(range(T), v0_plot[0], '-k',
+
+        ax4 = fig.add_subplot(414)
+        ax4.plot(range(T), v0_plot[0], '-k',
                  range(T), v0_plot[9], '-g',
                  range(T), v0_plot[19], '-r',
                  range(T), v0_plot[29], '-b')
@@ -217,7 +410,7 @@ class ADP_scheduling_algorithm(object):
         plt.ylabel('v0')
 
         # aggregated results
-        plt.figure(1)
+        plt.figure(3)
         plt.subplot(311)
         plt.plot(range(self._hyperparams['nIter'] + 1), v_t0_sum_iters[0], '-k',
                  range(self._hyperparams['nIter'] + 1), v_t0_sum_iters[6], '-g',
@@ -244,7 +437,7 @@ class ADP_scheduling_algorithm(object):
         plt.xlabel('iterations')
         plt.ylabel('stepwise GMV')
 
-        plt.figure(2)
+        plt.figure(4)
         plt.subplot(311)
         plt.plot(range(T), v_sum_t_iters[0], '-k',
                  range(T), v_sum_t_iters[9], '-g',
