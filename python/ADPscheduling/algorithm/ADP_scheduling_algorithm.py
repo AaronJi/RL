@@ -15,6 +15,7 @@ src_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file
 sys.path.append(src_dir)
 
 from RLutils.algorithm.ALGconfig import ALGconfig
+from RLutils.algorithm.utils import list_find
 
 
 class ADP_scheduling_algorithm(object):
@@ -163,8 +164,10 @@ class ADP_scheduling_algorithm(object):
         return train_results
 
 
-    def show_results(self, train_results, time_space_info):
+    def show_results(self, train_results, data):
         import matplotlib.pyplot as plt
+
+        time_space_info, init_resource, tasks, relocations = data
 
         n = self.agent.n
         T = self.agent.T
@@ -200,7 +203,8 @@ class ADP_scheduling_algorithm(object):
             #for i in range(n):
             #    print('# location %i: ' % i + ','.join([str(vvv) for vvv in vv[:, i]]))
 
-        # plot of value function (the marginal value at resource = 0, the immediate coming period)
+        ## plot of value function (the marginal value at resource = 0, the immediate coming period)
+        reg_size = (4, 4)
         fontSize = 6
         markerSize = 3200
         alpha = 0.7
@@ -208,7 +212,6 @@ class ADP_scheduling_algorithm(object):
 
         def plot_v_value(ax, Qfun, t_plot):
             v_value = np.zeros((n, 3))
-            reg_size = (4, 4)
             for loc_i in range(reg_size[0]):
                 for loc_j in range(reg_size[1]):
                     i = loc_i * 4 + loc_j
@@ -244,7 +247,8 @@ class ADP_scheduling_algorithm(object):
         plot_v_value(ax3, Qfun, t_plot=20)
 
 
-        # scheduling result
+        ## scheduling result
+
         def find_v(r, v, vlen):
             cumsum = 0
             vr = 0
@@ -258,27 +262,42 @@ class ADP_scheduling_algorithm(object):
                     break
             return vr
 
-        def plot_scheduling_result(ax, Qfun, t_plot):
+        # plot of scheduling results
+        def plot_scheduling_result(ax, Qfun, time_space_info, tasks, t_plot):
             state = train_results['states'][-1][t_plot]
             action = train_results['actions'][-1][t_plot]
-            out_resource = train_results['out_resource'][-1][t_plot]
+            #out_resource = train_results['out_resource'][-1][t_plot]
+
+            # num of resources
+            nR_curr = np.zeros(n)
+            for i in range(n):
+                location_key = time_space_info['location_seq'][i]
+                nR_curr[i] = state[1][location_key]
+
+            # demand of tasks
+            tasks_t = tasks[t_plot].values()[0]
+            nTasks_curr = np.zeros(n)
+            for task in tasks_t:
+                i = list_find(time_space_info['location_seq'], task['start'])
+                #j = list_find(time_space_info['location_seq'], task['destination'])
+                #task_start = time_space_info['location_detail'][time_space_info['location_seq'][i]]
+                #task_dest = time_space_info['location_detail'][time_space_info['location_seq'][j]]
+                nTasks_curr[i] += 1
+
+            related_resource_avail = nR_curr - nTasks_curr
 
             # plot of value function
             v_value = np.zeros((n, 3))
-            reg_size = (4, 4)
+
             for loc_i in range(reg_size[0]):
                 for loc_j in range(reg_size[1]):
                     i = loc_i * 4 + loc_j
                     v_value[i, 0] = loc_i - (reg_size[0] - 1) / 2.0
                     v_value[i, 1] = loc_j - (reg_size[1] - 1) / 2.0
 
-
                     v = Qfun[-1]['vT'][t_plot][:, (period - 1) * n + i]
                     vLen = Qfun[-1]['vLenT'][t_plot][:, (period - 1) * n + i]
-                    location_key = time_space_info['location_seq'][i]
-                    nR_curr = state[1][location_key]
-                    v_value[i, 2] = find_v(nR_curr, v, vLen)
-
+                    v_value[i, 2] = find_v(nR_curr[i], v, vLen)
 
             scatter = ax.scatter(v_value[:, 0], v_value[:, 1], c=v_value[:, 2], s=markerSize, marker='s',
                                   cmap=plt.cm.Oranges, vmin=vbounds[0], vmax=vbounds[1], alpha=alpha)
@@ -301,12 +320,11 @@ class ADP_scheduling_algorithm(object):
             if len(schedulings) > 0:
                 schedulings = np.array(schedulings)
                 schedulings[:, 2:4] = schedulings[:, 2:4] - schedulings[:, 0:2]
-
                 quiver = ax.quiver(schedulings[:, 0], schedulings[:, 1], schedulings[:, 2], schedulings[:, 3] , schedulings[:, 4], angles='xy',
                                    scale_units='xy', scale=1, width=0.01, cmap=plt.cm.winter)
 
             for i in range(n):
-                ax.annotate(float('%0.1f' % v_value[i, 2]), (v_value[i, 0], v_value[i, 1]), size=fontSize)
+                ax.annotate(float('%i' % related_resource_avail[i]), (v_value[i, 0], v_value[i, 1]), size=fontSize)
 
             plt.title('Scheduling with V @ nR & t=%i & tau=0' % t_plot)
             plt.xlim(-reg_size[0] / 2, reg_size[0] / 2)
@@ -318,18 +336,26 @@ class ADP_scheduling_algorithm(object):
 
         fig0 = plt.figure(1, figsize=(11, 10))
         ax0 = fig0.add_subplot(221)
-        plot_scheduling_result(ax0, Qfun, t_plot=8)
+        plot_scheduling_result(ax0, Qfun, time_space_info, tasks, t_plot=8)
         ax1 = fig0.add_subplot(222)
-        plot_scheduling_result(ax1, Qfun, t_plot=12)
+        plot_scheduling_result(ax1, Qfun, time_space_info, tasks, t_plot=12)
         ax2 = fig0.add_subplot(223)
-        plot_scheduling_result(ax2, Qfun, t_plot=16)
+        plot_scheduling_result(ax2, Qfun, time_space_info, tasks, t_plot=16)
         ax3 = fig0.add_subplot(224)
-        plot_scheduling_result(ax3, Qfun, t_plot=20)
+        plot_scheduling_result(ax3, Qfun, time_space_info, tasks, t_plot=20)
 
 
+        ## result at a specific location
+        iters_plot = [0, 9, 19, 29]
+        #iters_plot = [0, 39, 69, 99]
+        #iters_plot = [0, 399, 699, 999]
+
+        i_plot = 13
+        t_plot = 20
+        v_plot = Qfun[-1]['vT'][t_plot][:, (period-1)*n+i_plot]
+        vLen_plot = Qfun[-1]['vLenT'][t_plot][:, (period-1)*n+i_plot]
 
         # plot points of v and vLen at location = i_plot and time = t_plot
-
         def plot_points_v(v_plot, vLen_plot):
             # find the num of plotted intervals where v is smaller than cutoff
             zero_cutoff = 0.01
@@ -357,15 +383,7 @@ class ADP_scheduling_algorithm(object):
 
             return mwplot, splot, awplot, vplot
 
-
-        # result at a specific location
-        i_plot = 13
-        t_plot = 20
-        v_plot = Qfun[-1]['vT'][t_plot][:, (period-1)*n+i_plot]
-        vLen_plot = Qfun[-1]['vLenT'][t_plot][:, (period-1)*n+i_plot]
-
         mwplot, splot, awplot, vplot = plot_points_v(v_plot, vLen_plot)
-
 
         v0_plot = np.zeros((self._hyperparams['nIter'], T))
         for k in range(self._hyperparams['nIter']):
@@ -401,15 +419,15 @@ class ADP_scheduling_algorithm(object):
         plt.ylabel('v0')
 
         ax4 = fig.add_subplot(414)
-        ax4.plot(range(T), v0_plot[0], '-k',
-                 range(T), v0_plot[9], '-g',
-                 range(T), v0_plot[19], '-r',
-                 range(T), v0_plot[29], '-b')
-        plt.legend(['iter=1', 'iter=10', 'iter=20', 'iter=30'])
+        ax4.plot(range(T), v0_plot[iters_plot[0]], '-k',
+                 range(T), v0_plot[iters_plot[1]], '-g',
+                 range(T), v0_plot[iters_plot[2]], '-r',
+                 range(T), v0_plot[iters_plot[3]], '-b')
+        plt.legend(['iter=%i' % iters_plot[0], 'iter=%i' % iters_plot[1], 'iter=%i' % iters_plot[2], 'iter=%i' % iters_plot[3]])
         plt.xlabel('time')
         plt.ylabel('v0')
 
-        # aggregated results
+        ## aggregated results
         plt.figure(3)
         plt.subplot(311)
         plt.plot(range(self._hyperparams['nIter'] + 1), v_t0_sum_iters[0], '-k',
@@ -439,32 +457,33 @@ class ADP_scheduling_algorithm(object):
 
         plt.figure(4)
         plt.subplot(311)
-        plt.plot(range(T), v_sum_t_iters[0], '-k',
-                 range(T), v_sum_t_iters[9], '-g',
-                 range(T), v_sum_t_iters[19], '-r',
-                 range(T), v_sum_t_iters[29], '-b')
-        plt.legend(['iter 1', 'iter 10', 'iter 20', 'iter 30'])
+        plt.plot(range(T), v_sum_t_iters[iters_plot[0]], '-k',
+                 range(T), v_sum_t_iters[iters_plot[1]], '-g',
+                 range(T), v_sum_t_iters[iters_plot[2]], '-r',
+                 range(T), v_sum_t_iters[iters_plot[3]], '-b')
+        plt.legend(['iter=%i' % iters_plot[0], 'iter=%i' % iters_plot[1], 'iter=%i' % iters_plot[2],
+                    'iter=%i' % iters_plot[3]])
         plt.title('summed on all locations with coming_period=1')
         plt.xlabel('time')
         plt.ylabel('sum of dvd0')
         plt.subplot(312)
-        plt.plot(range(T), Vopt[0], '-k',
-                 range(T), Vopt[9], '-g',
-                 range(T), Vopt[19], '-r',
-                 range(T), Vopt[29], '-b')
-        plt.legend(['iter=1', 'iter=10', 'iter=20', 'iter=30'])
+        plt.plot(range(T), Vopt[iters_plot[0]], '-k',
+                 range(T), Vopt[iters_plot[1]], '-g',
+                 range(T), Vopt[iters_plot[2]], '-r',
+                 range(T), Vopt[iters_plot[3]], '-b')
+        plt.legend(['iter=%i' % iters_plot[0], 'iter=%i' % iters_plot[1], 'iter=%i' % iters_plot[2],
+                    'iter=%i' % iters_plot[3]])
         plt.xlabel('time')
         plt.ylabel('optimal objective')
         plt.subplot(313)
-        plt.plot(range(T), GMVopt[0], '-k',
-                 range(T), GMVopt[9], '-g',
-                 range(T), GMVopt[19], '-r',
-                 range(T), GMVopt[29], '-b')
-        plt.legend(['iter=1', 'iter=10', 'iter=20', 'iter=30'])
+        plt.plot(range(T), GMVopt[iters_plot[0]], '-k',
+                 range(T), GMVopt[iters_plot[1]], '-g',
+                 range(T), GMVopt[iters_plot[2]], '-r',
+                 range(T), GMVopt[iters_plot[3]], '-b')
+        plt.legend(['iter=%i' % iters_plot[0], 'iter=%i' % iters_plot[1], 'iter=%i' % iters_plot[2],
+                    'iter=%i' % iters_plot[3]])
         plt.xlabel('time')
         plt.ylabel('stepwise GMV')
-
-
 
         plt.show()
 

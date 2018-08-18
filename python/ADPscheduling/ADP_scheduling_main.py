@@ -96,10 +96,11 @@ def main():
     alg.initAgent(agent)
 
     # offline train using data
-    train_results = alg.offline_train((time_space_info, init_resource, tasks, repositions))
+    data = (time_space_info, init_resource, tasks, repositions)
+    train_results = alg.offline_train(data)
 
     # show results
-    alg.show_results(train_results, time_space_info)
+    alg.show_results(train_results, data)
 
 if __name__ == "__main__":
     main()

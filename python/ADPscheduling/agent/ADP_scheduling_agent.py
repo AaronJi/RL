@@ -14,6 +14,7 @@ sys.path.append(src_dir)
 from RLutils.agent.Agent import Agent
 from RLutils.algorithm.scheduling_mp import scheduling_mp_sparse
 from RLutils.algorithm.cave import CAVE, v2A, A2v
+from RLutils.algorithm.utils import list_find
 
 class ADP_scheduling_agent(Agent):
 
@@ -78,14 +79,14 @@ class ADP_scheduling_agent(Agent):
         Ru = np.zeros((self.n, self.max_period))
         for tau in range(self.max_period):
             for incoming in incoming_resource[tau]:
-                location_index = self.list_find(self.time_space_info['location_seq'], incoming['destination'])
+                location_index = list_find(self.time_space_info['location_seq'], incoming['destination'])
                 Ru[location_index, tau] += incoming['nR']
 
         # param_job
         param_job = np.zeros((5, len(tasks_t)))
         for j, task in enumerate(tasks_t):
-            param_job[0, j] = self.list_find(self.time_space_info['location_seq'], task['start'])
-            param_job[1, j] = self.list_find(self.time_space_info['location_seq'], task['destination'])
+            param_job[0, j] = list_find(self.time_space_info['location_seq'], task['start'])
+            param_job[1, j] = list_find(self.time_space_info['location_seq'], task['destination'])
             param_job[2, j] += 1
             param_job[3, j] = task['income']
             param_job[4, j] = min(task['duration'], self.max_period)  # for task longer than the max period limit, manually cut it
@@ -93,18 +94,12 @@ class ADP_scheduling_agent(Agent):
         # param_rep
         param_rep = np.zeros((4, len(self.possible_repositions)))
         for j, reposition in enumerate(self.possible_repositions):
-            param_rep[0, j] = self.list_find(self.time_space_info['location_seq'], reposition['start'])
-            param_rep[1, j] = self.list_find(self.time_space_info['location_seq'], reposition['destination'])
+            param_rep[0, j] = list_find(self.time_space_info['location_seq'], reposition['start'])
+            param_rep[1, j] = list_find(self.time_space_info['location_seq'], reposition['destination'])
             param_rep[2, j] = reposition['cost']
             param_rep[3, j] = reposition['duration']
 
         return Rt, Ru, param_job, param_rep
-
-    def list_find(self, l, element):
-        for i, e in enumerate(l):
-            if e == element:
-                return i
-        return None
 
     # perform an action according to the policy, given the current state
     # can be provided with a pre-calculated policy pi to improve the speed

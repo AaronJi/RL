@@ -55,3 +55,9 @@ def sort_dict_by_value(d, reverse=True):
     import operator
     d = sorted(d.items(), key=operator.itemgetter(1), reverse=reverse)
     return d
+
+def list_find(l, element):
+    for i, e in enumerate(l):
+        if e == element:
+            return i
+    return None
