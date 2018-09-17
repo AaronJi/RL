@@ -174,20 +174,16 @@ class ADP_scheduling_agent(Agent):
 
         if self._hyperparams['cave_type'] == 'DUALNEXT':
             # DUALNEXT: the slope update method of eq(17-18), Godfrey, Powell, 2002
-            #next_pi_plus = self.decision_record[t+1][-1]['right lambda']
-            #next_pi_minus = self.decision_record[t+1][-1]['left lambda']
             next_pi_plus = rewards_record[t+1][2]
             next_pi_minus = rewards_record[t+1][3]
-
 
             for tau in range(self.max_period):
                 for i in range(self.n):
                     t_pi_o_plus[i][tau] = next_pi_plus[i][tau]
                     t_pi_o_minus[i][tau] = next_pi_minus[i][tau]
+
         elif self._hyperparams['cave_type'] == 'DUALMAX':
             # DUALMAX: the slope update method of eq(15-16), Godfrey, Powell, 2002
-            #future_pi_plus = self.decision_record[t+1][k]['right lambda']
-            #future_pi_minus = self.decision_record[t+1][k]['left lambda']
             future_pi_plus = rewards_record[t + 1][2]
             future_pi_minus = rewards_record[t + 1][3]
 
@@ -199,10 +195,8 @@ class ADP_scheduling_agent(Agent):
                     for s in range(1, tau + 1):
                         if t + 1 + s >= self.T:
                             break
-                        #future_pi_plus = self.decision_record[t+1+s][-1]['right lambda']
                         future_pi_plus = rewards_record[t + 1 + s][2]
                         candi_pi_plus = np.hstack((candi_pi_plus, future_pi_plus[:, tau - s].reshape((self.n, 1))))
-                        #future_pi_minus = self.decision_record[t+1+s][-1]['left lambda']
                         future_pi_plus = rewards_record[t + 1 + s][3]
                         candi_pi_minus = np.hstack((candi_pi_minus, future_pi_minus[:, tau - s].reshape((self.n, 1))))
                 for i in range(self.n):
@@ -223,7 +217,6 @@ class ADP_scheduling_agent(Agent):
             for i in range(self.n):
                 icol = tau * self.n + i
 
-                #newBreakPoint = [self.decision_record[t][-1]['Rout'][i][tau], t_pi_o_minus[i][tau], t_pi_o_plus[i][tau]]
                 newBreakPoint = [Rout_record[t][i][tau], t_pi_o_minus[i][tau], t_pi_o_plus[i][tau]]
 
                 A = v2A(v[:, icol], vLen[:, icol], self.Qfun['NT'][t, tau, i])  # convert to A from v and vLen

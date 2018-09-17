@@ -463,14 +463,14 @@ def scheduling_mp_sparse_v1(n, tau_max, R, Ru, param_job, param_rep, P, PLen, so
     else:
         for i in range(num_nonzero_rep):
             Yopt[rep_row_num[i]][rep_col_num[i]] = np.round(Yval[i][0])
-    dual_right = np.array(cons_right[0].dual_value)
+    dual_right_cur = np.array(cons_right[0].dual_value)
     for i in range(n):
-        lambda_right[i][0] = dual_right[i][0]
-    dual_right = np.array(cons_right[1].dual_value)
+        lambda_right[i][0] = dual_right_cur[i][0]
+    dual_right_fut = np.array(cons_right[1].dual_value)
     for tau in range(tau_max):
         for i in range(n):
             end_resource[i][tau] = np.sum(Zval[:, tau*n+i])
-            lambda_right[i][1+tau] = dual_right[tau*n+i][0]
+            lambda_right[i][1+tau] = dual_right_fut[tau*n+i][0]
 
     ## Generating left derivative
     small = 1.0e-6
@@ -504,13 +504,13 @@ def scheduling_mp_sparse_v1(n, tau_max, R, Ru, param_job, param_rep, P, PLen, so
     else:
         prob_left.solve(solver=cvx.ECOS)
 
-    dual_left = np.array(cons_left[0].dual_value)
+    dual_left_cur = np.array(cons_left[0].dual_value)
     for i in range(n):
-        lambda_left[i][0] = dual_left[i][0]
-    dual_left = np.array(cons_left[1].dual_value)
+        lambda_left[i][0] = dual_left_cur[i][0]
+    dual_left_fut = np.array(cons_left[1].dual_value)
     for tau in range(tau_max):
         for i in range(n):
-            lambda_left[i][1+tau] = dual_left[tau*n+i][0]
+            lambda_left[i][1+tau] = dual_left_fut[tau*n+i][0]
 
     # the GMV part of the objective excludes the effect of value function
     GMVopt = - np.dot(C_coeff, Yval.flatten())

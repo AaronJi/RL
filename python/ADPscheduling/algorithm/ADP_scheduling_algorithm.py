@@ -324,7 +324,7 @@ class ADP_scheduling_algorithm(object):
                                    scale_units='xy', scale=1, width=0.01, cmap=plt.cm.winter)
 
             for i in range(n):
-                ax.annotate(float('%i' % related_resource_avail[i]), (v_value[i, 0], v_value[i, 1]), size=fontSize)
+                ax.annotate(float('%i' % int(related_resource_avail[i])), (v_value[i, 0], v_value[i, 1]), size=fontSize)
 
             plt.title('Scheduling with V @ nR & t=%i & tau=0' % t_plot)
             plt.xlim(-reg_size[0] / 2, reg_size[0] / 2)
@@ -392,25 +392,17 @@ class ADP_scheduling_algorithm(object):
 
         fig = plt.figure(2)
 
-        ax1 = fig.add_subplot(411)
-        ax1.plot(awplot, vplot)
+        ax1 = fig.add_subplot(311)
+        ax1.plot(awplot, vplot, '-', mwplot, splot, 'o')
         plt.xlim(awplot[0], awplot[-1])
         plt.ylim(0, max(vplot) * 1.2)
         plt.xticks(awplot)
         plt.xlabel('num of resource')
         plt.ylabel('value')
+        plt.legend(['marginal value', 'value'])
 
-        ax2 = fig.add_subplot(412)
-        ax2.plot(mwplot, splot, 'o')
-        plt.xlim(awplot[0], awplot[-1])
-        plt.ylim(0, max(splot) * 1.2)
-        #plt.xticks(awplot)
-        #plt.yticks(np.arange(0, max(splot) * 1.2 + 50, 50))
-        plt.xlabel('num of resource')
-        plt.ylabel('marginal value')
-
-        ax3 = fig.add_subplot(413)
-        ax3.plot(range(self._hyperparams['nIter']), v0_plot[:, 0], '-k',
+        ax2 = fig.add_subplot(312)
+        ax2.plot(range(self._hyperparams['nIter']), v0_plot[:, 0], '-k',
                  range(self._hyperparams['nIter']), v0_plot[:, 6], '-g',
                  range(self._hyperparams['nIter']), v0_plot[:, 12], '-r',
                  range(self._hyperparams['nIter']), v0_plot[:, 18], '-b')
@@ -418,14 +410,16 @@ class ADP_scheduling_algorithm(object):
         plt.xlabel('iterations')
         plt.ylabel('v0')
 
-        ax4 = fig.add_subplot(414)
-        ax4.plot(range(T), v0_plot[iters_plot[0]], '-k',
+        ax3 = fig.add_subplot(313)
+        ax3.plot(range(T), v0_plot[iters_plot[0]], '-k',
                  range(T), v0_plot[iters_plot[1]], '-g',
                  range(T), v0_plot[iters_plot[2]], '-r',
                  range(T), v0_plot[iters_plot[3]], '-b')
         plt.legend(['iter=%i' % iters_plot[0], 'iter=%i' % iters_plot[1], 'iter=%i' % iters_plot[2], 'iter=%i' % iters_plot[3]])
         plt.xlabel('time')
         plt.ylabel('v0')
+
+        '''
 
         ## aggregated results
         plt.figure(3)
@@ -435,9 +429,9 @@ class ADP_scheduling_algorithm(object):
                  range(self._hyperparams['nIter'] + 1), v_t0_sum_iters[12], '-r',
                  range(self._hyperparams['nIter'] + 1), v_t0_sum_iters[18], '-b')
         plt.legend(['t=0', 't=6', 't=12', 't=18'])
-        plt.title('summed on all locations with coming_period=1')
+        plt.title('sumed on all locations with coming_period=1')
         plt.xlabel('iterations')
-        plt.ylabel('sum of value function slopes')
+        plt.ylabel('sum of v-slopes')
         plt.subplot(312)
         plt.plot(range(1, self._hyperparams['nIter'] + 1), Vopt[:, 0], '-k',
                  range(1, self._hyperparams['nIter'] + 1), Vopt[:, 6], '-g',
@@ -445,7 +439,7 @@ class ADP_scheduling_algorithm(object):
                  range(1, self._hyperparams['nIter'] + 1), Vopt[:, 18], '-b')
         plt.legend(['t=0', 't=6', 't=12', 't=18'])
         plt.xlabel('iterations')
-        plt.ylabel('optimal objective')
+        plt.ylabel('stepwise objective')
         plt.subplot(313)
         plt.plot(range(1, self._hyperparams['nIter'] + 1), GMVopt[:, 0], '-k',
                  range(1, self._hyperparams['nIter'] + 1), GMVopt[:, 6], '-g',
@@ -463,8 +457,8 @@ class ADP_scheduling_algorithm(object):
                  range(T), v_sum_t_iters[iters_plot[3]], '-b')
         plt.legend(['iter=%i' % iters_plot[0], 'iter=%i' % iters_plot[1], 'iter=%i' % iters_plot[2],
                     'iter=%i' % iters_plot[3]])
-        plt.title('summed on all locations with coming_period=1')
-        plt.xlabel('time')
+        plt.title('sumed on all locations with coming_period=1')
+        plt.xlabel('tie')
         plt.ylabel('sum of dvd0')
         plt.subplot(312)
         plt.plot(range(T), Vopt[iters_plot[0]], '-k',
@@ -474,7 +468,7 @@ class ADP_scheduling_algorithm(object):
         plt.legend(['iter=%i' % iters_plot[0], 'iter=%i' % iters_plot[1], 'iter=%i' % iters_plot[2],
                     'iter=%i' % iters_plot[3]])
         plt.xlabel('time')
-        plt.ylabel('optimal objective')
+        plt.ylabel('stepwise objective')
         plt.subplot(313)
         plt.plot(range(T), GMVopt[iters_plot[0]], '-k',
                  range(T), GMVopt[iters_plot[1]], '-g',
@@ -484,6 +478,8 @@ class ADP_scheduling_algorithm(object):
                     'iter=%i' % iters_plot[3]])
         plt.xlabel('time')
         plt.ylabel('stepwise GMV')
+        
+        '''
 
         plt.show()
 
