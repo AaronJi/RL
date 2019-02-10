@@ -1,5 +1,5 @@
 
-""" Hyperparameters for LETOR ohsumed"""
+""" Hyperparameters for ADP scheduling"""
 from __future__ import division
 
 DATAconfig = {
