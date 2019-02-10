@@ -399,7 +399,7 @@ class ADP_scheduling_algorithm(object):
         plt.xticks(awplot)
         plt.xlabel('num of resource')
         plt.ylabel('value')
-        plt.legend(['marginal value', 'value'])
+        plt.legend(['value', 'marginal value'])
 
         ax2 = fig.add_subplot(312)
         ax2.plot(range(self._hyperparams['nIter']), v0_plot[:, 0], '-k',
