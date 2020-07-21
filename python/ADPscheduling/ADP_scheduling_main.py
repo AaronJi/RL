@@ -16,9 +16,9 @@ project_dir = os.path.dirname(os.path.dirname(os.path.dirname(MDPrank_main_path)
 sys.path.append(project_dir)
 
 from data.Time_Space.time_space_data_dealer import TimeSpaceDataDealer
-from environment.ADP_scheduling_environment import ADPschedulingEnvironment
-from agent.ADP_scheduling_agent import ADP_scheduling_agent
-from algorithm.ADP_scheduling_algorithm import ADP_scheduling_algorithm
+from python.ADPscheduling.environment.ADP_scheduling_environment import ADPschedulingEnvironment
+from python.ADPscheduling.agent.ADP_scheduling_agent import ADP_scheduling_agent
+from python.ADPscheduling.algorithm.ADP_scheduling_algorithm import ADP_scheduling_algorithm
 
 def main():
     """ Main function to be run. """

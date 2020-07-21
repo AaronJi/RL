@@ -24,7 +24,7 @@ class TimeSpaceDataDealer(DataDealer):
         # time information
         self.time_info = {}  # a dict about time information with key as each time key and value as corresponding time indice
         self.time_seq = []  # a list with time keys as elements, indexed as the time indice
-        self.T = (self._hyperparams['ts_end'] - self._hyperparams['ts_start']) / self._hyperparams['delta_ts'] + 1
+        self.T = int((self._hyperparams['ts_end'] - self._hyperparams['ts_start']) / self._hyperparams['delta_ts'] + 1)
         for t in range(self.T):
             time = str(self._hyperparams['ts_start'] + t)
             self.time_info[t] = time
@@ -144,22 +144,22 @@ class TimeSpaceDataDealer(DataDealer):
         # time & location dictionary
         time_space_info = {"time_detail": self.time_info, "time_seq": self.time_seq, "location_detail": self.location_info, "location_seq": self.location_seq}
         with open(ex_data_dir + 'time_space_info.json', 'w') as f:
-            json.dump(time_space_info, f, indent=4, ensure_ascii=False, encoding="utf-8")
+            json.dump(time_space_info, f, indent=4, ensure_ascii=False)  # , encoding="utf-8"
         f.close()
 
         # init resources
         with open(ex_data_dir + 'init_resource.json', 'w') as f:
-            json.dump(self.init_resource_info, f, indent=4, ensure_ascii=False, encoding="utf-8")
+            json.dump(self.init_resource_info, f, indent=4, ensure_ascii=False)  # , encoding="utf-8"
         f.close()
 
         # task orders
         with open(ex_data_dir + 'tasks.json', 'w') as f:
-            json.dump(self.tasks_info, f, indent=4, ensure_ascii=False, encoding="utf-8")
+            json.dump(self.tasks_info, f, indent=4, ensure_ascii=False)  # , encoding="utf-8"
         f.close()
 
         # possible relocations
         with open(ex_data_dir + 'repositions.json', 'w') as f:
-            json.dump(self.repositions, f, indent=4, ensure_ascii=False, encoding="utf-8")
+            json.dump(self.repositions, f, indent=4, ensure_ascii=False)  # , encoding="utf-8"
         f.close()
 
         return

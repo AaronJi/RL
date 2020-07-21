@@ -16,9 +16,9 @@ project_dir = os.path.dirname(os.path.dirname(os.path.dirname(MDPrank_main_path)
 sys.path.append(project_dir)
 
 from data.Letor.LectorDataDealer import LectorDataDealer
-from algorithm.MDPrankAlg import MDPrankAlg
-from agent.MDPrankAgent import MDPrankAgent
-from environment.MDPrankEnvironment import MDPrankEnvironment
+from python.MDPrank.algorithm.MDPrankAlg import MDPrankAlg
+from python.MDPrank.agent.MDPrankAgent import MDPrankAgent
+from python.MDPrank.environment.MDPrankEnvironment import MDPrankEnvironment
 
 class MDPrankMain(object):
 
