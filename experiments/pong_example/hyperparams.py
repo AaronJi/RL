@@ -7,7 +7,7 @@ DATAconfig = {
 }
 
 ALGconfig = {
-    'method': "CartPole_play",
+    'method': "Pong_play",
     'eta': 0.0001,  # learning rate
     'discount': 1.0,
     'iterations': 10, #100000
@@ -30,7 +30,7 @@ AGEconfig = {
 }
 
 ENVconfig = {
-    'env_name': 'CartPole-v0',
+    'env_name': 'PongNoFrameskip-v4',
     'reward_metric': "NDCG"
 }
 

@@ -10,13 +10,13 @@ MDPrank_main_path = os.path.abspath(__file__)
 project_dir = os.path.dirname(os.path.dirname(os.path.dirname(MDPrank_main_path)))
 sys.path.append(project_dir)
 
-from python.CartPole.environment.CartPole_environment import CartPoleEnvironment
+from python.Pong.environment.Pong_environment import PongEnvironment
 
 def main():
     """ Main function to be run. """
 
     # arguments
-    parser = argparse.ArgumentParser(description='Run the CartPole algorithm.')
+    parser = argparse.ArgumentParser(description='Run the Pong algorithm.')
 
     parser.add_argument('experiment', type=str, help='experiment name')
     parser.add_argument('--folder', type=str, default="", help="folder of outputs")
@@ -38,9 +38,9 @@ def main():
 
     print(hyperparams.ENVconfig)
 
-    env = CartPoleEnvironment(hyperparams.ENVconfig)
+    env = PongEnvironment(hyperparams.ENVconfig)
 
-    env.test_train(10, 1000)
+    env.test_train(1, 1000)
 
     return
 
