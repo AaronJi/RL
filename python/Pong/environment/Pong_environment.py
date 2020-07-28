@@ -3,6 +3,7 @@
 import collections
 import numpy as np
 import gym
+import cv2
 
 from python.RLutils.environment.gymEnvironment import GymEnvironment
 
@@ -11,6 +12,12 @@ class PongEnvironment(GymEnvironment):
     def __init__(self, hyperparams):
         env_name = 'PongNoFrameskip-v4'
         super(PongEnvironment, self).__init__(hyperparams, env_name)
+
+        self.env = MaxAndSkipEnv(self.env)
+        self.env = FireResetEnv(self.env)
+        self.env = ProcessFrame84(self.env)
+        self.env = ImageToPyTorch(self.env)
+        self.env = BufferWrapper(self.env, 4)
         return
 
 class MaxAndSkipEnv(gym.Wrapper):
@@ -80,14 +87,11 @@ class ProcessFrame84(gym.ObservationWrapper):
                 np.float32)
         else:
             assert False, "Unknown resolution."
-        img = img[:, :, 0] * 0.299 + img[:, :, 1] * 0.587 + \
-              img[:, :, 2] * 0.114
-        resized_screen = cv2.resize(
-            img, (84, 110), interpolation=cv2.INTER_AREA)
+        img = img[:, :, 0] * 0.299 + img[:, :, 1] * 0.587 + img[:, :, 2] * 0.114
+        resized_screen = cv2.resize(img, (84, 110), interpolation=cv2.INTER_AREA)
         x_t = resized_screen[18:102, :]
         x_t = np.reshape(x_t, [84, 84, 1])
         return x_t.astype(np.uint8)
-
 
 class ImageToPyTorch(gym.ObservationWrapper):
     def __init__(self, env):
@@ -123,10 +127,10 @@ class ScaledFloatFrame(gym.ObservationWrapper):
     def observation(self, obs):
         return np.array(obs).astype(np.float32) / 255.0
 
-
 if __name__ == "__main__":
-    cartpole_env =PongEnvironment({})
+    pong_env =PongEnvironment({})
 
+    '''
     def make_env(env_name):
         env = gym.make(env_name)
         env = MaxAndSkipEnv(env)
@@ -134,4 +138,6 @@ if __name__ == "__main__":
         env = ProcessFrame84(env)
         env = ImageToPyTorch(env)
         env = BufferWrapper(env, 4)
-        return ScaledFloatFrame(env)
+        return ScaledFloatFrame(env)    
+    '''
+

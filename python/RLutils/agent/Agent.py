@@ -4,7 +4,6 @@
 from abc import ABCMeta, abstractmethod
 import copy
 
-
 from .AGEconfig import AGEconfig
 
 class Agent(object):
@@ -16,6 +15,7 @@ class Agent(object):
         config.update(hyperparams)
         self._hyperparams = config
         self.policy = None
+        self.total_reward = None
         return
 
     @abstractmethod

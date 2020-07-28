@@ -28,6 +28,9 @@ class GymEnvironment(Environment):
         self.env.render()
         return
 
+    def get_observation_space(self):
+        return self.env.observation_space
+
     def get_action_space(self):
         return self.env.action_space
 

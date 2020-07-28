@@ -2,36 +2,28 @@
 from __future__ import division
 
 DATAconfig = {
-    'normalization': True,
-    'with_linear_intercept': True
 }
 
 ALGconfig = {
     'method': "Pong_play",
-    'eta': 0.0001,  # learning rate
-    'discount': 1.0,
-    'iterations': 10, #100000
-    'nIter_batch': 10,
-    'absErr': 1.0e-4,
-    'nAbsErr': 3,
-    'param_with_scale': 'minMax',  # minMax, sigmoid, None
-    'update_by': 'batch',  # batch, episode, step
-    'verbose': True,
-    'eval_valid_in_iters': False,
-    'eval_test_in_iters': False,
-    'fast_cal': True,
-    "softmax_power": 1,
-    'predict_syntax': 'listwise'  # listwise, pointwise
+    'replay_size': 10000,
+    'replay_start_size': 10000,
+    'batch_size': 32,
+    'sync_target_frames': 1000,
+    'mean_reward_bound': -19.0  # 19.5,
 }
 
 AGEconfig = {
-    "policyType": "stochastic",
-    "softmax_power": 1
+    'policyType': "epsilon_greedy",
+    'learning_rate': 1e-4,
+    'epsilon_start': 1.0,
+    'epsilon_final': 0.02,
+    'epsilon_decay_last_frame': 10**5,
+    'gamma': 0.99
 }
 
 ENVconfig = {
-    'env_name': 'PongNoFrameskip-v4',
-    'reward_metric': "NDCG"
+    'env_name': 'PongNoFrameskip-v4'
 }
 
 config = {
