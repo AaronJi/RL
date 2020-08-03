@@ -3,7 +3,7 @@
 
 import os, sys
 import argparse
-import time
+import time, datetime
 import importlib
 import numpy as np
 import cv2
@@ -21,7 +21,7 @@ from python.RLutils.algorithm.experience_buffer import Experience
 from python.RLutils.algorithm.experience_buffer import ExperienceBuffer
 from python.Pong.environment.Pong_environment import PongEnvironment
 from python.Pong.agent.PongAgent import PongAgent
-from python.Pong.agent.PongAgent1 import PongAgent1
+#from python.Pong.agent.PongAgent1 import PongAgent1
 from python.Pong.agent.PongAgentOld import PongAgentOld
 from python.Pong.algorithm.dqn_model import DQN_nn
 
@@ -55,7 +55,9 @@ def main():
     device = torch.device("cuda" if args.cuda else "cpu")
 
     env_name = hyperparams.ENVconfig['env_name']
-    env = make_env(env_name)
+    #env = make_env(env_name)
+    env = PongEnvironment(hyperparams.ENVconfig)
+    #env = PongEnvironment(env_name)
 
     MEAN_REWARD_BOUND = 19.5
 
@@ -70,8 +72,8 @@ def main():
     EPSILON_START = 1.0
     EPSILON_FINAL = 0.02
 
-    net = DQN_nn(env.observation_space.shape, env.action_space.n).to(device)
-    tgt_net = DQN_nn(env.observation_space.shape, env.action_space.n).to(device)
+    net = DQN_nn(env.get_observation_space().shape, env.get_action_space().n).to(device)
+    tgt_net = DQN_nn(env.get_observation_space().shape, env.get_action_space().n).to(device)
     #net = DQN(env.observation_space.shape, env.action_space.n).to(device)
     #tgt_net = DQN(env.observation_space.shape, env.action_space.n).to(device)
     writer = SummaryWriter(comment="-" + env_name)
@@ -79,13 +81,15 @@ def main():
 
     buffer = ExperienceBuffer(REPLAY_SIZE)
     agent = Agent(env, buffer)
-    epsilon = EPSILON_START
+    #agent = PongAgentOld(hyperparams.AGEconfig, env, buffer)
+    #epsilon = EPSILON_START
 
     optimizer = torch.optim.Adam(net.parameters(), lr=LEARNING_RATE)
     total_rewards = []
     frame_idx = 0
     ts_frame = 0
-    ts = time.time()
+    t0 = time.time()
+    ts = t0
     best_mean_reward = None
 
     while True:
@@ -95,13 +99,13 @@ def main():
         reward = agent.play_step(net, epsilon, device=device)
         if reward is not None:
             total_rewards.append(reward)
-            speed = (frame_idx - ts_frame) / (time.time() - ts)
-            ts_frame = frame_idx
+            speed = (frame_idx - ts_frame) / (time.time() -ts)
             ts = time.time()
+            ts_frame = frame_idx
             mean_reward = np.mean(total_rewards[-100:])
-            print("%d: done %d games, mean reward %.3f, nn param sum %.3f, eps %.2f, speed %.2f f/s" % (
+            print("%d: done %d games, mean reward %.3f, nn param sum %.3f, eps %.2f, speed %.2f f/s, time passed %s" % (
                 frame_idx, len(total_rewards), mean_reward, net.get_param_sum(), epsilon,
-                speed
+                speed, datetime.timedelta(seconds=ts - t0)
             ))
             writer.add_scalar("epsilon", epsilon, frame_idx)
             writer.add_scalar("speed", speed, frame_idx)
@@ -305,7 +309,7 @@ class Agent:
         done_reward = None
 
         if np.random.random() < epsilon:
-            action = self.env.action_space.sample()
+            action = self.env.get_action_space().sample()
         else:
             state_a = np.array([self.state], copy=False)
             state_v = torch.tensor(state_a).to(device)
@@ -430,6 +434,41 @@ class BufferWrapper(gym.ObservationWrapper):
         self.buffer[-1] = observation
         return self.buffer
 
+
+class PongEnvironment1(object):
+    def __init__(self, env_name):
+        self.env = gym.make(env_name)
+        self.env = MaxAndSkipEnv(self.env)
+        self.env = FireResetEnv(self.env)
+        self.env = ProcessFrame84(self.env)
+        self.env = ImageToPyTorch(self.env)
+        self.env = BufferWrapper(self.env, 4)
+
+        self.observation_space = self.env.observation_space
+        self.action_space = self.env.action_space
+        return
+
+
+    def reset(self):
+        return self.env.reset()
+
+    def render(self):
+        self.env.render()
+        return
+
+    def get_observation_space(self):
+        return self.env.observation_space
+
+    def get_action_space(self):
+        return self.env.action_space
+
+    def step(self, action):
+        observation, reward, done, info = self.env.step(action)
+        return observation, reward, done, info
+
+    def close(self):
+        self.env.close()
+        return
 
 def make_env(env_name):
     env = gym.make(env_name)

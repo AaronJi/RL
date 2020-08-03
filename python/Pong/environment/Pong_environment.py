@@ -18,6 +18,7 @@ class PongEnvironment(GymEnvironment):
         self.env = ProcessFrame84(self.env)
         self.env = ImageToPyTorch(self.env)
         self.env = BufferWrapper(self.env, 4)
+        self.env = ScaledFloatFrame(self.env)
         return
 
 class MaxAndSkipEnv(gym.Wrapper):
