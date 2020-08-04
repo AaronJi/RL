@@ -64,7 +64,7 @@ def main():
     GAMMA = 0.99
     BATCH_SIZE = 32
     REPLAY_SIZE = 10000
-    LEARNING_RATE = 1.2*1e-4
+    LEARNING_RATE = 1e-4
     SYNC_TARGET_FRAMES = 1000
     REPLAY_START_SIZE = REPLAY_SIZE
 
@@ -80,59 +80,105 @@ def main():
     print(net)
 
     buffer = ExperienceBuffer(REPLAY_SIZE)
-    agent = Agent(env, buffer)
+    agent = Agent(env)  # , buffer
     #agent = PongAgentOld(hyperparams.AGEconfig, env, buffer)
     #epsilon = EPSILON_START
 
-    optimizer = torch.optim.Adam(net.parameters(), lr=LEARNING_RATE)
-    total_rewards = []
-    frame_idx = 0
-    ts_frame = 0
-    t0 = time.time()
-    ts = t0
-    best_mean_reward = None
+    train = True
+    if train:
 
-    while True:
-        frame_idx += 1
-        epsilon = max(EPSILON_FINAL, EPSILON_START - frame_idx / EPSILON_DECAY_LAST_FRAME)
+        optimizer = torch.optim.Adam(net.parameters(), lr=LEARNING_RATE)
+        total_rewards = []
+        frame_idx = 0
+        ts_frame = 0
+        t0 = time.time()
+        ts = t0
+        best_mean_reward = None
 
-        reward = agent.play_step(net, epsilon, device=device)
-        if reward is not None:
-            total_rewards.append(reward)
-            speed = (frame_idx - ts_frame) / (time.time() -ts)
-            ts = time.time()
-            ts_frame = frame_idx
-            mean_reward = np.mean(total_rewards[-100:])
-            print("%d: done %d games, mean reward %.3f, nn param sum %.3f, eps %.2f, speed %.2f f/s, time passed %s" % (
-                frame_idx, len(total_rewards), mean_reward, net.get_param_sum(), epsilon,
-                speed, datetime.timedelta(seconds=ts - t0)
-            ))
-            writer.add_scalar("epsilon", epsilon, frame_idx)
-            writer.add_scalar("speed", speed, frame_idx)
-            writer.add_scalar("reward_100", mean_reward, frame_idx)
-            writer.add_scalar("reward", reward, frame_idx)
-            if best_mean_reward is None or best_mean_reward < mean_reward:
-                torch.save(net.state_dict(), env_name + "-best.dat")
-                if best_mean_reward is not None:
-                    print("Best mean reward updated %.3f -> %.3f, model saved" % (best_mean_reward, mean_reward))
-                best_mean_reward = mean_reward
-            if mean_reward > hyperparams.ALGconfig['mean_reward_bound']:
-                print("Solved in %d frames!" % frame_idx)
+        episode_reward = 0.0
+        while True:
+            frame_idx += 1
+            epsilon = max(EPSILON_FINAL, EPSILON_START - frame_idx / EPSILON_DECAY_LAST_FRAME)
+
+            action, reward, is_done, new_state = agent.play_step(net, epsilon, device=device)
+
+            exp = Experience(agent.state, action, reward, is_done, new_state)
+            buffer.append(exp)
+
+            episode_reward += reward
+            if is_done:
+                total_rewards.append(episode_reward)
+                speed = (frame_idx - ts_frame) / (time.time() -ts)
+                ts = time.time()
+                ts_frame = frame_idx
+                mean_reward = np.mean(total_rewards[-100:])
+                print("%d: done %d games, mean reward %.3f, nn param sum %.3f, eps %.2f, speed %.2f f/s, time passed %s" % (
+                    frame_idx, len(total_rewards), mean_reward, net.get_param_sum(), epsilon,
+                    speed, datetime.timedelta(seconds=ts - t0)
+                ))
+                writer.add_scalar("epsilon", epsilon, frame_idx)
+                writer.add_scalar("speed", speed, frame_idx)
+                writer.add_scalar("reward_100", mean_reward, frame_idx)
+                writer.add_scalar("reward", reward, frame_idx)
+                if best_mean_reward is None or best_mean_reward < mean_reward:
+                    torch.save(net.state_dict(), exp_dir + '/' + env_name + "-best.dat")
+                    if best_mean_reward is not None:
+                        print("Best mean reward updated %.3f -> %.3f, model saved" % (best_mean_reward, mean_reward))
+                    best_mean_reward = mean_reward
+                if mean_reward > hyperparams.ALGconfig['mean_reward_bound']:
+                    print("Solved in %d frames!" % frame_idx)
+                    break
+
+                episode_reward = 0.0
+
+            if len(buffer) < REPLAY_START_SIZE:
+                continue
+
+            if frame_idx % SYNC_TARGET_FRAMES == 0:
+                tgt_net.load_state_dict(net.state_dict())
+
+            optimizer.zero_grad()
+            batch = buffer.sample(BATCH_SIZE)
+            loss_t = calc_loss(batch, net, tgt_net, device=device)
+            loss_t.backward()
+            optimizer.step()
+        writer.close()
+
+    else:
+        visualize = True
+        FPS = 25
+
+        #print(project_dir + '/experiments/')
+        #print(exp_dir)
+
+        model_name = exp_dir + '/' + 'PongNoFrameskip-v4-best.dat'
+        #print(model_name)
+        #exit(3)
+
+        net.load_state_dict(torch.load(model_name, map_location=lambda storage, loc: storage))
+
+        state = env.reset()
+        total_reward = 0.0
+        c = collections.Counter()
+        while True:
+            start_ts = time.time()
+            if visualize:
+                env.render()
+
+            action = agent.play(state, net, epsilon=0.0, device="cpu")
+
+            c[action] += 1
+            state, reward, done, _ = env.step(action)
+            total_reward += reward
+            if done:
                 break
-
-        if len(buffer) < REPLAY_START_SIZE:
-            continue
-
-        if frame_idx % SYNC_TARGET_FRAMES == 0:
-            tgt_net.load_state_dict(net.state_dict())
-
-        optimizer.zero_grad()
-        batch = buffer.sample(BATCH_SIZE)
-        loss_t = calc_loss(batch, net, tgt_net, device=device)
-        loss_t.backward()
-        optimizer.step()
-    writer.close()
-
+            if visualize:
+                delta = 1 / FPS - (time.time() - start_ts)
+                if delta > 0:
+                    time.sleep(delta)
+        print("Total reward: %.2f" % total_reward)
+        print("Action counts:", c)
+        env.close()
 
     '''
     
@@ -246,8 +292,59 @@ def calc_loss(batch, net, tgt_net, device="cpu"):
     expected_state_action_values = rewards_v + GAMMA * next_state_values
     return torch.nn.MSELoss()(state_action_values, expected_state_action_values)
 
+class Agent(object):
+    def __init__(self, env):  # , exp_buffer
+        self.env = env
+        #self.exp_buffer = exp_buffer
+        self._reset()
 
+    def _reset(self):
+        self.state = self.env.reset()
+        #self.total_reward = 0.0
 
+    def play_step(self, net, epsilon=0.0, device="cpu"):
+        #done_reward = None
+
+        if np.random.random() < epsilon:
+            action = self.env.get_action_space().sample()
+        else:
+            state_a = np.array([self.state], copy=False)
+            state_v = torch.tensor(state_a).to(device)
+            q_vals_v = net(state_v)
+            _, act_v = torch.max(q_vals_v, dim=1)
+            action = int(act_v.item())
+
+        # do step in the environment
+        new_state, reward, is_done, _ = self.env.step(action)
+        #self.total_reward += reward
+
+        #exp = Experience(self.state, action, reward, is_done, new_state)
+        #self.exp_buffer.append(exp)
+        self.state = new_state
+        if is_done:
+            #done_reward = self.total_reward
+            self._reset()
+        return action, reward, is_done, new_state  # done_reward
+
+    def play(self, state, net, epsilon=0.0, device="cpu"):
+        if epsilon is not None and np.random.random() < epsilon:
+            action = self.env.get_action_space().sample()
+        else:
+            state_a = np.array([state], copy=False)
+            state_v = torch.tensor(state_a).to(device)
+            q_vals_v = net(state_v)
+            _, act_v = torch.max(q_vals_v, dim=1)
+            action = int(act_v.item())
+
+            '''
+            state_v = torch.tensor(np.array([state], copy=False))
+            q_vals = net(state_v).data.numpy()[0]
+            action = np.argmax(q_vals)
+            '''
+
+        return action
+
+'''
 class DQN(torch.nn.Module):
     def __init__(self, input_shape, n_actions):
         super(DQN, self).__init__()
@@ -293,8 +390,7 @@ class DQN(torch.nn.Module):
         #print(self.fc.weight)
 
         return p_sum
-
-
+    
 class Agent:
     def __init__(self, env, exp_buffer):
         self.env = env
@@ -478,6 +574,7 @@ def make_env(env_name):
     env = ImageToPyTorch(env)
     env = BufferWrapper(env, 4)
     return ScaledFloatFrame(env)
+'''
 
 if __name__ == "__main__":
     main()
