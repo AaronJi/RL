@@ -19,7 +19,7 @@ sys.path.append(project_dir)
 
 from python.RLutils.algorithm.experience_buffer import Experience
 from python.RLutils.algorithm.experience_buffer import ExperienceBuffer
-from python.Pong.environment.Pong_environment import PongEnvironment
+#from python.Pong.environment.Pong_environment import PongEnvironment
 from python.Pong.agent.PongAgent import PongAgent
 #from python.Pong.agent.PongAgent1 import PongAgent1
 from python.Pong.agent.PongAgentOld import PongAgentOld
@@ -55,9 +55,9 @@ def main():
     device = torch.device("cuda" if args.cuda else "cpu")
 
     env_name = hyperparams.ENVconfig['env_name']
-    #env = make_env(env_name)
-    env = PongEnvironment(hyperparams.ENVconfig)
-    #env = PongEnvironment(env_name)
+    env = make_env(env_name)
+    #env = PongEnvironment(hyperparams.ENVconfig)
+    #env = PongEnvironment1(env_name)
 
     MEAN_REWARD_BOUND = 19.5
 
@@ -72,15 +72,18 @@ def main():
     EPSILON_START = 1.0
     EPSILON_FINAL = 0.02
 
-    net = DQN_nn(env.get_observation_space().shape, env.get_action_space().n).to(device)
-    tgt_net = DQN_nn(env.get_observation_space().shape, env.get_action_space().n).to(device)
+    #net = DQN_nn(env.get_observation_space().shape, env.get_action_space().n).to(device)
+    #tgt_net = DQN_nn(env.get_observation_space().shape, env.get_action_space().n).to(device)
+    net = DQN_nn(env.observation_space.shape, env.action_space.n).to(device)
+    tgt_net = DQN_nn(env.observation_space.shape, env.action_space.n).to(device)
+
     #net = DQN(env.observation_space.shape, env.action_space.n).to(device)
     #tgt_net = DQN(env.observation_space.shape, env.action_space.n).to(device)
     writer = SummaryWriter(comment="-" + env_name)
     print(net)
 
     buffer = ExperienceBuffer(REPLAY_SIZE)
-    agent = Agent(env)  # , buffer
+    agent = Agent(env, buffer)  #
     #agent = PongAgentOld(hyperparams.AGEconfig, env, buffer)
     #epsilon = EPSILON_START
 
@@ -95,19 +98,20 @@ def main():
         ts = t0
         best_mean_reward = None
 
-        episode_reward = 0.0
+        #episode_reward = 0.0
         while True:
             frame_idx += 1
             epsilon = max(EPSILON_FINAL, EPSILON_START - frame_idx / EPSILON_DECAY_LAST_FRAME)
 
-            action, reward, is_done, new_state = agent.play_step(net, epsilon, device=device)
+            reward = agent.play_step(net, epsilon, device=device)
 
-            exp = Experience(agent.state, action, reward, is_done, new_state)
-            buffer.append(exp)
+            #action, reward, is_done, new_state = agent.play_step(net, epsilon, device=device)
+            #exp = Experience(agent.state, action, reward, is_done, new_state)
+            #buffer.append(exp)
 
-            episode_reward += reward
-            if is_done:
-                total_rewards.append(episode_reward)
+            #episode_reward += reward
+            if reward is not None:
+                total_rewards.append(reward)
                 speed = (frame_idx - ts_frame) / (time.time() -ts)
                 ts = time.time()
                 ts_frame = frame_idx
@@ -129,7 +133,7 @@ def main():
                     print("Solved in %d frames!" % frame_idx)
                     break
 
-                episode_reward = 0.0
+                #episode_reward = 0.0
 
             if len(buffer) < REPLAY_START_SIZE:
                 continue
@@ -292,21 +296,22 @@ def calc_loss(batch, net, tgt_net, device="cpu"):
     expected_state_action_values = rewards_v + GAMMA * next_state_values
     return torch.nn.MSELoss()(state_action_values, expected_state_action_values)
 
-class Agent(object):
-    def __init__(self, env):  # , exp_buffer
+class Agent:
+    def __init__(self, env, exp_buffer):
         self.env = env
-        #self.exp_buffer = exp_buffer
+        self.exp_buffer = exp_buffer
         self._reset()
 
     def _reset(self):
         self.state = self.env.reset()
-        #self.total_reward = 0.0
+        self.total_reward = 0.0
 
     def play_step(self, net, epsilon=0.0, device="cpu"):
-        #done_reward = None
+        done_reward = None
 
         if np.random.random() < epsilon:
-            action = self.env.get_action_space().sample()
+            #action = self.env.get_action_space().sample()
+            action = self.env.action_space.sample()
         else:
             state_a = np.array([self.state], copy=False)
             state_v = torch.tensor(state_a).to(device)
@@ -316,15 +321,15 @@ class Agent(object):
 
         # do step in the environment
         new_state, reward, is_done, _ = self.env.step(action)
-        #self.total_reward += reward
+        self.total_reward += reward
 
-        #exp = Experience(self.state, action, reward, is_done, new_state)
-        #self.exp_buffer.append(exp)
+        exp = Experience(self.state, action, reward, is_done, new_state)
+        self.exp_buffer.append(exp)
         self.state = new_state
         if is_done:
-            #done_reward = self.total_reward
+            done_reward = self.total_reward
             self._reset()
-        return action, reward, is_done, new_state  # done_reward
+        return done_reward
 
     def play(self, state, net, epsilon=0.0, device="cpu"):
         if epsilon is not None and np.random.random() < epsilon:
@@ -425,7 +430,7 @@ class Agent:
             self._reset()
         return done_reward
 
-
+'''
 class FireResetEnv(gym.Wrapper):
     def __init__(self, env=None):
         """For environments where the user need to press FIRE for the game to start."""
@@ -574,7 +579,7 @@ def make_env(env_name):
     env = ImageToPyTorch(env)
     env = BufferWrapper(env, 4)
     return ScaledFloatFrame(env)
-'''
+
 
 if __name__ == "__main__":
     main()
