@@ -98,20 +98,22 @@ def main():
         ts = t0
         best_mean_reward = None
 
-        #episode_reward = 0.0
+        episode_reward = 0.0
         while True:
             frame_idx += 1
             epsilon = max(EPSILON_FINAL, EPSILON_START - frame_idx / EPSILON_DECAY_LAST_FRAME)
 
-            reward = agent.play_step(net, epsilon, device=device)
+            #reward = agent.play_step(net, epsilon, device=device)
 
-            #action, reward, is_done, new_state = agent.play_step(net, epsilon, device=device)
+            action, new_state, reward, is_done = agent.play_step(net, epsilon, device=device)
             #exp = Experience(agent.state, action, reward, is_done, new_state)
             #buffer.append(exp)
 
-            #episode_reward += reward
-            if reward is not None:
-                total_rewards.append(reward)
+            episode_reward += reward
+            #if reward is not None:
+            if is_done:
+                total_rewards.append(episode_reward)
+                episode_reward = 0.0
                 speed = (frame_idx - ts_frame) / (time.time() -ts)
                 ts = time.time()
                 ts_frame = frame_idx
@@ -123,7 +125,7 @@ def main():
                 writer.add_scalar("epsilon", epsilon, frame_idx)
                 writer.add_scalar("speed", speed, frame_idx)
                 writer.add_scalar("reward_100", mean_reward, frame_idx)
-                writer.add_scalar("reward", reward, frame_idx)
+                writer.add_scalar("reward", episode_reward, frame_idx)
                 if best_mean_reward is None or best_mean_reward < mean_reward:
                     torch.save(net.state_dict(), exp_dir + '/' + env_name + "-best.dat")
                     if best_mean_reward is not None:
@@ -132,8 +134,6 @@ def main():
                 if mean_reward > hyperparams.ALGconfig['mean_reward_bound']:
                     print("Solved in %d frames!" % frame_idx)
                     break
-
-                #episode_reward = 0.0
 
             if len(buffer) < REPLAY_START_SIZE:
                 continue
@@ -304,7 +304,7 @@ class Agent:
 
     def _reset(self):
         self.state = self.env.reset()
-        self.total_reward = 0.0
+        #self.total_reward = 0.0
 
     def play_step(self, net, epsilon=0.0, device="cpu"):
         done_reward = None
@@ -321,15 +321,15 @@ class Agent:
 
         # do step in the environment
         new_state, reward, is_done, _ = self.env.step(action)
-        self.total_reward += reward
+        #self.total_reward += reward
 
         exp = Experience(self.state, action, reward, is_done, new_state)
         self.exp_buffer.append(exp)
         self.state = new_state
         if is_done:
-            done_reward = self.total_reward
+            #done_reward = self.total_reward
             self._reset()
-        return done_reward
+        return action, new_state, reward, is_done
 
     def play(self, state, net, epsilon=0.0, device="cpu"):
         if epsilon is not None and np.random.random() < epsilon:
