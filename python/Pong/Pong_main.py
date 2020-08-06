@@ -19,7 +19,7 @@ sys.path.append(project_dir)
 
 from python.RLutils.algorithm.experience_buffer import Experience
 from python.RLutils.algorithm.experience_buffer import ExperienceBuffer
-#from python.Pong.environment.Pong_environment import PongEnvironment
+from python.Pong.environment.Pong_environment import PongEnvironment
 from python.Pong.agent.PongAgent import PongAgent
 #from python.Pong.agent.PongAgent1 import PongAgent1
 from python.Pong.agent.PongAgentOld import PongAgentOld
@@ -55,8 +55,8 @@ def main():
     device = torch.device("cuda" if args.cuda else "cpu")
 
     env_name = hyperparams.ENVconfig['env_name']
-    env = make_env(env_name)
-    #env = PongEnvironment(hyperparams.ENVconfig)
+    #env = make_env(env_name)
+    env = PongEnvironment(hyperparams.ENVconfig)
     #env = PongEnvironment1(env_name)
 
     MEAN_REWARD_BOUND = 19.5
@@ -72,10 +72,10 @@ def main():
     EPSILON_START = 1.0
     EPSILON_FINAL = 0.02
 
-    #net = DQN_nn(env.get_observation_space().shape, env.get_action_space().n).to(device)
-    #tgt_net = DQN_nn(env.get_observation_space().shape, env.get_action_space().n).to(device)
-    net = DQN_nn(env.observation_space.shape, env.action_space.n).to(device)
-    tgt_net = DQN_nn(env.observation_space.shape, env.action_space.n).to(device)
+    net = DQN_nn(env.get_observation_space().shape, env.get_action_space().n).to(device)
+    tgt_net = DQN_nn(env.get_observation_space().shape, env.get_action_space().n).to(device)
+    #net = DQN_nn(env.observation_space.shape, env.action_space.n).to(device)
+    #tgt_net = DQN_nn(env.observation_space.shape, env.action_space.n).to(device)
 
     #net = DQN(env.observation_space.shape, env.action_space.n).to(device)
     #tgt_net = DQN(env.observation_space.shape, env.action_space.n).to(device)
@@ -310,8 +310,8 @@ class Agent:
         done_reward = None
 
         if np.random.random() < epsilon:
-            #action = self.env.get_action_space().sample()
-            action = self.env.action_space.sample()
+            action = self.env.get_action_space().sample()
+            #action = self.env.action_space.sample()
         else:
             state_a = np.array([self.state], copy=False)
             state_v = torch.tensor(state_a).to(device)
