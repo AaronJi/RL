@@ -112,6 +112,7 @@ def main():
             episode_reward += reward
             #if reward is not None:
             if is_done:
+                agent.state = env.reset()
                 total_rewards.append(episode_reward)
                 episode_reward = 0.0
                 speed = (frame_idx - ts_frame) / (time.time() -ts)
@@ -300,7 +301,8 @@ class Agent:
     def __init__(self, env, exp_buffer):
         self.env = env
         self.exp_buffer = exp_buffer
-        self._reset()
+        #self._reset()
+        self.state = self.env.reset()
 
     def _reset(self):
         self.state = self.env.reset()
@@ -326,9 +328,9 @@ class Agent:
         exp = Experience(self.state, action, reward, is_done, new_state)
         self.exp_buffer.append(exp)
         self.state = new_state
-        if is_done:
+        #if is_done:
             #done_reward = self.total_reward
-            self._reset()
+            #self._reset()
         return action, new_state, reward, is_done
 
     def play(self, state, net, epsilon=0.0, device="cpu"):
