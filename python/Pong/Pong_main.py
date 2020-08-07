@@ -297,15 +297,15 @@ def calc_loss(batch, net, tgt_net, device="cpu"):
     expected_state_action_values = rewards_v + GAMMA * next_state_values
     return torch.nn.MSELoss()(state_action_values, expected_state_action_values)
 
-class Agent:
+class Agent(object):
     def __init__(self, env, exp_buffer):
         self.env = env
         self.exp_buffer = exp_buffer
         #self._reset()
         self.state = self.env.reset()
 
-    def _reset(self):
-        self.state = self.env.reset()
+    #def _reset(self):
+        #self.state = self.env.reset()
         #self.total_reward = 0.0
 
     def play_step(self, net, epsilon=0.0, device="cpu"):
