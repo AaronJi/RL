@@ -108,6 +108,7 @@ def main():
             action, new_state, reward, is_done = agent.play_step(net, epsilon, device=device)
             #exp = Experience(agent.state, action, reward, is_done, new_state)
             #buffer.append(exp)
+            agent.state = new_state
 
             episode_reward += reward
             #if reward is not None:
@@ -327,7 +328,7 @@ class Agent(object):
 
         exp = Experience(self.state, action, reward, is_done, new_state)
         self.exp_buffer.append(exp)
-        self.state = new_state
+        #self.state = new_state
         #if is_done:
             #done_reward = self.total_reward
             #self._reset()
