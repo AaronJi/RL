@@ -87,6 +87,7 @@ def main():
     #agent = PongAgentOld(hyperparams.AGEconfig, env, buffer)
     #epsilon = EPSILON_START
 
+    agent.state = env.reset()
     train = True
     if train:
 
@@ -104,6 +105,11 @@ def main():
             epsilon = max(EPSILON_FINAL, EPSILON_START - frame_idx / EPSILON_DECAY_LAST_FRAME)
 
             #reward = agent.play_step(net, epsilon, device=device)
+
+            #action = agent.play_s(net, epsilon, device=device)
+            #new_state, reward, is_done, _ = env.step(action)
+            #exp = Experience(agent.state, action, reward, is_done, new_state)
+            #agent.exp_buffer.append(exp)
 
             action, new_state, reward, is_done = agent.play_step(net, epsilon, device=device)
             #exp = Experience(agent.state, action, reward, is_done, new_state)
@@ -303,7 +309,7 @@ class Agent(object):
         self.env = env
         self.exp_buffer = exp_buffer
         #self._reset()
-        self.state = self.env.reset()
+        #self.state = self.env.reset()
 
     #def _reset(self):
         #self.state = self.env.reset()
@@ -333,6 +339,18 @@ class Agent(object):
             #done_reward = self.total_reward
             #self._reset()
         return action, new_state, reward, is_done
+
+    def play_s(self, net, epsilon=0.0, device="cpu"):
+        if np.random.random() < epsilon:
+            action = self.env.get_action_space().sample()
+            #action = self.env.action_space.sample()
+        else:
+            state_a = np.array([self.state], copy=False)
+            state_v = torch.tensor(state_a).to(device)
+            q_vals_v = net(state_v)
+            _, act_v = torch.max(q_vals_v, dim=1)
+            action = int(act_v.item())
+        return action
 
     def play(self, state, net, epsilon=0.0, device="cpu"):
         if epsilon is not None and np.random.random() < epsilon:
