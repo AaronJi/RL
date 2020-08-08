@@ -304,7 +304,8 @@ def calc_loss(batch, net, tgt_net, device="cpu"):
 
 class Agent(object):
     def __init__(self, env, exp_buffer):
-        self.env = env
+        self.action_space = env.get_action_space()
+        #self.env = env
         #self.exp_buffer = exp_buffer
         #self._reset()
         #self.state = self.env.reset()
@@ -340,8 +341,8 @@ class Agent(object):
 
     def play_s(self, state, net, epsilon=0.0, device="cpu"):
         if np.random.random() < epsilon:
-            action = self.env.get_action_space().sample()
-            #action = self.env.action_space.sample()
+            #action = self.env.get_action_space().sample()
+            action = self.action_space.sample()
         else:
             state_a = np.array([state], copy=False)
             state_v = torch.tensor(state_a).to(device)
