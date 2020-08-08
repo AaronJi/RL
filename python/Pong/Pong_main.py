@@ -87,7 +87,7 @@ def main():
     #agent = PongAgentOld(hyperparams.AGEconfig, env, buffer)
     #epsilon = EPSILON_START
 
-    agent.state = env.reset()
+    state = env.reset()
     train = True
     if train:
 
@@ -111,15 +111,15 @@ def main():
             #exp = Experience(agent.state, action, reward, is_done, new_state)
             #agent.exp_buffer.append(exp)
 
-            action, new_state, reward, is_done = agent.play_step(net, epsilon, device=device)
+            action, new_state, reward, is_done = agent.play_step(state, net, epsilon, device=device)
             #exp = Experience(agent.state, action, reward, is_done, new_state)
             #buffer.append(exp)
-            agent.state = new_state
+            state = new_state
 
             episode_reward += reward
             #if reward is not None:
             if is_done:
-                agent.state = env.reset()
+                state = env.reset()
                 total_rewards.append(episode_reward)
                 episode_reward = 0.0
                 speed = (frame_idx - ts_frame) / (time.time() -ts)
@@ -315,14 +315,14 @@ class Agent(object):
         #self.state = self.env.reset()
         #self.total_reward = 0.0
 
-    def play_step(self, net, epsilon=0.0, device="cpu"):
+    def play_step(self, state, net, epsilon=0.0, device="cpu"):
         done_reward = None
 
         if np.random.random() < epsilon:
             action = self.env.get_action_space().sample()
             #action = self.env.action_space.sample()
         else:
-            state_a = np.array([self.state], copy=False)
+            state_a = np.array([state], copy=False)
             state_v = torch.tensor(state_a).to(device)
             q_vals_v = net(state_v)
             _, act_v = torch.max(q_vals_v, dim=1)
@@ -332,7 +332,7 @@ class Agent(object):
         new_state, reward, is_done, _ = self.env.step(action)
         #self.total_reward += reward
 
-        exp = Experience(self.state, action, reward, is_done, new_state)
+        exp = Experience(state, action, reward, is_done, new_state)
         self.exp_buffer.append(exp)
         #self.state = new_state
         #if is_done:
