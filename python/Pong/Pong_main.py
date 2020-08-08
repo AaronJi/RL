@@ -83,7 +83,8 @@ def main():
     print(net)
 
     buffer = ExperienceBuffer(REPLAY_SIZE)
-    agent = Agent(env, buffer)  #
+    #agent = Agent(env, buffer)  #
+    agent = Agent(env.get_action_space())
     #agent = PongAgentOld(hyperparams.AGEconfig, env, buffer)
     #epsilon = EPSILON_START
 
@@ -106,7 +107,7 @@ def main():
 
             #reward = agent.play_step(net, epsilon, device=device)
 
-            action = agent.play_s(state, net, epsilon, device=device)
+            action = agent.play(state, net, epsilon, device=device)
             new_state, reward, is_done, _ = env.step(action)
             exp = Experience(state, action, reward, is_done, new_state)
             buffer.append(exp)
@@ -303,8 +304,8 @@ def calc_loss(batch, net, tgt_net, device="cpu"):
     return torch.nn.MSELoss()(state_action_values, expected_state_action_values)
 
 class Agent(object):
-    def __init__(self, env, exp_buffer):
-        self.action_space = env.get_action_space()
+    def __init__(self, action_space): # , env, exp_buffer
+        self.action_space = action_space
         #self.env = env
         #self.exp_buffer = exp_buffer
         #self._reset()
@@ -353,7 +354,7 @@ class Agent(object):
 
     def play(self, state, net, epsilon=0.0, device="cpu"):
         if epsilon is not None and np.random.random() < epsilon:
-            action = self.env.get_action_space().sample()
+            action = self.action_space.sample()
         else:
             state_a = np.array([state], copy=False)
             state_v = torch.tensor(state_a).to(device)
