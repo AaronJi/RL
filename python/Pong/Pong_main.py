@@ -100,6 +100,71 @@ def main():
         ts = t0
         best_mean_reward = None
 
+        max_episodes = 200
+        for i in range(max_episodes):
+
+            episode_reward = 0.0
+
+            while True:
+
+                frame_idx += 1
+                epsilon = max(EPSILON_FINAL, EPSILON_START - frame_idx / EPSILON_DECAY_LAST_FRAME)
+
+                action = agent.play(state, net, epsilon, device=device)
+                new_state, reward, is_done, _ = env.step(action)
+                exp = Experience(state, action, reward, is_done, new_state)
+                buffer.append(exp)
+
+                state = new_state
+
+                episode_reward += reward
+                if is_done:
+                    state = env.reset()
+                    total_rewards.append(episode_reward)
+
+                    speed = (frame_idx - ts_frame) / (time.time() -ts)
+                    ts = time.time()
+                    ts_frame = frame_idx
+                    mean_reward = np.mean(total_rewards[-100:])
+                    print("%d: done %d games, last reward %.3f, mean reward %.3f, nn param sum %.3f, eps %.2f, speed %.2f f/s, time passed %s" % (
+                        frame_idx, len(total_rewards), episode_reward, mean_reward, net.get_param_sum(), epsilon,
+                        speed, datetime.timedelta(seconds=ts - t0)
+                    ))
+                    #episode_reward = 0.0
+
+
+                    writer.add_scalar("epsilon", epsilon, frame_idx)
+                    writer.add_scalar("speed", speed, frame_idx)
+                    writer.add_scalar("reward_100", mean_reward, frame_idx)
+                    writer.add_scalar("reward", episode_reward, frame_idx)
+                    if best_mean_reward is None or best_mean_reward < mean_reward:
+                        torch.save(net.state_dict(), exp_dir + '/' + env_name + "-best.dat")
+                        if best_mean_reward is not None:
+                            print("Best mean reward updated %.3f -> %.3f, model saved" % (best_mean_reward, mean_reward))
+                        best_mean_reward = mean_reward
+
+                    break
+
+                if len(buffer) < REPLAY_START_SIZE:
+                    continue
+
+                if frame_idx % SYNC_TARGET_FRAMES == 0:
+                    tgt_net.load_state_dict(net.state_dict())
+
+                optimizer.zero_grad()
+                batch = buffer.sample(BATCH_SIZE)
+                loss_t = calc_loss(batch, net, tgt_net, device=device)
+                loss_t.backward()
+                optimizer.step()
+
+            if mean_reward > hyperparams.ALGconfig['mean_reward_bound']:
+                print("Solved in %d frames!" % frame_idx)
+                break
+
+        writer.close()
+
+
+        '''
         episode_reward = 0.0
         while True:
             frame_idx += 1
@@ -156,6 +221,7 @@ def main():
             loss_t.backward()
             optimizer.step()
         writer.close()
+        '''
 
     else:
         visualize = True
