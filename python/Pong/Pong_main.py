@@ -120,15 +120,17 @@ def main():
             if is_done:
                 state = env.reset()
                 total_rewards.append(episode_reward)
-                episode_reward = 0.0
+
                 speed = (frame_idx - ts_frame) / (time.time() -ts)
                 ts = time.time()
                 ts_frame = frame_idx
                 mean_reward = np.mean(total_rewards[-100:])
-                print("%d: done %d games, mean reward %.3f, nn param sum %.3f, eps %.2f, speed %.2f f/s, time passed %s" % (
-                    frame_idx, len(total_rewards), mean_reward, net.get_param_sum(), epsilon,
+                print("%d: done %d games, last reward %.3f, mean reward %.3f, nn param sum %.3f, eps %.2f, speed %.2f f/s, time passed %s" % (
+                    frame_idx, len(total_rewards), episode_reward, mean_reward, net.get_param_sum(), epsilon,
                     speed, datetime.timedelta(seconds=ts - t0)
                 ))
+                episode_reward = 0.0
+
                 writer.add_scalar("epsilon", epsilon, frame_idx)
                 writer.add_scalar("speed", speed, frame_idx)
                 writer.add_scalar("reward_100", mean_reward, frame_idx)
