@@ -100,7 +100,7 @@ def main():
         ts = t0
         best_mean_reward = None
 
-        max_episodes = 200
+        max_episodes = 300
         for i in range(max_episodes):
 
             episode_reward = 0.0

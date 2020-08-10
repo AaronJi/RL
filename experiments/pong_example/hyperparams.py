@@ -10,7 +10,7 @@ ALGconfig = {
     'replay_start_size': 10000,
     'batch_size': 32,
     'sync_target_frames': 1000,
-    'mean_reward_bound': 10.0,
+    'mean_reward_bound': 19.0,
 }
 
 AGEconfig = {
