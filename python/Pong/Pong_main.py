@@ -21,8 +21,6 @@ from python.RLutils.algorithm.experience_buffer import Experience
 from python.RLutils.algorithm.experience_buffer import ExperienceBuffer
 from python.Pong.environment.Pong_environment import PongEnvironment
 from python.Pong.agent.PongAgent import PongAgent
-#from python.Pong.agent.PongAgent1 import PongAgent1
-from python.Pong.agent.PongAgentOld import PongAgentOld
 from python.Pong.algorithm.dqn_model import DQN_nn
 
 import warnings
@@ -84,8 +82,8 @@ def main():
 
     buffer = ExperienceBuffer(REPLAY_SIZE)
     #agent = Agent(env, buffer)  #
-    agent = Agent(env.get_action_space())
-    #agent = PongAgentOld(hyperparams.AGEconfig, env, buffer)
+    #agent = Agent(env.get_action_space())
+    agent = PongAgent(hyperparams.AGEconfig, env.get_action_space())
     #epsilon = EPSILON_START
 
     state = env.reset()
@@ -105,6 +103,7 @@ def main():
 
             episode_reward = 0.0
 
+            # episode starts
             while True:
 
                 frame_idx += 1
@@ -119,30 +118,6 @@ def main():
 
                 episode_reward += reward
                 if is_done:
-                    state = env.reset()
-                    total_rewards.append(episode_reward)
-
-                    speed = (frame_idx - ts_frame) / (time.time() -ts)
-                    ts = time.time()
-                    ts_frame = frame_idx
-                    mean_reward = np.mean(total_rewards[-100:])
-                    print("%d: done %d games, last reward %.3f, mean reward %.3f, nn param sum %.3f, eps %.2f, speed %.2f f/s, time passed %s" % (
-                        frame_idx, len(total_rewards), episode_reward, mean_reward, net.get_param_sum(), epsilon,
-                        speed, datetime.timedelta(seconds=ts - t0)
-                    ))
-                    #episode_reward = 0.0
-
-
-                    writer.add_scalar("epsilon", epsilon, frame_idx)
-                    writer.add_scalar("speed", speed, frame_idx)
-                    writer.add_scalar("reward_100", mean_reward, frame_idx)
-                    writer.add_scalar("reward", episode_reward, frame_idx)
-                    if best_mean_reward is None or best_mean_reward < mean_reward:
-                        torch.save(net.state_dict(), exp_dir + '/' + env_name + "-best.dat")
-                        if best_mean_reward is not None:
-                            print("Best mean reward updated %.3f -> %.3f, model saved" % (best_mean_reward, mean_reward))
-                        best_mean_reward = mean_reward
-
                     break
 
                 if len(buffer) < REPLAY_START_SIZE:
@@ -156,6 +131,33 @@ def main():
                 loss_t = calc_loss(batch, net, tgt_net, device=device)
                 loss_t.backward()
                 optimizer.step()
+
+
+            # the episode ends
+            state = env.reset()
+
+            total_rewards.append(episode_reward)
+
+            speed = (frame_idx - ts_frame) / (time.time() - ts)
+            ts = time.time()
+            ts_frame = frame_idx
+            mean_reward = np.mean(total_rewards[-100:])
+            print(
+                "%d: done %d games, last reward %.3f, mean reward %.3f, nn param sum %.3f, eps %.2f, speed %.2f f/s, time passed %s" % (
+                    frame_idx, len(total_rewards), episode_reward, mean_reward, net.get_param_sum(), epsilon,
+                    speed, datetime.timedelta(seconds=ts - t0)
+                ))
+            # episode_reward = 0.0
+
+            writer.add_scalar("epsilon", epsilon, frame_idx)
+            writer.add_scalar("speed", speed, frame_idx)
+            writer.add_scalar("reward_100", mean_reward, frame_idx)
+            writer.add_scalar("reward", episode_reward, frame_idx)
+            if best_mean_reward is None or best_mean_reward < mean_reward:
+                torch.save(net.state_dict(), exp_dir + '/' + env_name + "-best.dat")
+                if best_mean_reward is not None:
+                    print("Best mean reward updated %.3f -> %.3f, model saved" % (best_mean_reward, mean_reward))
+                best_mean_reward = mean_reward
 
             if mean_reward > hyperparams.ALGconfig['mean_reward_bound']:
                 print("Solved in %d frames!" % frame_idx)
@@ -347,10 +349,6 @@ def main():
     
     '''
 
-    #ts_end = time.time()
-    #print(ts_end - ts_start)
-
-    #env.test_train(1, 1000)
     return
 
 def calc_loss(batch, net, tgt_net, device="cpu"):
@@ -370,6 +368,9 @@ def calc_loss(batch, net, tgt_net, device="cpu"):
     GAMMA = 0.99
     expected_state_action_values = rewards_v + GAMMA * next_state_values
     return torch.nn.MSELoss()(state_action_values, expected_state_action_values)
+
+
+'''
 
 class Agent(object):
     def __init__(self, action_space): # , env, exp_buffer
@@ -430,15 +431,8 @@ class Agent(object):
             _, act_v = torch.max(q_vals_v, dim=1)
             action = int(act_v.item())
 
-            '''
-            state_v = torch.tensor(np.array([state], copy=False))
-            q_vals = net(state_v).data.numpy()[0]
-            action = np.argmax(q_vals)
-            '''
-
         return action
-
-'''
+        
 class DQN(torch.nn.Module):
     def __init__(self, input_shape, n_actions):
         super(DQN, self).__init__()
@@ -519,7 +513,6 @@ class Agent:
             self._reset()
         return done_reward
 
-'''
 class FireResetEnv(gym.Wrapper):
     def __init__(self, env=None):
         """For environments where the user need to press FIRE for the game to start."""
@@ -669,6 +662,7 @@ def make_env(env_name):
     env = BufferWrapper(env, 4)
     return ScaledFloatFrame(env)
 
+'''
 
 if __name__ == "__main__":
     main()
