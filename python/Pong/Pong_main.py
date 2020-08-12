@@ -86,7 +86,7 @@ def main():
     agent = PongAgent(hyperparams.AGEconfig, env.get_action_space())
     #epsilon = EPSILON_START
 
-    state = env.reset()
+
     train = True
     if train:
 
@@ -100,7 +100,7 @@ def main():
 
         max_episodes = 300
         for i in range(max_episodes):
-
+            state = env.reset()
             episode_reward = 0.0
 
             # episode starts
@@ -134,7 +134,7 @@ def main():
 
 
             # the episode ends
-            state = env.reset()
+            #state = env.reset()
 
             total_rewards.append(episode_reward)
 
