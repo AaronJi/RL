@@ -141,7 +141,7 @@ def main():
             speed = (frame_idx - ts_frame) / (time.time() - ts)
             ts = time.time()
             ts_frame = frame_idx
-            mean_reward = np.mean(total_rewards[-100:])
+            mean_reward = np.mean(total_rewards[-20:])
             print(
                 "%d: done %d games, last reward %.3f, mean reward %.3f, nn param sum %.3f, eps %.2f, speed %.2f f/s, time passed %s" % (
                     frame_idx, len(total_rewards), episode_reward, mean_reward, net.get_param_sum(), epsilon,
