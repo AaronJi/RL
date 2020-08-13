@@ -22,6 +22,7 @@ from python.RLutils.algorithm.experience_buffer import ExperienceBuffer
 from python.Pong.environment.Pong_environment import PongEnvironment
 from python.Pong.agent.PongAgent import PongAgent
 from python.Pong.algorithm.dqn_model import DQN_nn
+from python.Pong.algorithm.Pong_dqn_train import dqn_train
 
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -80,7 +81,7 @@ def main():
     writer = SummaryWriter(comment="-" + env_name)
     print(net)
 
-    buffer = ExperienceBuffer(REPLAY_SIZE)
+    #buffer = ExperienceBuffer(REPLAY_SIZE)
     #agent = Agent(env, buffer)  #
     #agent = Agent(env.get_action_space())
     agent = PongAgent(hyperparams.AGEconfig, env.get_action_space())
@@ -89,7 +90,9 @@ def main():
 
     train = True
     if train:
+        dqn_train(hyperparams, env, agent, net, tgt_net, writer, exp_dir, device)
 
+        '''
         optimizer = torch.optim.Adam(net.parameters(), lr=LEARNING_RATE)
         total_rewards = []
         frame_idx = 0
@@ -163,7 +166,9 @@ def main():
                 print("Solved in %d frames!" % frame_idx)
                 break
 
-        writer.close()
+        writer.close()        
+        '''
+
 
 
         '''
