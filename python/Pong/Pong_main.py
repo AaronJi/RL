@@ -90,7 +90,7 @@ def main():
 
     train = True
     if train:
-        dqn_train(hyperparams, env, agent, net, tgt_net, writer, exp_dir, device)
+        dqn_train(hyperparams.ALGconfig, env, agent, net, tgt_net, writer, exp_dir, device)
 
         '''
         optimizer = torch.optim.Adam(net.parameters(), lr=LEARNING_RATE)

@@ -19,6 +19,7 @@ class GymEnvironment(Environment):
     def __init__(self, hyperparams, env_name):
         super(GymEnvironment, self).__init__(hyperparams)
         self.env = gym.make(env_name)
+        self.env_name = env_name
         return
 
     def reset(self):
