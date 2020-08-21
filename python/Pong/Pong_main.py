@@ -9,6 +9,9 @@ import torch
 import collections
 from tensorboardX import SummaryWriter
 
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning)
+
 # path of the whole project
 MDPrank_main_path = os.path.abspath(__file__)
 project_dir = os.path.dirname(os.path.dirname(os.path.dirname(MDPrank_main_path)))
@@ -18,9 +21,7 @@ from python.Pong.environment.Pong_environment import PongEnvironment
 from python.Pong.agent.PongAgent import PongAgent
 from python.Pong.algorithm.dqn_model import DQN_nn
 from python.Pong.algorithm.Pong_dqn_train import dqn_train
-
-import warnings
-warnings.filterwarnings("ignore", category=UserWarning)
+from python.Pong.algorithm.Pong_dqn_play import dqn_play
 
 def main():
     """ Main function to be run. """
@@ -61,37 +62,8 @@ def main():
     train = True
     if train:
         dqn_train(hyperparams.ALGconfig, env, agent, net, tgt_net, writer, exp_dir, device)
-
     else:
-        visualize = True
-        FPS = 25
-
-        model_name = exp_dir + '/' + 'PongNoFrameskip-v4-best.dat'
-
-        net.load_state_dict(torch.load(model_name, map_location=lambda storage, loc: storage))
-
-        state = env.reset()
-        total_reward = 0.0
-        c = collections.Counter()
-        while True:
-            start_ts = time.time()
-            if visualize:
-                env.render()
-
-            action = agent.play(state, net, epsilon=0.0, device="cpu")
-
-            c[action] += 1
-            state, reward, done, _ = env.step(action)
-            total_reward += reward
-            if done:
-                break
-            if visualize:
-                delta = 1 / FPS - (time.time() - start_ts)
-                if delta > 0:
-                    time.sleep(delta)
-        print("Total reward: %.2f" % total_reward)
-        print("Action counts:", c)
-        env.close()
+        dqn_play(hyperparams.ALGconfig, env, agent, net, exp_dir)
 
     return
 
