@@ -11,10 +11,6 @@ from python.RLutils.algorithm.experience_buffer import Experience
 from python.RLutils.algorithm.experience_buffer import ExperienceBuffer
 
 def dqn_train(hyperparams, env, agent, net, tgt_net, writer, exp_dir, device):
-    EPSILON_DECAY_LAST_FRAME = 10 ** 5
-    EPSILON_START = 1.0
-    EPSILON_FINAL = 0.02
-
     buffer = ExperienceBuffer(hyperparams['replay_start_size'])
 
     env_name = env.env_name
@@ -34,7 +30,6 @@ def dqn_train(hyperparams, env, agent, net, tgt_net, writer, exp_dir, device):
         # episode starts
         while True:
             frame_idx += 1
-            #epsilon = max(EPSILON_FINAL, EPSILON_START - frame_idx / EPSILON_DECAY_LAST_FRAME)
             epsilon = agent.get_epsilon(frame_idx)
 
             action = agent.play(state, net, epsilon, device=device)

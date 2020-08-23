@@ -21,10 +21,10 @@ class PongAgent(GymAgent):
         return action
 
     def get_epsilon(self, index):
-        EPSILON_DECAY_LAST_FRAME = 10 ** 5
-        EPSILON_START = 1.0
-        EPSILON_FINAL = 0.02
+        #EPSILON_DECAY_LAST_FRAME = 10 ** 5
+        #EPSILON_START = 1.0
+        #EPSILON_FINAL = 0.02
 
-        epsilon = max(EPSILON_FINAL, EPSILON_START - index / EPSILON_DECAY_LAST_FRAME)
+        epsilon = max(self._hyperparams['epsilon_final'], self._hyperparams['epsilon_start'] - index / self._hyperparams['epsilon_decay_last_frame'])
 
         return epsilon
