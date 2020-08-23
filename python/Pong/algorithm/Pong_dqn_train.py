@@ -34,7 +34,8 @@ def dqn_train(hyperparams, env, agent, net, tgt_net, writer, exp_dir, device):
         # episode starts
         while True:
             frame_idx += 1
-            epsilon = max(EPSILON_FINAL, EPSILON_START - frame_idx / EPSILON_DECAY_LAST_FRAME)
+            #epsilon = max(EPSILON_FINAL, EPSILON_START - frame_idx / EPSILON_DECAY_LAST_FRAME)
+            epsilon = agent.get_epsilon(frame_idx)
 
             action = agent.play(state, net, epsilon, device=device)
             new_state, reward, is_done, _ = env.step(action)

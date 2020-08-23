@@ -19,3 +19,12 @@ class PongAgent(GymAgent):
             _, act_v = torch.max(q_vals_v, dim=1)
             action = int(act_v.item())
         return action
+
+    def get_epsilon(self, index):
+        EPSILON_DECAY_LAST_FRAME = 10 ** 5
+        EPSILON_START = 1.0
+        EPSILON_FINAL = 0.02
+
+        epsilon = max(EPSILON_FINAL, EPSILON_START - index / EPSILON_DECAY_LAST_FRAME)
+
+        return epsilon
