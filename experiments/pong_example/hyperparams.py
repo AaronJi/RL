@@ -6,13 +6,14 @@ DATAconfig = {
 
 ALGconfig = {
     'method': "Pong_play",
+    'gamma': 0.99,
     'replay_size': 10000,
     'replay_start_size': 10000,
     'batch_size': 32,
     'sync_target_frames': 1000,
     'learning_rate': 1e-4,
     'max_episodes': 500,
-    'mean_reward_bound': 19.0,
+    'mean_reward_bound': 16.0,
 }
 
 AGEconfig = {

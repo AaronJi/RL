@@ -51,7 +51,7 @@ def dqn_train(hyperparams, env, agent, net, tgt_net, writer, exp_dir, device):
 
             optimizer.zero_grad()
             batch = buffer.sample(hyperparams['batch_size'])
-            loss_t = calc_loss(batch, net, tgt_net, device=device)
+            loss_t = calc_loss(hyperparams, batch, net, tgt_net, device=device)
             loss_t.backward()
             optimizer.step()
 
@@ -86,7 +86,7 @@ def dqn_train(hyperparams, env, agent, net, tgt_net, writer, exp_dir, device):
 
     writer.close()
 
-def calc_loss(batch, net, tgt_net, device="cpu"):
+def calc_loss(hyperparams, batch, net, tgt_net, device="cpu"):
     states, actions, rewards, dones, next_states = batch
 
     states_v = torch.tensor(states).to(device)
@@ -100,6 +100,5 @@ def calc_loss(batch, net, tgt_net, device="cpu"):
     next_state_values[done_mask] = 0.0
     next_state_values = next_state_values.detach()
 
-    GAMMA = 0.99
-    expected_state_action_values = rewards_v + GAMMA * next_state_values
+    expected_state_action_values = rewards_v + hyperparams['gamma'] * next_state_values
     return torch.nn.MSELoss()(state_action_values, expected_state_action_values)
