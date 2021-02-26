@@ -1,5 +1,13 @@
 # RL
 
+## DQN
+A simple replicate of the famous DQN algorithm.
+
+### Run Pong example:
+```
+python python/Pong/Pong_main pong_example
+```
+
 ## MDP rank:
 Replicate the MDP rank algorithm in [Reinforcement Learning to Rank with Markov Decision Process. Wei, Xu, Lan, Guo, Cheng, SIGIR’17, 2017]
 
