@@ -10,7 +10,7 @@ ALGconfig = {
     'method': "LIRD",
     'discount': 0.99,  # Gamma in Bellman equation
     'batch_size': 64,
-    'n_session': 3,
+    'n_session': 10,
     'n_session_len': 50,
     'buffer_size': 1000000,  # Size of replay memory D in article
 }

@@ -117,7 +117,6 @@ class LIRDAlg(object):
                         ratings.append(l[0])
                 for item in historical_sampled_items:
                     random_seen.append(list(user_data.loc[user_data['itemId'] == item]['rating'])[0])
-                break
         return ratings, unknown, random_seen
 
 def intract_experience(state, action, reward, next_state):
