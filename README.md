@@ -10,14 +10,6 @@ Related paper: [Deep Reinforcement Learning for List-wise Recommendations]
 ### RUN MovieLens example
 ```
 python python/LIRD/LIRD_main.py movielens_lird_example
-=======
-## DQN
-A simple replicate of the famous DQN algorithm.
-
-### Run Pong example:
-```
-python python/Pong/Pong_main pong_example
-
 ```
 
 ## MDP rank:
