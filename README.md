@@ -2,6 +2,8 @@
 
 ## LIRD
 Replicate the MDP rank algorithm in https://github.com/egipcy/LIRD
+Some logic is extended including:
+- user features is added
 
 Related paper: [Deep Reinforcement Learning for List-wise Recommendations]
 
