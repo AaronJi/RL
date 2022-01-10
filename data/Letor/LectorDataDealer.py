@@ -9,7 +9,7 @@ import sys
 parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(parentdir)
 
-from rec_data_dealer import  RecDataDealer
+from rec_data_dealer import RecDataDealer
 from DataDealer import DataDealer
 
 class LectorDataDealer(RecDataDealer):
