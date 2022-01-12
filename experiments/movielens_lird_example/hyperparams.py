@@ -30,7 +30,7 @@ ENVconfig = {
     'fixed_length': True,  # Fixed memory length
     'item_sequence_len': 12,  # N in article
     'item_rec_len': 4,  # K in article
-    'use_user': True,  # if use user features in the program
+    'use_user': False,  # if use user features in the program
     'w_transit_noise': False  # if with noise in next state
 }
 

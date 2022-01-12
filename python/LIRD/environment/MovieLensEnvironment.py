@@ -48,6 +48,7 @@ class MovieLensEnvironment(RankEnvironment):
 
         self.load_embeddings(data_dir + '/embeddings.csv')
         assert self.get_embedding_size() == self.emb_size
+        self.get_embedding_dict()
 
         self.user_space_size = len(self.datadealer.user_cols)
         self.state_space_size = self.item_space_size + self.user_space_size
@@ -250,12 +251,12 @@ class MovieLensEnvironment(RankEnvironment):
         return np.array([self.get_embedding(item) for item in item_list])
 
     def get_embedding_dict(self):
-        dict_embeddings = {}
+        self.dict_embeddings = {}
         for i, item in enumerate(self.item_embeddings):
             str_item = str(item)
-            assert (str_item not in dict_embeddings)
-            dict_embeddings[str_item] = i
-        return dict_embeddings
+            assert (str_item not in self.dict_embeddings)
+            self.dict_embeddings[str_item] = i
+        return #dict_embeddings
 
 
 class OrnsteinUhlenbeckNoise:

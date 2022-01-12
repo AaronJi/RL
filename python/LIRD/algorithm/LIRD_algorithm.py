@@ -93,11 +93,12 @@ class LIRDAlg(object):
             start_time = time.time()
         return
 
-    def test_actor(self, users_data, target=False, n_session_len=1, sess=None):
+    def test_actor(self, users_data, target=False, n_round=1, sess=None):
         ratings = []
         unknown = 0
         random_seen = []
-        for _ in range(n_session_len):
+        for i in range(n_round):
+            print('*** test round %i, %i users***' %(i, len(users_data)))
             for user_data in users_data:
                 user_id = user_data.iloc[0]['userId']
                 user = self.env.datadealer.user_data[self.env.datadealer.user_data['userId'] == user_id].values
@@ -106,13 +107,12 @@ class LIRDAlg(object):
                 item = self.env.get_list_embedding(historical_sampled_items).reshape(1, -1)
                 state = np.hstack((user, item))
 
-                rec_items = self.agent.get_recommendation_items(state, self.env.get_embedding_dict(), target=target, sess=sess)
+                rec_items = self.agent.get_recommendation_items(state, self.env.dict_embeddings, target=target, sess=sess)
                 for item in rec_items:
                     l = list(user_data.loc[user_data['itemId'] == item]['rating'])
                     assert (len(l) < 2)
                     if len(l) == 0:
                         unknown += 1
-
                     else:
                         ratings.append(l[0])
                 for item in historical_sampled_items:

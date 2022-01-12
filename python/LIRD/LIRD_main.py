@@ -128,7 +128,7 @@ class LIRDMain(object):
 
     def offline_test(self):
         # # Testing
-        ratings, unknown, random_seen = self.alg.test_actor(self.env.train_users_data, target=False, n_session_len=10, sess=self.sess)
+        ratings, unknown, random_seen = self.alg.test_actor(self.env.train_users_data, target=False, n_round=50, sess=self.sess)
         print('%0.1f%% unknown' % (100 * unknown / (len(ratings) + unknown)))
 
         plt.figure(0)
@@ -140,7 +140,7 @@ class LIRDMain(object):
         plt.title('Random ; Mean = %.4f' % (np.mean(random_seen)))
 
         # self.env.test_users_data
-        ratings, unknown, random_seen = self.alg.test_actor(self.env.train_users_data, target=True, n_session_len=10, sess=self.sess)
+        ratings, unknown, random_seen = self.alg.test_actor(self.env.train_users_data, target=True, n_round=50, sess=self.sess)
         print('%0.1f%% unknown' % (100 * unknown / (len(ratings) + unknown)))
 
         plt.figure(1)
