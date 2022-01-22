@@ -15,11 +15,10 @@ from data.MovieLens.MovieLensDataDealer import MovieLensDataDealer
 from RLutils.environment.rankEnvironment import RankEnvironment
 from RLutils.algorithm.simularity import cosine_simularity
 
-
-class MovieLensEnvironment(RankEnvironment):
+class EHRLMovieLensEnvironment(RankEnvironment):
 
     def __init__(self, hyperparams):
-        super(MovieLensEnvironment, self).__init__(hyperparams)
+        super(EHRLMovieLensEnvironment, self).__init__(hyperparams)
         self.alpha = self._hyperparams['alpha']  # α (alpha) in Equation (1)
         self.gamma = self._hyperparams['gamma']  # Γ (Gamma) in Equation (4)
         self.fixed_length = self._hyperparams['fixed_length']
