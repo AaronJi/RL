@@ -31,6 +31,9 @@ ENVconfig = {
     'item_sequence_len': 12,  # N in article
     'item_rec_len': 4,  # K in article
     'use_user': False,  # if use user features in the program
+    'with_cloud_latency': True,
+    'cloud_user_space_size': 5,
+    'cloud_item_sequence_len': 6,
     'w_transit_noise': False  # if with noise in next state
 }
 

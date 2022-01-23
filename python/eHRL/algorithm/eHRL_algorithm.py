@@ -5,7 +5,7 @@ import logging
 
 from RLutils.algorithm.ALGconfig import ALGconfig
 from python.RLutils.algorithm.experience_buffer import ReplayMemory
-from python.RLutils.algorithm.actor_critic.DDPG import experience_replay
+from python.RLutils.algorithm.actor_critic.DDPG import experience_replay_mc
 
 class eHRLAlg(object):
 
@@ -68,7 +68,6 @@ class eHRLAlg(object):
                 reward, next_state = self.env.step(action)
 
                 # '19: Store transition (s_t, a_t, r_t, s_t+1) in D'
-                #experience = intract_experience(state.reshape(self.env.state_space_size), action.reshape(self.env.action_space_size), [reward], next_state.reshape(self.env.state_space_size))
                 experience = intract_experience(state, action, [reward], next_state)
                 replay_memory.add(experience)
                 state = next_state  # '20: Set s_t = s_t+1'
@@ -81,7 +80,10 @@ class eHRLAlg(object):
                     sampled_experiences = replay_memory.sample_batch(self._hyperparams['batch_size'])
 
                     states, actions, rewards, next_states = extract_experience(sampled_experiences)
-                    replay_Q_value, loss_critic = experience_replay(states, actions, rewards, next_states, self.agent_edge.actor, self.agent_edge.critic, self._hyperparams['discount'], recurrent__length=self.env._hyperparams['item_rec_len'], sess=sess)
+
+                    states_cloud = self.env.upload_cloud_state(states)
+                    next_states_cloud = self.env.upload_cloud_state(next_states)
+                    replay_Q_value, loss_critic = experience_replay_mc(states, actions, rewards, next_states, states_cloud, next_states_cloud, self.agent_edge.actor, self.agent_cloud.critic, self._hyperparams['discount'], recurrent_length=self.env._hyperparams['item_rec_len'], sess=sess)
                     session_Q_value += replay_Q_value
                     session_critic_loss += loss_critic
 

@@ -50,7 +50,18 @@ class EHRLMovieLensEnvironment(RankEnvironment):
 
         self.user_space_size = len(self.datadealer.user_cols)
         self.state_space_size = self.item_space_size + self.user_space_size
-        print('After init, embedding size %i, state space dim %i, action space dim %i' % (self.emb_size, self.state_space_size, self.action_space_size))
+        print('After init, embedding size %i, action space dim %i' % (self.emb_size, self.action_space_size))
+        print('On the edge side, user_space_size %i, item_space_size dim %i, state_space_size dim %i' % (self.user_space_size, self.item_space_size, self.state_space_size))
+
+        if self._hyperparams['with_cloud_latency']:
+            self.cloud_user_space_size = self._hyperparams['cloud_user_space_size']
+            self.cloud_item_space_size = self.emb_size * self._hyperparams['cloud_item_sequence_len']
+            self.cloud_state_space_size = self.cloud_user_space_size + self.cloud_item_space_size
+        else:
+            self.cloud_user_space_size = self.user_space_size
+            self.cloud_item_space_size = self.item_space_size
+            self.cloud_state_space_size = self.state_space_size
+        print('On the cloud  side, with edge-cloud transmission latency, user_space_size %i, item_space_size dim %i, state_space_size dim %i' % (self.cloud_user_space_size, self.cloud_item_space_size, self.cloud_state_space_size))
         return
 
     def setTrainData(self):
@@ -128,6 +139,14 @@ class EHRLMovieLensEnvironment(RankEnvironment):
             self.current_state += exploration_noise.get().reshape(1, -1)
 
         return cumulated_reward, self.current_state
+
+    def upload_cloud_state(self, edge_state):
+        if self._hyperparams['with_cloud_latency']:
+            cloud_state = np.hstack((edge_state[:, :self.cloud_user_space_size], edge_state[:, self.user_space_size:self.user_space_size+self.cloud_item_space_size]))
+            #cloud_state = edge_state[:, :self.user_space_size + self.emb_size * self._hyperparams['cloud_item_sequence_len']]
+        else:
+            cloud_state = edge_state
+        return cloud_state
 
     def get_groups(self):
         ''' Calculate average state/action value for each group. Equation (3). '''
@@ -272,11 +291,12 @@ class OrnsteinUhlenbeckNoise:
         return self.state
 
 
-
-import keras.backend as K
-from keras import Sequential
-from keras.layers import Dense, Dropout
-
+#import keras.backend as K
+#from keras import Sequential
+#from keras.layers import Dense, Dropout
+from tensorflow.keras import backend as K
+from tensorflow.keras import Sequential
+from tensorflow.keras.layers import Dense, Dropout
 
 class EmbeddingsGenerator:
     def __init__(self, users, data, embedding_dim=100):

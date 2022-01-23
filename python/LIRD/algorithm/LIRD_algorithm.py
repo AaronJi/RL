@@ -78,7 +78,7 @@ class LIRDAlg(object):
                     sampled_experiences = replay_memory.sample_batch(self._hyperparams['batch_size'])
 
                     states, actions, rewards, next_states = extract_experience(sampled_experiences)
-                    replay_Q_value, loss_critic = experience_replay(states, actions, rewards, next_states, self.agent.actor, self.agent.critic, self._hyperparams['discount'], recurrent__length=self.env._hyperparams['item_rec_len'], sess=sess)
+                    replay_Q_value, loss_critic = experience_replay(states, actions, rewards, next_states, self.agent.actor, self.agent.critic, self._hyperparams['discount'], recurrent_length=self.env._hyperparams['item_rec_len'], sess=sess)
                     session_Q_value += replay_Q_value
                     session_critic_loss += loss_critic
 
