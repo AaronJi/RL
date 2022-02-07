@@ -1,11 +1,7 @@
+# -*- coding: utf-8 -*-
 import tensorflow as tf
-import json
-import os
 from tensorflow.contrib import layers
 import attention
-# -*- coding: utf-8 -*-
-
-import tensorflow as tf
 import json
 from tensorflow.contrib.layers.python.layers import feature_column as fc
 import os
@@ -24,7 +20,19 @@ class DIN(object):
         self.hidden_units = [256, 128, 64]
         self.emb_size = 128
         self.seq_len = 5
+
+        self.data_cols = ['user', 'item', 'seq', 'count', 'userid', 'itemid', 'rating', 'label']
+
         self.data_dim = 0
+        for col in self.data_cols:
+            if col in ['user', 'item']:
+                self.data_dim += self.emb_size
+            elif col == 'seq':
+                self.data_dim += self.seq_len*self.emb_size
+            else:
+                self.data_dim += 1
+        print('data dim: %i' % self.data_dim)
+
         return
 
     def build_model(self, data_info = None):
@@ -34,7 +42,8 @@ class DIN(object):
             params={
                 'max_len': self.seq_len,
                 'hidden_units': self.hidden_units,
-                'use_din': self.use_din
+                'use_din': self.use_din,
+                'emb_size': self.emb_size
             }
         )
 
@@ -51,7 +60,7 @@ class DIN(object):
             #     if self.columns_default[i] == '':
             #         features[i] = process_list_column(features[i])
 
-            d = dict(zip([str(i) for i in range(897)], features))
+            d = dict(zip([str(i) for i in range(self.data_dim-1)], features))
             return d, label
 
         dataset = tf.data.TextLineDataset(data_file)
@@ -138,41 +147,45 @@ class DIN(object):
             # key: userid, value: [itemid, rating, timestamp]
             value = data[key]
             value.sort(key=lambda x: x[2])
-            print("{} has {} items".format(key, len(value)))
+            #print("{} has {} items".format(key, len(value)))
             for i in range(len(value)):
                 d = []
-                d.append(user_emb[key])
-                self.data_dim += self.emb_size
-                d.append(item_emb[value[i][0]])
-                self.data_dim += self.emb_size
 
                 count = 0
-                for j in range(i, 0, -1):
-                    # build click sequence
-                    if value[j][1] > 3:
-                        d.append(item_emb[value[j][0]])
-                        count += 1
-                        if count == self.seq_len:
-                            break
-                #print(len(d))
-                #print(len(user_emb[key].split(',')))
-                #print(len(item_emb[value[i][0]].split(',')))
-                #print(len(default_emb.split(',')))
-                #print((2+5)*128 + 2)
 
-                if count < self.seq_len:
-                    for j in range(count, self.seq_len):
-                        d.append(default_emb)
+                for col in self.data_cols:
+                    if col == 'user':
+                        d.append(user_emb[key])
+                    elif col == 'item':
+                        d.append(item_emb[value[i][0]])
+                    elif col == 'seq':
 
-                self.data_dim += self.seq_len*self.emb_size
+                        for j in range(i, 0, -1):
+                            # build click sequence
+                            if value[j][1] > 3:
+                                d.append(item_emb[value[j][0]])
+                                count += 1
+                                if count == self.seq_len:
+                                    break
+                        if count < self.seq_len:
+                            for j in range(count, self.seq_len):
+                                d.append(default_emb)
+                    elif col == 'count':
+                        d.append(str(count))
+                    elif col == 'userid':
+                        d.append(str(key))
+                    elif col == 'itemid':
+                        d.append(str(value[i][0]))
+                    elif col == 'rating':
+                        d.append(str(value[i][1]))
+                    elif col == 'label':
+                        d.append('1' if value[i][1] > 3 else '0')
+                    else:
+                        pass
 
-                d.append(str(count))
-                d.append('1' if value[i][1] > 3 else '0')
-
-                self.data_dim += 2
-
-                #exit(2)
                 s = ",".join(d)
+                assert len(s.split(',')) == self.data_dim
+
                 if i >= len(value) - 3:
                     test_out.write(s + "\n")
                 else:
@@ -181,22 +194,17 @@ class DIN(object):
         train_out.close()
         test_out.close()
 
+        return
 
-
-
-    def train(self, path, delim = ','):
+    def train(self, data_path, delim = ','):
         # a file name or a list of file name [path, label_data, user_data, item_data]
-        return self.model.train(input_fn=lambda: self.build_input(os.path.join(path, 'train.txt'), delim))
+        return self.model.train(input_fn=lambda: self.build_input(data_path, delim))
 
+    def eval(self,  data_path, delim = ','):
+        return self.model.evaluate(input_fn=lambda: self.build_input(data_path, delim))
 
-    def eval(self,path, delim = ','):
-        return self.model.evaluate(input_fn=lambda: self.build_input(os.path.join(path, 'test.txt'), delim))
-
-
-    def predict(self,path, delim = ','):
-        return self.model.predict(input_fn=lambda: self.build_input(os.path.join(path, 'test.txt'), delim))
-
-
+    def predict(self, data_path, delim = ','):
+        return self.model.predict(input_fn=lambda: self.build_input(data_path, delim))
 
 def my_model(features, labels, mode, params):
     # user_feats = features['user']
@@ -204,8 +212,8 @@ def my_model(features, labels, mode, params):
     #
     # seq_feats = features['seq']
     # seq_len = features['seq_len']
-    emb_size = 128
-    seq_len = 5
+    emb_size = params['emb_size']
+    seq_len = params['max_len']
     index = 0
     user_feats = tf.concat([tf.reshape(features[str(i)], [-1, 1]) for i in range(index, index + emb_size)], -1)
     # user_feats = tf.reshape(user_feats, [-1,emb_size])
@@ -224,12 +232,16 @@ def my_model(features, labels, mode, params):
 
     seq_feats = tf.concat(seq_emb, 1)
     seq_len = features[str(index)]
+    index += 1
 
+    userid = features[str(index)]
+    index += 1
+    itemid = features[str(index)]
+    index += 1
+    rating = features[str(index)]
+    index += 1
 
-    max_len = params['max_len']
-
-
-    atten = attention.transformer_target_attention_layer(seq_feats, seq_len, item_feats, max_len)
+    atten = attention.transformer_target_attention_layer(seq_feats, seq_len, item_feats, params['max_len'])
 
     if params['use_din']:
         net = tf.concat([user_feats, item_feats, atten],-1)
@@ -241,12 +253,7 @@ def my_model(features, labels, mode, params):
             net = tf.layers.dense(net, units=units, activation=tf.nn.relu)
 
 
-    logits = layers.linear(
-                    net,
-                    1,
-                    biases_initializer=None
-                )
-
+    logits = layers.linear(net, 1, biases_initializer=None)
 
     # Compute predictions.
     predicted_classes = tf.argmax(logits, 1)
@@ -254,7 +261,10 @@ def my_model(features, labels, mode, params):
         predictions = {
             'class_ids': predicted_classes[:, tf.newaxis],
             'probabilities': tf.nn.sigmoid(logits),
-            'logits': logits
+            'logits': logits,
+            'userid': userid,
+            'itemid': itemid,
+            'rating': rating
         }
         return tf.estimator.EstimatorSpec(mode, predictions=predictions)
 
