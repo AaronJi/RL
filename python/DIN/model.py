@@ -135,29 +135,39 @@ class DIN(object):
         train_out = open(os.path.join(path,"train.txt"), 'w')
         test_out = open(os.path.join(path,"test.txt"), 'w')
         for key in data.keys():
+            # key: userid, value: [itemid, rating, timestamp]
             value = data[key]
-            value.sort(key = lambda x:x[2])
+            value.sort(key=lambda x: x[2])
             print("{} has {} items".format(key, len(value)))
             for i in range(len(value)):
-
                 d = []
                 d.append(user_emb[key])
                 d.append(item_emb[value[i][0]])
+
+                print(len(d))
                 count = 0
                 for j in range(i, 0 , -1):
+                    # build click sequence
                     if value[j][1] > 3:
                         d.append(item_emb[value[j][0]])
                         count+=1
                         if count == self.seq_len:
                             break
-
+                print(len(d))
 
                 if count < self.seq_len:
                     for j in range(count, self.seq_len):
                         d.append(default_emb)
+
+                print(len(d))
                 d.append(str(count))
                 d.append('1' if value[i][1] > 3 else '0')
 
+                print(len(d))
+
+                print(d)
+
+                exit(2)
                 s = ",".join(d)
                 if i >= len(value) - 3:
                     test_out.write(s +"\n")
