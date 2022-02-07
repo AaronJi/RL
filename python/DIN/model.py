@@ -18,14 +18,14 @@ default_emb = '0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 
 class DIN(object):
     def __init__(self,  num_epochs=30, batch_size=128, use_din=True):
-
-
         self.num_epochs = num_epochs
         self.batch_size = batch_size
         self.use_din = use_din
         self.hidden_units = [256, 128, 64]
         self.emb_size = 128
         self.seq_len = 5
+        self.data_dim = 0
+        return
 
     def build_model(self, data_info = None):
 
@@ -34,7 +34,7 @@ class DIN(object):
             params={
                 'max_len': self.seq_len,
                 'hidden_units': self.hidden_units,
-                'use_din':self.use_din
+                'use_din': self.use_din
             }
         )
 
@@ -42,7 +42,7 @@ class DIN(object):
         assert tf.gfile.Exists(data_file)
 
         def parse_csv(value):
-            parsed_line = tf.decode_csv(value, record_defaults=[[0.0]]*898, field_delim=delim)
+            parsed_line = tf.decode_csv(value, record_defaults=[[0.0]]*self.data_dim, field_delim=delim)
             label = parsed_line[-1]
 
             del parsed_line[-1]
@@ -142,35 +142,39 @@ class DIN(object):
             for i in range(len(value)):
                 d = []
                 d.append(user_emb[key])
+                self.data_dim += self.emb_size
                 d.append(item_emb[value[i][0]])
+                self.data_dim += self.emb_size
 
-                print(len(d))
                 count = 0
-                for j in range(i, 0 , -1):
+                for j in range(i, 0, -1):
                     # build click sequence
                     if value[j][1] > 3:
                         d.append(item_emb[value[j][0]])
-                        count+=1
+                        count += 1
                         if count == self.seq_len:
                             break
-                print(len(d))
+                #print(len(d))
+                #print(len(user_emb[key].split(',')))
+                #print(len(item_emb[value[i][0]].split(',')))
+                #print(len(default_emb.split(',')))
+                #print((2+5)*128 + 2)
 
                 if count < self.seq_len:
                     for j in range(count, self.seq_len):
                         d.append(default_emb)
 
-                print(len(d))
+                self.data_dim += self.seq_len*self.emb_size
+
                 d.append(str(count))
                 d.append('1' if value[i][1] > 3 else '0')
 
-                print(len(d))
+                self.data_dim += 2
 
-                print(d)
-
-                exit(2)
+                #exit(2)
                 s = ",".join(d)
                 if i >= len(value) - 3:
-                    test_out.write(s +"\n")
+                    test_out.write(s + "\n")
                 else:
                     train_out.write(s + "\n")
 
@@ -203,12 +207,11 @@ def my_model(features, labels, mode, params):
     emb_size = 128
     seq_len = 5
     index = 0
-    user_feats = tf.concat([tf.reshape(features[str(i)], [-1,1]) for i in range(index, index + emb_size)], -1)
+    user_feats = tf.concat([tf.reshape(features[str(i)], [-1, 1]) for i in range(index, index + emb_size)], -1)
     # user_feats = tf.reshape(user_feats, [-1,emb_size])
     index = index + emb_size
-    item_feats = tf.concat([tf.reshape(features[str(i)],[-1,1]) for i in range(index, index + emb_size)], -1)
+    item_feats = tf.concat([tf.reshape(features[str(i)], [-1, 1]) for i in range(index, index + emb_size)], -1)
     # item_feats = tf.reshape(item_feats, [-1,emb_size])
-
     index = index + emb_size
 
     seq_emb = []
@@ -226,7 +229,7 @@ def my_model(features, labels, mode, params):
     max_len = params['max_len']
 
 
-    atten = attention.transformer_target_attention_layer(seq_feats, seq_len, item_feats,max_len)
+    atten = attention.transformer_target_attention_layer(seq_feats, seq_len, item_feats, max_len)
 
     if params['use_din']:
         net = tf.concat([user_feats, item_feats, atten],-1)
@@ -263,15 +266,9 @@ def my_model(features, labels, mode, params):
             logits=logits,
             labels=labels))
 
+    auc = tf.metrics.auc(labels=labels, predictions=tf.nn.sigmoid(logits), name='auc')
 
-
-
-    auc = tf.metrics.auc(labels=labels,
-                                   predictions=tf.nn.sigmoid(logits),
-                                   name='auc')
-
-    logging_hook = tf.train.LoggingTensorHook({"loss": loss,
-                                               "auc": auc[1]}, every_n_iter=100)
+    logging_hook = tf.train.LoggingTensorHook({"loss": loss, "auc": auc[1]}, every_n_iter=100)
 
     metrics = {'auc': auc}
     tf.summary.scalar('accuracy', auc[1])
